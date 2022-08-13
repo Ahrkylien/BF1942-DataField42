@@ -19,6 +19,7 @@ using namespace std;
 
 //https://zlib.net/
 //https://github.com/madler/zlib
+
 //http://www.zedwood.com/article/cpp-md5-function
 
 /*
@@ -105,21 +106,21 @@ int main(int argc, char** argv){
     FileDB master_db;
     master_db.init();
     if(argc > 1){
-        string identifier(argv[0]);
-        if((identifier == "map" && argc == 6) || (identifier == "mod" && argc == 5)){
-            string keyRegisterPath(argv[1]);
-            string ip_port(argv[2]);
-            string password(argv[3]);
+        string identifier(argv[1]);
+        if((identifier == "map" && argc == 7) || (identifier == "mod" && argc == 6)){
+            string keyRegisterPath(argv[2]);
+            string ip_port(argv[3]);
+            string password(argv[4]);
             string mapPath, modID;
             if(identifier == "map"){
-                mapPath = argv[4];
-                modID = argv[5];
+                mapPath = argv[5];
+                modID = argv[6];
             }else{
-                modID = argv[4];
+                modID = argv[5];
             }
             string keyHash;
             int keyHashSuccess = getKeyHash(keyRegisterPath, keyHash);
-            if (keyHashSuccess){
+            if(keyHashSuccess){
                 if(identifier == "map"){
                     if(strncmp(mapPath.c_str(), "bf1942/levels/", 14) == 0 && mapPath.back() == '/'){
                         string mapName = mapPath.substr(14, mapPath.length()-14-1);
@@ -127,18 +128,35 @@ int main(int argc, char** argv){
                         replace(mapName_clean.begin(), mapName_clean.end(), '_', ' ');
                         //check if map of mod is available in db
                         cout << "The server you wanted to join runs a map you don't have." << endl;
-                        if(1){
-                            cout << "Do you want to download the map: '" << mapName_clean << "' for " << modID << "?" << endl;
+                        int handshake = master_db.handshake();
+                        if(handshake == 1){
+                            if(master_db.downloadMap(mapName, modID, 1)){
+                                cout << "Do you want to download the map: '" << mapName_clean << "' for " << modID << "?" << endl;
+                                cout << "(Type 'yes' or 'no' and hit enter)" << endl;
+                                if(clientAwknowlage()){
+                                    master_db.downloadMap(mapName, modID);
+                                    clientAwknowlage2();
+                                    return openBF1942(modID.c_str(), ip_port.c_str(), password.c_str());
+                                }else{
+                                    return openBF1942(modID.c_str());
+                                }
+                            }else{
+                                cout << "We sadly can't find the file in our database." << endl;
+                                cout << "Press enter to go back to the game." << endl;
+                                getchar();
+                                return openBF1942(modID.c_str());
+                            }
+                        }else if(handshake == -1){ //update
+                            cout << "You need to update DataField42 to continue." << endl;
+                            cout << "Do you want to update now?" << endl;
                             cout << "(Type 'yes' or 'no' and hit enter)" << endl;
                             if(clientAwknowlage()){
-                                master_db.downloadMap(mapName, modID);
-                                clientAwknowlage2();
-                                return openBF1942(modID.c_str(), ip_port.c_str(), password.c_str());
+                                master_db.update();
                             }else{
                                 return openBF1942(modID.c_str());
                             }
-                        }else{
-                            cout << "We sadly can't find the file in our database." << endl;
+                        }else{//cant connect to master
+                            cout << "We sadly can't connect to the central file database." << endl;
                             cout << "Press enter to go back to the game." << endl;
                             getchar();
                             return openBF1942(modID.c_str());
@@ -169,6 +187,7 @@ int main(int argc, char** argv){
             }
         }else{
             cout << "ERROR: Wrong argc for " << identifier << ": " << argc << endl;
+            getchar();
         }
     }else{
         cout << "You are in the settings portal" << endl << endl;

@@ -19,7 +19,7 @@ using namespace std;
 
 class FileDB{
     public:
-        string domainName = "bf1942.eu";
+        string domainName = "files.bf1942.eu";
         string IP;
         int port = 28901;
         int status = 0;
@@ -32,9 +32,10 @@ class FileDB{
         int receive();
         int disconnect();
         int awknowlage();
-        int handshake(const char* keyhash); //send and receive versions. master also tells if its compatible
-        int checkIfMapExists(const char* map, const char* modID);
-        int downloadMap(const string& map, const string& modID);
+        // int handshake(const char* keyhash); //send and receive versions. master also tells if its compatible
+        int handshake(); //send and receive versions
+        int downloadMap(const string& map, const string& modID, int checkIfMapExists = 0);
+        int update();
     private:
         SOCKET socket_tcp = INVALID_SOCKET;
         WSADATA wsaData;

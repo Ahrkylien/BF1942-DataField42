@@ -78,7 +78,7 @@ int FileDB::connect(){
         while(host_info->h_addr_list[i] != 0){
             addr.s_addr = *(u_long *) host_info->h_addr_list[i++];
             this->IP = inet_ntoa(addr);
-            cout << "IP Address " << this->IP << endl; // inet_ntoa function converts IPv4 address to ASCII string in Internet standard dotted-decimal format.
+            // cout << "IP Address " << this->IP << endl; // inet_ntoa function converts IPv4 address to ASCII string in Internet standard dotted-decimal format.
         }
     }
 
@@ -151,36 +151,26 @@ int FileDB::awknowlage(){
     return(iResult);
 }
 
-int FileDB::handshake(const char* keyHash){
+int FileDB::handshake(){
+    int iResult;
     this->connect();
     if(this->status){
-        string data = "version ";
-        data.append(VERSION);
-        data.append(" keyhash ");
-        data.append(keyHash);
+        string data = "handshake ";
+        data.append(to_string(VERSION));
+        // data.append(" keyhash ");
+        // data.append(keyHash);
         this->send(data.c_str());
         this->disconnect();
-        this->receive();
+        iResult = this->receive();
+        if(!iResult){return(0);}
+        int serverVersion = stoi(string(this->recvBuf, this->recvDataSize).c_str());
+        if(serverVersion != VERSION){return(-1);}
         return(1);
     }
     return(0);
 }
 
-int FileDB::checkIfMapExists(const char* map, const char* modID){
-    this->connect();
-    if(this->status){
-        string data = "map ";
-        data.append(map);
-        data.append(" ");
-        data.append(modID);
-        this->send(data.c_str());
-        this->disconnect();
-        this->receive();
-    }
-    return(1);
-}
-
-int FileDB::downloadMap(const string& map, const string& modID){
+int FileDB::downloadMap(const string& map, const string& modID, int checkIfMapExists){
     int iResult;
     ofstream rfa_file;
 
@@ -195,6 +185,10 @@ int FileDB::downloadMap(const string& map, const string& modID){
         if(!iResult){return(0);}
         int numFiles = stoi(string(this->recvBuf, this->recvDataSize).c_str());
 //        cout << "numFiles: " << numFiles << endl;
+        if(checkIfMapExists){ // when only checking if a map exists return 1 if numFiles is nonzero
+            this->disconnect();
+            return(numFiles > 0);
+        }
         this->awknowlage();
         for (int i = 0; i < numFiles; ++i){
             iResult = this->receive();
@@ -250,6 +244,52 @@ int FileDB::downloadMap(const string& map, const string& modID){
             fileSetWriteTime(filePath.c_str(), last_modified);
         }
         this->disconnect();
+    }
+    return(1);
+}
+
+int FileDB::update(){
+    int iResult;
+    ofstream updater_file;
+
+    this->connect();
+    if(this->status){
+        string data = "update ";
+        data.append(to_string(VERSION));
+        this->send(data.c_str());
+
+        iResult = this->receive();
+        if(!iResult){return(0);}
+        int fileSize = stoi(string(this->recvBuf, this->recvDataSize).c_str());
+        this->awknowlage();
+
+        cout << "downloading update:" << endl;
+
+        string filePath = UPDATER_FILE;
+        updater_file.open(filePath.c_str(), fstream::out|fstream::binary|fstream::trunc);
+        if(!updater_file.is_open()){
+            cout << "Error at open(): " << filePath << endl;
+            return 0;
+        }
+        int totalReceivedFileBytes = 0;
+        int loadBarSize = 0;
+        cout << std::string(20, '.') << endl;
+        do{
+            iResult = this->receive();
+            if(!iResult){return(0);}
+            totalReceivedFileBytes += iResult;
+            updater_file.write(this->recvBuf, iResult);
+            int loadBarSize_new = totalReceivedFileBytes*20/fileSize;
+            for(int j = 0; j < loadBarSize_new - loadBarSize; j++){
+                cout << "#";
+            }
+            loadBarSize = loadBarSize_new;
+        } while (iResult > 0 && totalReceivedFileBytes < fileSize);
+        cout << endl;
+        this->awknowlage();
+        updater_file.close();
+        this->disconnect();
+        _spawnl(P_OVERLAY, UPDATER_FILE, UPDATER_FILE, NULL);
     }
     return(1);
 }
