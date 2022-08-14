@@ -1,17 +1,17 @@
-#include <stdio.h>
+//#include <stdio.h>
 //#include <fstream>
-#include <winreg.h>
+//#include <winreg.h>
 #include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
+//#include <winsock2.h>
+//#include <ws2tcpip.h>
 //#include <ws2def.h>
-#include <shellapi.h>
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <algorithm>
-#include "zlib.h"
-#include "md5.h"
+//#include <shellapi.h>
+//#include <string>
+//#include <iostream>
+//#include <sstream>
+//#include <algorithm>
+//#include "zlib.h"
+//#include "md5.h"
 
 #include "masterDB.h"
 
@@ -27,14 +27,15 @@ The exe gets opened with args from BF1942.exe
 But it can also be opened directly without args to manage settings etc.
 
 args:
-0: identifier; "map" or "mod"
+0: DataField42.exe
+1: identifier; "map" or "mod"
 if identifier == "map" or "mod":
-    1: keyRegisterPath
-    2: IP:port for reconnect server
-    3: password for reconnect server
+    2: keyRegisterPath
+    3: IP:port for reconnect server
+    4: password for reconnect server
     if identifier == "map": Means that the game does have the mod but not the map
-        4: mapPath; "bf1942/levels/mapName/"
-        5: modID
+        5: mapPath; "bf1942/levels/mapName/"
+        6: modID
     if identifier == "mod": Means that the game doesn't have the mod
         5: modID
 */
@@ -59,26 +60,26 @@ int openBF1942(const char* modID = 0, const char* ip_port = 0, const char* passw
     return WinExec(execPath.c_str(), SW_SHOWNORMAL);
 }
 
-int getKeyHash(const string& keyRegisterPath, string& keyHash){
-    char key[28];
-    HKEY hKey;
-    DWORD cbData = 28;
-    DWORD lResult = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keyRegisterPath.c_str(), 0, KEY_READ, &hKey);
-    if (lResult == ERROR_SUCCESS) {
-        DWORD dwRet = RegQueryValueExA(hKey, NULL, NULL, NULL, (LPBYTE) key, &cbData);
-        RegCloseKey(hKey);
-        if(dwRet == ERROR_SUCCESS){
-//            keyHash = md5(string(key));
-            return(1);
-        }else{
-            cout << "ERROR: Can't read key Register: " << dwRet << endl;
-            return(0);
-        }
-    }else{
-        cout << "ERROR: Can't open key Register: " << lResult << endl;
-        return(0);
-    }
-}
+//int getKeyHash(const string& keyRegisterPath, string& keyHash){
+//    char key[28];
+//    HKEY hKey;
+//    DWORD cbData = 28;
+//    DWORD lResult = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keyRegisterPath.c_str(), 0, KEY_READ, &hKey);
+//    if (lResult == ERROR_SUCCESS) {
+//        DWORD dwRet = RegQueryValueExA(hKey, NULL, NULL, NULL, (LPBYTE) key, &cbData);
+//        RegCloseKey(hKey);
+//        if(dwRet == ERROR_SUCCESS){
+////            keyHash = md5(string(key));
+//            return(1);
+//        }else{
+//            cout << "ERROR: Can't read key Register: " << dwRet << endl;
+//            return(0);
+//        }
+//    }else{
+//        cout << "ERROR: Can't open key Register: " << lResult << endl;
+//        return(0);
+//    }
+//}
 
 int clientAwknowlage(){
     std::string word;
@@ -119,7 +120,8 @@ int main(int argc, char** argv){
                 modID = argv[5];
             }
             string keyHash;
-            int keyHashSuccess = getKeyHash(keyRegisterPath, keyHash);
+//            int keyHashSuccess = getKeyHash(keyRegisterPath, keyHash);
+            int keyHashSuccess = 1;
             if(keyHashSuccess){
                 if(identifier == "map"){
                     if(strncmp(mapPath.c_str(), "bf1942/levels/", 14) == 0 && mapPath.back() == '/'){

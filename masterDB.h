@@ -1,15 +1,15 @@
-#include <stdio.h>
+//#include <stdio.h>
 #include <fstream>
-#include <winreg.h>
+//#include <winreg.h>
 #include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <shellapi.h>
-#include <string>
+//#include <winsock2.h>
+//#include <ws2tcpip.h>
+//#include <shellapi.h>
+//#include <string>
 #include <iostream>
-#include <sstream>
+//#include <sstream>
 #include <algorithm>
-#include <filesystem>
+//#include <filesystem>
 
 #include "main.h"
 
