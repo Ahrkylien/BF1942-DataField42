@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33829.357
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataField42", "DataField42\DataField42.csproj", "{5AEA35FC-2FD1-4EE9-B8C2-F702A47F89D6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataField42 Console", "DataField42 Console\DataField42 Console.csproj", "{6CF4AF8E-5BAE-4426-B425-D0E086C8B6D5}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "DataField42.Core", "DataField42.Core\DataField42.Core.shproj", "{D4916D93-F51D-4671-B111-8893AE49C8FC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5AEA35FC-2FD1-4EE9-B8C2-F702A47F89D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5AEA35FC-2FD1-4EE9-B8C2-F702A47F89D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5AEA35FC-2FD1-4EE9-B8C2-F702A47F89D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5AEA35FC-2FD1-4EE9-B8C2-F702A47F89D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6CF4AF8E-5BAE-4426-B425-D0E086C8B6D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6CF4AF8E-5BAE-4426-B425-D0E086C8B6D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6CF4AF8E-5BAE-4426-B425-D0E086C8B6D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6CF4AF8E-5BAE-4426-B425-D0E086C8B6D5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {06C4AAD8-5AB1-45AF-92AD-5974D5A6CF2C}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		DataField42.Core\DataField42.Core.projitems*{5aea35fc-2fd1-4ee9-b8c2-f702a47f89d6}*SharedItemsImports = 5
+		DataField42.Core\DataField42.Core.projitems*{6cf4af8e-5bae-4426-b425-d0e086c8b6d5}*SharedItemsImports = 5
+		DataField42.Core\DataField42.Core.projitems*{d4916d93-f51d-4671-b111-8893ae49c8fc}*SharedItemsImports = 13
+	EndGlobalSection
+EndGlobal

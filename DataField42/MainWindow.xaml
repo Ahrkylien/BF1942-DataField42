@@ -1,0 +1,77 @@
+﻿<Window x:Class="DataField42.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DataField42"
+        xmlns:VM="clr-namespace:DataField42.ViewModels"
+        mc:Ignorable="d"
+        Title="DataField42"
+        Height="450" Width="800"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="SingleBorderWindow"
+        Background="Transparent"
+        >
+    <Window.DataContext>
+        <VM:MainWindowViewModel />
+    </Window.DataContext>
+    <WindowChrome.WindowChrome>
+        <WindowChrome     
+        CaptionHeight="0"  
+        CornerRadius ="0"
+        ResizeBorderThickness="4"
+        GlassFrameThickness="0">
+        </WindowChrome>
+    </WindowChrome.WindowChrome>
+    <Border CornerRadius="0" BorderBrush="#233050" BorderThickness="2" Padding="0" Background="#090b12">
+        <DockPanel>
+            <DockPanel DockPanel.Dock="Top" Height="50" MouseLeftButtonDown="ControlBar_MouseLeftButtonDown" MouseEnter="ControlBar_MouseEnter">
+                <Button Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Background="#c33c3c" BorderThickness="2" BorderBrush="#c33c3c" Foreground="#d4d4d4" Click="CloseButton_Click">X</Button>
+                <Button Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Click="MaximizeButton_Click">[ ]</Button>
+                <Button Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Click="MinimizeButton_Click">-</Button>
+                <Label Margin="120,0,0,0" Height="30" Foreground="#d4d4d4" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="15">DataField42</Label>
+            </DockPanel>
+            <Border DockPanel.Dock="Left" Visibility="Collapsed" CornerRadius="0" BorderBrush="#233050" BorderThickness="0,0,2,0" Padding="0" Background="#090b12">
+                <StackPanel Width="115" Margin="0,55,0,0">
+                    <Button Margin="0,10,0,0" Width="90" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4">Servers</Button>
+                    <Button Margin="0,10,0,0" Width="90" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4">Download</Button>
+                    <Button Margin="0,10,0,0" Width="90" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4">Settings</Button>
+                </StackPanel>
+            </Border>
+            <Canvas DockPanel.Dock="Right" Width="0"></Canvas>
+            <ScrollViewer x:Name="centralControl" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <Border Background="#090b12" BorderBrush="#233050" BorderThickness="0,2,0,0" MaxWidth="{Binding ElementName=centralControl, Path=ActualWidth}">
+                    <Grid Background="#0a1225">
+                        <Border Grid.Row="0" Background="#090b12" BorderBrush="#233050" BorderThickness="2" Padding="10" Margin="10">
+                            <StackPanel>
+                                <!-- stage 1: -->
+                                <TextBlock Foreground="#d4d4d4" Padding="0" Text="{Binding Messages}" TextWrapping="Wrap"/>
+
+                                <StackPanel Visibility="{Binding ContinueToDownloadStage, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <CheckBox Foreground="#d4d4d4" Margin="0">Always trust IP/name</CheckBox>
+                                    <Button HorizontalAlignment="Left" Margin="0,10,0,0" Width="104" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Command="{Binding DownloadCommand}" >Continue</Button>
+                                </StackPanel>
+
+                                <!-- stage 2: -->
+                                <StackPanel Visibility="{Binding DownloadStage, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Border HorizontalAlignment="Left" Background="#0a1225" BorderBrush="#233050" BorderThickness="2" Width="104" Height="20" Margin="0,10">
+                                        <Grid>
+                                            <ProgressBar  Width="100" Minimum="0" Maximum="100" Value="{Binding Percentage}" Background="Transparent" BorderThickness="0" Foreground="#57a857" Name="pbStatus" />
+                                            <TextBlock Text="{Binding ElementName=pbStatus, Path=Value, StringFormat={}{0:0}%}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#d4d4d4" />
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- stage 3: -->
+                                <StackPanel Visibility="{Binding ReturnToGameStage, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <CheckBox Visibility="{Binding ReturnToGameStageCheckboxVisible, Converter={StaticResource BooleanToVisibilityConverter}}" IsChecked="True" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4">Always automatically go back to game</CheckBox>
+                                    <Button HorizontalAlignment="Left" Margin="0,10,0,0" Width="104" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Command="{Binding ReturnBackToGameCommand}">Back to Game</Button>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </ScrollViewer>
+        </DockPanel>
+    </Border>
+</Window>
