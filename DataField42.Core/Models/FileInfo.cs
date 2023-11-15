@@ -8,7 +8,7 @@ public class FileInfo
     public string FilePath { get; set; }
     public string Checksum { get; set; }
     public ulong Size { get; set; }
-    public uint LastModifiedTimestamp { get; set; }
+    public ulong LastModifiedTimestamp { get; set; }
     public Bf1942FileTypes FileType { get; set; } = Bf1942FileTypes.None;
 
     public SyncType SyncType { get; set; } = SyncType.Unknown;
@@ -74,7 +74,7 @@ public class FileInfo
         FilePath = Regex.Replace(filePath, "^\"|\"$", ""); //remove quotes around string
         Checksum = fast ? "" : crc32;
         Size = fast ? 0 : ulong.Parse(size);
-        LastModifiedTimestamp = fast ? 0 : uint.Parse(lastModifiedTimestamp);
+        LastModifiedTimestamp = fast ? 0 : ulong.Parse(lastModifiedTimestamp);
 
         //TODO Parse/validate Crc32 & Size & LastModifiedTimestamp, except if fast
 

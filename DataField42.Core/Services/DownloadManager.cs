@@ -89,6 +89,8 @@ public class DownloadManager
             using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
             _communication.ReceiveFile(fileInfo.Size, fileStream, backgroundWorkers);
             _communication.SendAcknowledgement();
+            fileStream.Close();
+            File.SetLastWriteTime(filePath, DateTimeOffset.FromUnixTimeSeconds((long)fileInfo.LastModifiedTimestamp).UtcDateTime);
         }
         _communication.SendAcknowledgement();
         _communication.Dispose();
