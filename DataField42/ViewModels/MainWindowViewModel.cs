@@ -127,7 +127,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             if (readyToDownload && communicationWithServer != null)
             {
-                ISyncRuleManager syncRuleManager = new SyncRuleManagerDummy();
+                ISyncRuleManager syncRuleManager = new SyncRuleManager("Synchronization rules.txt");
                 ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("cache", "tmp", "game");
                 var downloadDecisionMaker = new DownloadDecisionMaker(syncRuleManager, localFileCacheManager);
                 _downloadManager = new DownloadManager(communicationWithServer, downloadDecisionMaker, localFileCacheManager);

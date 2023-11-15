@@ -1,70 +1,48 @@
 ﻿public class FileRule
 {
-    public SyncScenarios SyncScenario { get; private set; }
-    public Bf1942FileTypes FileType { get; private set; }
-    public string Mod { get; private set; }
-    public string FileName { get; private set; }
-    public string FilePath { get; private set; }
+    public IgnoreSyncScenarios IgnoreSyncScenario { get; init; }
+    private readonly Bf1942FileTypes _fileType;
+    private readonly string _mod;
+    private readonly string _fileName;
 
-    public bool AllMods => Mod == "*";
-    public bool AllFiles => FileName == "*";
+    private bool AllMods => _mod == "*";
+    private bool AllFiles => _fileName == "*";
 
-    public FileRule(string syncScenario, string fileType, string mod, string fileName)
+    public FileRule(string ignoreSyncScenario, string fileType, string mod, string fileName)
     {
-        SyncScenario = Enum.Parse<SyncScenarios>(syncScenario, true);
-        FileType = Enum.Parse<Bf1942FileTypes>(fileType, true);
-        Mod = mod.ToLower();
-        FileName = fileName.ToLower();
+        IgnoreSyncScenario = Enum.Parse<IgnoreSyncScenarios>(ignoreSyncScenario, true);
+        _fileType = Enum.Parse<Bf1942FileTypes>(fileType, true);
+        _mod = mod.ToLower();
+        _fileName = fileName.ToLower();
 
-        // append file type to FileName if not provided
-        if ((FileType == Bf1942FileTypes.Level || FileType == Bf1942FileTypes.Archive) && !FileName.EndsWith(".rfa"))
-            FileName += ".rfa";
-        else if ((FileType == Bf1942FileTypes.Movie || FileType == Bf1942FileTypes.Music) && !FileName.EndsWith(".bik"))
-            FileName += ".bik";
-        else if (FileType == Bf1942FileTypes.ModMiscFile)
+        // append file extension to FileName if not provided
+        if ((_fileType == Bf1942FileTypes.Level || _fileType == Bf1942FileTypes.Archive) && !_fileName.EndsWith(".rfa"))
+            _fileName += ".rfa";
+        else if ((_fileType == Bf1942FileTypes.Movie || _fileType == Bf1942FileTypes.Music) && !_fileName.EndsWith(".bik"))
+            _fileName += ".bik";
+        else if (_fileType == Bf1942FileTypes.ModMiscFile)
         {
-            switch(FileName)
+            switch(_fileName)
             {
                 case "contentcrc32":
                 case "init":
-                    FileName += ".con";
+                    _fileName += ".con";
                     break;
                 case "mod":
-                    FileName += ".dll";
+                    _fileName += ".dll";
                     break;
                 case "lexiconall":
-                    FileName += ".dat";
+                    _fileName += ".dat";
                     break;
                 case "serverinfo":
-                    FileName += ".dds";
+                    _fileName += ".dds";
                     break;
             }
         }
-        switch (FileType)
-        {
-            case Bf1942FileTypes.Movie:
-                FilePath = "movies/" + FileName;
-                break;
-            case Bf1942FileTypes.Music:
-                FilePath = "music/" + FileName;
-                break;
-            case Bf1942FileTypes.ModMiscFile:
-            case Bf1942FileTypes.Archive:
-                FilePath = FileName;
-                break;
-            case Bf1942FileTypes.Level:
-                FilePath = "archives/bf1942/levels/" + FileName;
-                break;
-        }
     }
 
-    public bool VerifyIgnore(FileInfo fileInfo, bool existsWithDifferentVersion)
-    {
-        if (FileName == fileInfo.FilePath || AllFiles) // TODO: FileName is not FilePath
-            if (Mod == fileInfo.Mod || AllMods)
-                if (SyncScenario == SyncScenarios.Always || (SyncScenario == SyncScenarios.DifferentVersion && existsWithDifferentVersion))
-                    return true;
-        return false;
-
-    }
+    public bool Matches(FileInfo fileInfo) => 
+        (AllMods || _mod.ToLower() == fileInfo.Mod.ToLower())
+        && _fileType == fileInfo.FileType
+        && (AllFiles || _fileName.ToLower() == fileInfo.FilePath.ToLower());
 }

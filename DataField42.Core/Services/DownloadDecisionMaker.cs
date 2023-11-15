@@ -17,7 +17,10 @@
 
     public void CheckDownloadRequest(FileInfo fileInfo)
     {
-        if (!_syncRuleManager.CheckIfFileShouldBeSynced(fileInfo))
+        var ignoreSyncScenario = _syncRuleManager.GetIgnoreFileSyncScenario(fileInfo);
+        if (ignoreSyncScenario == IgnoreSyncScenarios.Always)
+            fileInfo.SyncType = SyncType.None;
+        else if (ignoreSyncScenario == IgnoreSyncScenarios.DifferentVersion && _localFileCacheManager.CheckIfFileExistsInGame(fileInfo)) // TODO: if (fileInfo.RepresentsAbsenceOfFile) should not be used in this call and rfas should be handled better
             fileInfo.SyncType = SyncType.None;
         else
         {

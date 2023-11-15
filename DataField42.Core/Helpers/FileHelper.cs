@@ -7,4 +7,9 @@ public static class FileHelper
         Directory.CreateDirectory(Path.GetDirectoryName(destinationPath) ?? "");
         File.Move(sourcePath, destinationPath, overwrite);
     }
+
+    public static void SetLastWriteTime(string filePath, ulong lastModifiedTimestamp)
+    {
+        File.SetLastWriteTime(filePath, DateTimeOffset.FromUnixTimeSeconds((long) lastModifiedTimestamp).UtcDateTime);
+    }
 }

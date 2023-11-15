@@ -2,8 +2,8 @@
 
 public class SyncRuleManager : ISyncRuleManager
 {
-    private string _ruleFilePath;
-    private List<FileRule> _fileRules;
+    private readonly string _ruleFilePath;
+    private readonly List<FileRule> _fileRules = new();
 
     public SyncRuleManager(string ruleFilePath)
     {
@@ -28,18 +28,32 @@ public class SyncRuleManager : ISyncRuleManager
             */
             if (lineParts[0] == "ignore" && lineParts.Length == 5)
             {
-                var syncScenario = Enum.Parse<SyncScenarios>(lineParts[1], true);
-                var fileType = Enum.Parse<Bf1942FileTypes>(lineParts[2], true);
-                var mod = lineParts[3];
-                var fileName = lineParts[4];
-
-                continue;
+                try
+                {
+                    var fileRule = new FileRule(lineParts[1], lineParts[2], lineParts[3], lineParts[4]);
+                    _fileRules.Add(fileRule);
+                }
+                catch (Exception ex)
+                {
+#if DEBUG
+                    throw new Exception($"Can't parse line: {line} in: {_ruleFilePath}, Exception: {ex}");
+#endif
+                }
             }
         }
     }
 
-    public bool CheckIfFileShouldBeSynced(FileInfo fileInfo)
+    /// <summary>
+    /// First rule matching the FileInfo will be applied
+    /// </summary>
+    /// <param name="fileInfo"></param>
+    /// <returns></returns>
+    public IgnoreSyncScenarios GetIgnoreFileSyncScenario(FileInfo fileInfo)
     {
-        return false;
+        foreach(var fileRule in _fileRules)
+            if (fileRule.Matches(fileInfo))
+                return fileRule.IgnoreSyncScenario;
+        
+        return IgnoreSyncScenarios.Never;
     }
 }

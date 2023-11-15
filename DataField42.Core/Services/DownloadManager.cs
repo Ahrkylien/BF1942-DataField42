@@ -82,7 +82,6 @@ public class DownloadManager
                 throw new Exception("File info send right before file download does not match the file info sequence on which was agreed");
 
             backgroundWorkerCurrentFile.TotalSize = fileInfo.Size;
-            //Console.WriteLine(fileInfo); // for test
             _communication.SendAcknowledgement();
             var filePath = _localFileCacheManager.GetWorkingDirectoryFilePath(fileInfo);
             Directory.CreateDirectory(Path.GetDirectoryName(filePath) ?? "");
@@ -90,7 +89,7 @@ public class DownloadManager
             _communication.ReceiveFile(fileInfo.Size, fileStream, backgroundWorkers);
             _communication.SendAcknowledgement();
             fileStream.Close();
-            File.SetLastWriteTime(filePath, DateTimeOffset.FromUnixTimeSeconds((long)fileInfo.LastModifiedTimestamp).UtcDateTime);
+            FileHelper.SetLastWriteTime(filePath, fileInfo.LastModifiedTimestamp);
         }
         _communication.SendAcknowledgement();
         _communication.Dispose();
