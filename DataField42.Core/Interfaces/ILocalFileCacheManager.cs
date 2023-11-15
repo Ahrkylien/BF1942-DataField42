@@ -1,5 +1,6 @@
 ﻿public interface ILocalFileCacheManager
 {
+    bool CheckIfSimilarFileExistsInGame(FileInfo fileInfo);
     bool CheckIfFileExistsInGame(FileInfo fileInfo);
     bool CheckIfFileExistsInCache(FileInfo fileInfo);
     void MoveFilesFromCacheToWorkingDirectory(IEnumerable<FileInfo> fileInfos);

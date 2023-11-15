@@ -44,5 +44,5 @@
     public bool Matches(FileInfo fileInfo) => 
         (AllMods || _mod.ToLower() == fileInfo.Mod.ToLower())
         && _fileType == fileInfo.FileType
-        && (AllFiles || _fileName.ToLower() == fileInfo.FilePath.ToLower());
+        && (AllFiles || _fileName.ToLower() == fileInfo.FileNameWithoutPatchNumber.ToLower());
 }

@@ -15,15 +15,23 @@ public class FileInfo
 
     public string Directory => Path.GetDirectoryName(FilePath) ?? "";
     public string FileName => Path.GetFileName(FilePath);
-    public string FileNameWithoutExtensionLower => Path.GetFileNameWithoutExtension(FilePath).ToLower();
     public bool RepresentsAbsenceOfFile => Size == 0;
 
-    public string RfaNameLower
+    public string FileNameWithoutPatchNumber
     {
         get
         {
-            var match = Regex.Match(FileNameWithoutExtensionLower, $"^([{AllowableChars}]+)(_{{1}})([0-9]{{1,3}})$");
-            return match.Success ? match.Groups[1].Value : FileNameWithoutExtensionLower;
+            if (FileType == Bf1942FileTypes.Level || FileType == Bf1942FileTypes.Archive)
+            {
+                var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(FileName);
+                var fileExtension = Path.GetExtension(FileName);
+                var match = Regex.Match(fileNameWithoutExtension, $"^([{AllowableChars}]+)(_{{1}})([0-9]{{1,3}})$");
+                return match.Success ? $"{match.Groups[1].Value}{fileExtension}" : FileName;
+            }
+            else
+            {
+                return FileName;
+            }
         }
     }
 

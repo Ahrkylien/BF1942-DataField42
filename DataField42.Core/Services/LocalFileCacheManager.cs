@@ -13,7 +13,21 @@ public class LocalFileCacheManager : ILocalFileCacheManager
         _gameDirectory = gameDirectory;
     }
 
-    public bool CheckIfFileExistsInGame(FileInfo fileInfo) { 
+    /// <summary>
+    /// Check if file exist in game folder.
+    /// Other versions of this file are allowed.
+    /// </summary>
+    /// <param name="fileInfo"></param>
+    /// <returns></returns>
+    public bool CheckIfSimilarFileExistsInGame(FileInfo fileInfo)
+    {
+        var filePath = $"{_gameDirectory}/mods/{fileInfo.Mod}/{fileInfo.Directory}{(fileInfo.Directory == "" ? "" : "/")}{fileInfo.FileNameWithoutPatchNumber}";
+
+        return File.Exists(filePath);
+    }
+        
+    public bool CheckIfFileExistsInGame(FileInfo fileInfo)
+    { 
         if (fileInfo.RepresentsAbsenceOfFile)
             return true;
         
@@ -27,7 +41,8 @@ public class LocalFileCacheManager : ILocalFileCacheManager
         return fileInfoLocalFile.Checksum == fileInfo.Checksum && fileInfoLocalFile.Size == fileInfo.Size;
     }
 
-    public bool CheckIfFileExistsInCache(FileInfo fileInfo) { 
+    public bool CheckIfFileExistsInCache(FileInfo fileInfo)
+    { 
         if (fileInfo.RepresentsAbsenceOfFile)
             return true;
         
@@ -73,7 +88,7 @@ public class LocalFileCacheManager : ILocalFileCacheManager
                 string[] filesToCheck = { };
                 try
                 {
-                    filesToCheck = Directory.GetFiles($"{_gameDirectory}/mods/{fileInfoGroup.Mod}/{fileInfoGroup.Directory}", $"{fileInfoGroup.RfaNameLower}*.rfa");
+                    filesToCheck = Directory.GetFiles($"{_gameDirectory}/mods/{fileInfoGroup.Mod}/{fileInfoGroup.Directory}", $"{fileInfoGroup.FileNameWithoutPatchNumber}*.rfa");
                 }catch (DirectoryNotFoundException) { } // swallow this exception
                 
                 foreach (var filePathToCheck in filesToCheck)
@@ -93,7 +108,7 @@ public class LocalFileCacheManager : ILocalFileCacheManager
                         fileInfoLocalFile = new FileInfo(filePathToCheck, _gameDirectory);
                     }
 
-                    if (fileInfoGroup.RfaNameLower == fileInfoLocalFile.RfaNameLower)
+                    if (fileInfoGroup.FileNameWithoutPatchNumber.ToLower() == fileInfoLocalFile.FileNameWithoutPatchNumber.ToLower())
                     {
                         var filePathInCache = GetCachedFilePath(fileInfoLocalFile);
                         FileHelper.MoveAndCreateDirectory(filePathToCheck, filePathInCache, true);

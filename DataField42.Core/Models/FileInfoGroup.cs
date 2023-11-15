@@ -10,7 +10,7 @@ public class FileInfoGroup
 
     public bool RepresentsAbsenceOfFile => FileInfos.Count > 0 ? FileInfos[0].RepresentsAbsenceOfFile : false;
 
-    public string RfaNameLower => FileInfos.Count > 0 ? FileInfos[0].RfaNameLower : "" ;
+    public string FileNameWithoutPatchNumber => FileInfos.Count > 0 ? FileInfos[0].FileNameWithoutPatchNumber : "" ;
 
     public string Directory => FileInfos.Count > 0 ? FileInfos[0].Directory : "" ;
 
@@ -29,7 +29,7 @@ public class FileInfoGroup
             {
                 foreach (FileInfoGroup fileInfoGroup in fileInfoGroups)
                 {
-                    if (fileInfoGroup.FileType == fileInfo.FileType && fileInfoGroup.RfaNameLower == fileInfo.RfaNameLower && fileInfoGroup.Mod.ToLower() == fileInfo.Mod.ToLower())
+                    if (fileInfoGroup.FileType == fileInfo.FileType && fileInfoGroup.FileNameWithoutPatchNumber.ToLower() == fileInfo.FileNameWithoutPatchNumber.ToLower() && fileInfoGroup.Mod.ToLower() == fileInfo.Mod.ToLower())
                     {
                         fileInfoGroup.FileInfos.Add(fileInfo);
                         addedToList = true;
