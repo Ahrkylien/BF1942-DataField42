@@ -3,7 +3,8 @@
 public class SyncRuleManager : ISyncRuleManager
 {
     private readonly string _ruleFilePath;
-    private readonly List<FileRule> _fileRules = new();
+    private readonly List<FileRule> _ignoreFileSyncRules = new();
+    private readonly List<string> _autoSyncEnabledServers = new();
 
     public SyncRuleManager(string ruleFilePath)
     {
@@ -31,7 +32,7 @@ public class SyncRuleManager : ISyncRuleManager
                 try
                 {
                     var fileRule = new FileRule(lineParts[1], lineParts[2], lineParts[3], lineParts[4]);
-                    _fileRules.Add(fileRule);
+                    _ignoreFileSyncRules.Add(fileRule);
                 }
                 catch (Exception ex)
                 {
@@ -39,6 +40,10 @@ public class SyncRuleManager : ISyncRuleManager
                     throw new Exception($"Can't parse line: {line} in: {_ruleFilePath}, Exception: {ex}");
 #endif
                 }
+            }
+            else if (lineParts[0] == "autoSync" && lineParts.Length == 2)
+            {
+                _autoSyncEnabledServers.Add(lineParts[1].ToLower());
             }
         }
     }
@@ -50,10 +55,22 @@ public class SyncRuleManager : ISyncRuleManager
     /// <returns></returns>
     public IgnoreSyncScenarios GetIgnoreFileSyncScenario(FileInfo fileInfo)
     {
-        foreach(var fileRule in _fileRules)
+        foreach(var fileRule in _ignoreFileSyncRules)
             if (fileRule.Matches(fileInfo))
                 return fileRule.IgnoreSyncScenario;
         
         return IgnoreSyncScenarios.Never;
+    }
+
+
+    public bool IsAutoSyncEnabled(string DomainOrIp) => _autoSyncEnabledServers.Contains(DomainOrIp.ToLower());
+
+    public void AutoSyncEnable(string DomainOrIp)
+    {
+        if (!IsAutoSyncEnabled(DomainOrIp))
+        {
+            _autoSyncEnabledServers.Add(DomainOrIp);
+            File.AppendAllText(_ruleFilePath, $"\nautoSync {DomainOrIp}");
+        }
     }
 }

@@ -20,8 +20,13 @@ public partial class MainWindowViewModel : ObservableObject
     private bool _returnToGameStage;
 
     [ObservableProperty]
+    private bool _autoJoinServerCheckBox;
+
+    [ObservableProperty]
     private bool _returnToGameStageCheckboxVisible;
 
+    private DataField42Communication? _communicationWithServer;
+    private ISyncRuleManager? _syncRuleManager;
     private DownloadManager? _downloadManager;
     private ulong _totalSizeExpected;
 
@@ -90,12 +95,11 @@ public partial class MainWindowViewModel : ObservableObject
             }
 
             // Try to connect to server:
-            DataField42Communication? communicationWithServer = null;
             var connectedToServer = false;
             try
             {
-                communicationWithServer = new DataField42Communication(CommandLineArguments.Ip);
-                var serverVersion = UpdateManager.RequestVersion(communicationWithServer);
+                _communicationWithServer = new DataField42Communication(CommandLineArguments.Ip);
+                var serverVersion = UpdateManager.RequestVersion(_communicationWithServer);
                 if (serverVersion != UpdateManager.Version)
                     throw new Exception($"Server has wrong version running: {serverVersion}");
                 connectedToServer = true;
@@ -115,7 +119,7 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 if (connectedToMaster && communicationWithMaster != null)
                 {
-                    communicationWithServer = communicationWithMaster;
+                    _communicationWithServer = communicationWithMaster;
                     PostMessage($"Resolved to central database.");
                 }
                 else
@@ -125,12 +129,12 @@ public partial class MainWindowViewModel : ObservableObject
                 }
             }
 
-            if (readyToDownload && communicationWithServer != null)
+            if (readyToDownload && _communicationWithServer != null)
             {
-                ISyncRuleManager syncRuleManager = new SyncRuleManager("Synchronization rules.txt");
+                _syncRuleManager = new SyncRuleManager("Synchronization rules.txt");
                 ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("cache", "tmp", "game");
-                var downloadDecisionMaker = new DownloadDecisionMaker(syncRuleManager, localFileCacheManager);
-                _downloadManager = new DownloadManager(communicationWithServer, downloadDecisionMaker, localFileCacheManager);
+                var downloadDecisionMaker = new DownloadDecisionMaker(_syncRuleManager, localFileCacheManager);
+                _downloadManager = new DownloadManager(_communicationWithServer, downloadDecisionMaker, localFileCacheManager);
                 PostMessage("test 1");
                 // ToDo: create cache of crc values in game folder
                 var fileInfos = _downloadManager.DownloadFilesRequest(CommandLineArguments.Mod, CommandLineArguments.Map, CommandLineArguments.Ip, CommandLineArguments.Port, CommandLineArguments.KeyHash);
@@ -138,9 +142,12 @@ public partial class MainWindowViewModel : ObservableObject
                 var fileInfosOfFilesToDownload = fileInfos.Where(x => x.SyncType == SyncType.Download);
                 var numberOfFilesExpected = fileInfosOfFilesToDownload.Count();
                 _totalSizeExpected = fileInfosOfFilesToDownload.Sum(x => x.Size);
-                PostMessage($"DataField42 wants to download {numberOfFilesExpected} files which is a total of {_totalSizeExpected.ToReadableFileSize()}, from {communicationWithServer.DisplayName}");
-                ContinueToDownloadStage = true;
-                // TODO: check rules for auto yes. or ask for yes from user
+                PostMessage($"DataField42 wants to download {numberOfFilesExpected} files which is a total of {_totalSizeExpected.ToReadableFileSize()}, from {_communicationWithServer.DisplayName}");
+                
+                if (_syncRuleManager.IsAutoSyncEnabled(_communicationWithServer.DisplayName))
+                    Download();
+                else
+                    ContinueToDownloadStage = true;
             }
         }
         else
@@ -158,6 +165,9 @@ public partial class MainWindowViewModel : ObservableObject
         DownloadStage = true;
         Task.Run(async () =>
         {
+            if (AutoJoinServerCheckBox)
+                _syncRuleManager.AutoSyncEnable(_communicationWithServer.DisplayName);
+
             bool downloadSuccessful = false;
             try
             {

@@ -99,7 +99,7 @@ if (CommandLineArguments.Identifier == CommandLineArgumentIdentifier.DownloadAnd
     }
 
     if (readyToDownload && communicationWithServer != null) {
-        ISyncRuleManager syncRuleManager = new SyncRuleManagerDummy();
+        ISyncRuleManager syncRuleManager = new SyncRuleManager("Synchronization rules.txt");
         ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("cache", "tmp", "game");
         var downloadDecisionMaker = new DownloadDecisionMaker(syncRuleManager, localFileCacheManager);
         var downloadManager = new DownloadManager(communicationWithServer, downloadDecisionMaker, localFileCacheManager);

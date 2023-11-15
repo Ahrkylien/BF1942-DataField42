@@ -1,9 +1,6 @@
 ﻿public interface ISyncRuleManager
 {
     IgnoreSyncScenarios GetIgnoreFileSyncScenario(FileInfo fileInfo);
-}
-
-public class SyncRuleManagerDummy : ISyncRuleManager
-{
-    public IgnoreSyncScenarios GetIgnoreFileSyncScenario(FileInfo fileInfo) => IgnoreSyncScenarios.Never;
+    bool IsAutoSyncEnabled(string DomainOrIp);
+    void AutoSyncEnable(string DomainOrIp);
 }
