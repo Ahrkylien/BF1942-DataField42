@@ -66,7 +66,7 @@ public partial class MainWindowViewModel : ObservableObject
                 masterVersion = updateManager.RequestVersion();
                 connectedToMaster = true;
             }
-            catch (TimeoutException e)
+            catch (TimeoutException)
             {
                 PostMessage($"Can't connect to central database. It seems to be down...");
             }
@@ -104,7 +104,7 @@ public partial class MainWindowViewModel : ObservableObject
                     throw new Exception($"Server has wrong version running: {serverVersion}");
                 connectedToServer = true;
             }
-            catch (TimeoutException e)
+            catch (TimeoutException)
             {
                 PostMessage($"Server doesn't have DataField42");
             }
@@ -165,12 +165,15 @@ public partial class MainWindowViewModel : ObservableObject
         DownloadStage = true;
         Task.Run(async () =>
         {
-            if (AutoJoinServerCheckBox)
-                _syncRuleManager.AutoSyncEnable(_communicationWithServer.DisplayName);
-
             bool downloadSuccessful = false;
             try
             {
+                if (_syncRuleManager == null || _communicationWithServer == null || _downloadManager == null)
+                    throw new Exception($"Illegal start of Download stage. {nameof(_syncRuleManager)}: {_syncRuleManager != null}, {nameof(_communicationWithServer)}: {_communicationWithServer != null}, {nameof(_downloadManager)}: {_downloadManager != null}");
+
+                if (AutoJoinServerCheckBox)
+                    _syncRuleManager.AutoSyncEnable(_communicationWithServer.DisplayName);
+                
                 // TODO: add file synctype represent absence of file (now it can be included in the download list)
                 // TODO: make all file sizes ulong
 

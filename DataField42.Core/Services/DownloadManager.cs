@@ -6,7 +6,7 @@ public class DownloadManager
     private readonly DownloadDecisionMaker _downloadDecisionMaker;
     private readonly ILocalFileCacheManager _localFileCacheManager;
 
-    private List<FileInfo> _fileInfos;
+    private List<FileInfo>? _fileInfos;
 
     public DownloadManager(DataField42Communication dataField42Communication, DownloadDecisionMaker downloadDecisionMaker, ILocalFileCacheManager localFileCacheManager)
     {

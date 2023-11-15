@@ -105,19 +105,18 @@ public class DataField42Communication : TcpCommunicationBase
 
 public class TcpCommunicationBase : IDisposable
 {
-    public string DisplayName => string.IsNullOrEmpty(_domainName) ? _ip.ToString() : _domainName;
+    public string DisplayName => _domainNameOrIp;
 
-    protected string _domainName;
-    protected IPAddress _ip;
+    protected string _domainNameOrIp;
     protected int _port;
     protected TcpClient _client;
     protected NetworkStream _stream;
 
     private const int _timeOutInitialConnect = 1000; // ms
 
-    public TcpCommunicationBase(string domainName, int port)
+    public TcpCommunicationBase(string domainNameOrIp, int port)
     {
-        _domainName = domainName;
+        _domainNameOrIp = domainNameOrIp;
         _port = port;
 
         _connect();
@@ -128,8 +127,8 @@ public class TcpCommunicationBase : IDisposable
     private void _connect(int millisecondsWithoutReceivingBeforeTimout = 1000)
     {
         _client = new TcpClient();
-        if (!_client.ConnectAsync(_domainName, _port).Wait(_timeOutInitialConnect))
-            throw new TimeoutException($"Server {_domainName}:{_port} doesn't respond in {_timeOutInitialConnect} ms");
+        if (!_client.ConnectAsync(_domainNameOrIp, _port).Wait(_timeOutInitialConnect))
+            throw new TimeoutException($"Server {_domainNameOrIp}:{_port} doesn't respond in {_timeOutInitialConnect} ms");
         _stream = _client.GetStream();
         // _stream.ReadTimeout = millisecondsWithoutReceivingBeforeTimout;
     }

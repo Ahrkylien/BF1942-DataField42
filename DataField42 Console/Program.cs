@@ -34,7 +34,7 @@ if (CommandLineArguments.Identifier == CommandLineArgumentIdentifier.DownloadAnd
         masterVersion = updateManager.RequestVersion();
         connectedToMaster = true;
     }
-    catch (TimeoutException e)
+    catch (TimeoutException)
     {
         Console.WriteLine($"Can't connect to central database. It seems to be down...");
     }
@@ -73,7 +73,7 @@ if (CommandLineArguments.Identifier == CommandLineArgumentIdentifier.DownloadAnd
             throw new Exception($"Server has wrong version running: {serverVersion}");
         connectedToServer = true;
     }
-    catch (TimeoutException e)
+    catch (TimeoutException)
     {
         Console.WriteLine($"Server doesn't have DataField42");
     }
