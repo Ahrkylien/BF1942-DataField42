@@ -20,10 +20,13 @@ public partial class MainWindowViewModel : ObservableObject
     private bool _returnToGameStage;
 
     [ObservableProperty]
+    private bool _autoSyncServerCheckBox;
+
+    [ObservableProperty]
     private bool _autoJoinServerCheckBox;
 
     [ObservableProperty]
-    private bool _returnToGameStageCheckboxVisible;
+    private bool _autoJoinServerCheckboxVisible;
 
     private DataField42Communication? _communicationWithServer;
     private ISyncRuleManager? _syncRuleManager;
@@ -156,7 +159,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         if (!ContinueToDownloadStage)
-            EnterReturnToGameStage(allowAutomaticJoin: false);
+            EnterReturnToGameStage(joinServer: false);
     }
 
     [RelayCommand]
@@ -166,12 +169,13 @@ public partial class MainWindowViewModel : ObservableObject
         Task.Run(async () =>
         {
             bool downloadSuccessful = false;
+            bool automaticJoinServer = false;
             try
             {
                 if (_syncRuleManager == null || _communicationWithServer == null || _downloadManager == null)
                     throw new Exception($"Illegal start of Download stage. {nameof(_syncRuleManager)}: {_syncRuleManager != null}, {nameof(_communicationWithServer)}: {_communicationWithServer != null}, {nameof(_downloadManager)}: {_downloadManager != null}");
 
-                if (AutoJoinServerCheckBox)
+                if (AutoSyncServerCheckBox)
                     _syncRuleManager.AutoSyncEnable(_communicationWithServer.DisplayName);
                 
                 // TODO: add file synctype represent absence of file (now it can be included in the download list)
@@ -183,27 +187,50 @@ public partial class MainWindowViewModel : ObservableObject
                 //backgroundWorkerCurrentFile.ProgressChanged += BackgroundWorkerCurrentFile_ProgressChanged;
                 _downloadManager.DownloadFilesDownload(backgroundWorkerTotal, backgroundWorkerCurrentFile);
                 _downloadManager.DownloadFilesWrapUp();
+                automaticJoinServer = _syncRuleManager.IsAutoJoinEnabled();
                 downloadSuccessful = true;
             }
             catch (Exception ex)
             {
                 PostError($"Failed to Download Files: {ex.Message}");
             }
-            EnterReturnToGameStage(downloadSuccessful);
+            EnterReturnToGameStage(downloadSuccessful, automaticJoinServer);
         });
     }
 
-    private void EnterReturnToGameStage(bool joinServer = false, bool allowAutomaticJoin = true)
+    private void EnterReturnToGameStage(bool joinServer = false, bool automaticJoinServer = false)
     {
+        if (joinServer)
+        {
+            if (automaticJoinServer)
+            {
+                ReturnBackToGame();
+            }
+            else
+            {
+                ReturnToGameStage = true;
+                AutoJoinServerCheckboxVisible = true;
+            }
+        }
+        else
+        {
+            ReturnToGameStage = true;
+            AutoJoinServerCheckboxVisible = false;
+        }
         // TODO: Think of a way to check if the central db / server has the map.
         // Then think of how to procede. (join mod, not server if map not found)
-        ReturnToGameStage = true;
-        ReturnToGameStageCheckboxVisible = allowAutomaticJoin;
     }
 
     [RelayCommand]
     private void ReturnBackToGame()
     {
+        if (AutoJoinServerCheckBox)
+        {
+            if (_syncRuleManager == null)
+                throw new Exception($"Illegal start of 'Return back to game' stage. {nameof(_syncRuleManager)}: {_syncRuleManager != null}");
+
+            _syncRuleManager.AutoJoinEnable();
+        }
 #if !DEBUG
         Bf1942Client.Start(CommandLineArguments.Mod, $"{CommandLineArguments.Ip}:{CommandLineArguments.Port}", CommandLineArguments.Password);
 #else

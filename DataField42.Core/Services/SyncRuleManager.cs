@@ -5,6 +5,7 @@ public class SyncRuleManager : ISyncRuleManager
     private readonly string _ruleFilePath;
     private readonly List<FileRule> _ignoreFileSyncRules = new();
     private readonly List<string> _autoSyncEnabledServers = new();
+    private bool _autoJoinEnabled = false;
 
     public SyncRuleManager(string ruleFilePath)
     {
@@ -45,6 +46,10 @@ public class SyncRuleManager : ISyncRuleManager
             {
                 _autoSyncEnabledServers.Add(lineParts[1].ToLower());
             }
+            else if (lineParts[0] == "autoJoin" && lineParts.Length == 1)
+            {
+                _autoJoinEnabled = true;
+            }
         }
     }
 
@@ -72,5 +77,17 @@ public class SyncRuleManager : ISyncRuleManager
             _autoSyncEnabledServers.Add(DomainOrIp);
             File.AppendAllText(_ruleFilePath, $"\nautoSync {DomainOrIp}");
         }
+    }
+
+    public bool IsAutoJoinEnabled() => _autoJoinEnabled;
+
+    public void AutoJoinEnable()
+    {
+        if (!IsAutoJoinEnabled())
+        {
+            _autoJoinEnabled = true;
+            File.AppendAllText(_ruleFilePath, $"\nautoJoin");
+        }
+        
     }
 }
