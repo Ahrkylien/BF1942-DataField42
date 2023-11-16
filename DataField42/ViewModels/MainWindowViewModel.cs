@@ -134,23 +134,27 @@ public partial class MainWindowViewModel : ObservableObject
 
             if (readyToDownload && _communicationWithServer != null)
             {
-                _syncRuleManager = new SyncRuleManager("Synchronization rules.txt");
-                ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("cache", "tmp", "game");
-                var downloadDecisionMaker = new DownloadDecisionMaker(_syncRuleManager, localFileCacheManager);
-                _downloadManager = new DownloadManager(_communicationWithServer, downloadDecisionMaker, localFileCacheManager);
-                PostMessage("test 1");
-                // ToDo: create cache of crc values in game folder
-                var fileInfos = _downloadManager.DownloadFilesRequest(CommandLineArguments.Mod, CommandLineArguments.Map, CommandLineArguments.Ip, CommandLineArguments.Port, CommandLineArguments.KeyHash);
-                PostMessage("test 2");
-                var fileInfosOfFilesToDownload = fileInfos.Where(x => x.SyncType == SyncType.Download);
-                var numberOfFilesExpected = fileInfosOfFilesToDownload.Count();
-                _totalSizeExpected = fileInfosOfFilesToDownload.Sum(x => x.Size);
-                PostMessage($"DataField42 wants to download {numberOfFilesExpected} files which is a total of {_totalSizeExpected.ToReadableFileSize()}, from {_communicationWithServer.DisplayName}");
-                
-                if (_syncRuleManager.IsAutoSyncEnabled(_communicationWithServer.DisplayName))
-                    Download();
-                else
-                    ContinueToDownloadStage = true;
+                try
+                {
+                    _syncRuleManager = new SyncRuleManager("Synchronization rules.txt");
+                    ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("cache", "tmp", "game");
+                    var downloadDecisionMaker = new DownloadDecisionMaker(_syncRuleManager, localFileCacheManager);
+                    _downloadManager = new DownloadManager(_communicationWithServer, downloadDecisionMaker, localFileCacheManager);
+                    var fileInfos = _downloadManager.DownloadFilesRequest(CommandLineArguments.Mod, CommandLineArguments.Map, CommandLineArguments.Ip, CommandLineArguments.Port, CommandLineArguments.KeyHash);
+                    var fileInfosOfFilesToDownload = fileInfos.Where(x => x.SyncType == SyncType.Download);
+                    var numberOfFilesExpected = fileInfosOfFilesToDownload.Count();
+                    _totalSizeExpected = fileInfosOfFilesToDownload.Sum(x => x.Size);
+                    PostMessage($"DataField42 wants to download {numberOfFilesExpected} files which is a total of {_totalSizeExpected.ToReadableFileSize()}, from {_communicationWithServer.DisplayName}");
+
+                    if (_syncRuleManager.IsAutoSyncEnabled(_communicationWithServer.DisplayName))
+                        Download();
+                    else
+                        ContinueToDownloadStage = true;
+                }
+                catch (Exception ex)
+                {
+                    PostError($"Error: {ex.Message}");
+                }
             }
         }
         else
@@ -179,7 +183,6 @@ public partial class MainWindowViewModel : ObservableObject
                     _syncRuleManager.AutoSyncEnable(_communicationWithServer.DisplayName);
                 
                 // TODO: add file synctype represent absence of file (now it can be included in the download list)
-                // TODO: make all file sizes ulong
 
                 var backgroundWorkerTotal = new DownloadBackgroundWorker(_totalSizeExpected);
                 var backgroundWorkerCurrentFile = new DownloadBackgroundWorker(0);

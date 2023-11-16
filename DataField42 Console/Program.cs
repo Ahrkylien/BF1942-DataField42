@@ -103,17 +103,13 @@ if (CommandLineArguments.Identifier == CommandLineArgumentIdentifier.DownloadAnd
         ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("cache", "tmp", "game");
         var downloadDecisionMaker = new DownloadDecisionMaker(syncRuleManager, localFileCacheManager);
         var downloadManager = new DownloadManager(communicationWithServer, downloadDecisionMaker, localFileCacheManager);
-        Console.WriteLine("test 1");
-        // ToDo: create cache of crc values in game folder
         var fileInfos = downloadManager.DownloadFilesRequest(CommandLineArguments.Mod, CommandLineArguments.Map, CommandLineArguments.Ip, CommandLineArguments.Port, CommandLineArguments.KeyHash);
-        Console.WriteLine("test 2");
         var fileInfosOfFilesToDownload = fileInfos.Where(x => x.SyncType == SyncType.Download);
         var numberOfFilesExpected = fileInfosOfFilesToDownload.Count();
         ulong totalSizeExpected = fileInfosOfFilesToDownload.Sum(x => x.Size);
         Console.WriteLine($"DataField42 wants to download {numberOfFilesExpected} files which is a total of {totalSizeExpected.ToReadableFileSize()}, from {communicationWithServer.DisplayName}");
 
         Console.WriteLine($"Do you want to continue??");
-        // TODO: check rules for auto yes. or ask for yes from user
         // TODO: add file synctype represent absence of file (now it can be included in the download list)
 
         var backgroundWorkerTotal = new DownloadBackgroundWorker(totalSizeExpected);

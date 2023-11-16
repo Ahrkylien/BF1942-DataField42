@@ -17,7 +17,16 @@ public class SyncRuleManager : ISyncRuleManager
     /// Parses the rule file while swallowing parsing errors
     /// </summary>
     private void _parseRuleFile() {
-        string[] lines = File.ReadAllLines(_ruleFilePath);
+        string[] lines = Array.Empty<string>();
+        try
+        {
+            lines = File.ReadAllLines(_ruleFilePath);
+        }
+        catch (IOException ex)
+        {
+            // swallow
+        }
+
         foreach(var line in lines)
         {
             if (line.TrimStart().StartsWith("//")) // comment
