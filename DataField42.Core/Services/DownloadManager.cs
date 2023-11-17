@@ -6,6 +6,9 @@ public class DownloadManager
     private readonly DownloadDecisionMaker _downloadDecisionMaker;
     private readonly ILocalFileCacheManager _localFileCacheManager;
 
+    private string _mod;
+    private string _map;
+
     private List<FileInfo>? _fileInfos;
 
     public DownloadManager(DataField42Communication dataField42Communication, DownloadDecisionMaker downloadDecisionMaker, ILocalFileCacheManager localFileCacheManager)
@@ -20,13 +23,14 @@ public class DownloadManager
     /// </summary>
     public IEnumerable<FileInfo> DownloadFilesRequest(string mod, string map, string ip, int port, string keyHash)
     {
+        _mod = mod;
+        _map = map;
+
         _localFileCacheManager.RemoveWorkingDirectory();
         _communication.StartSession();
         _communication.SendString($"download {map} {mod} {ip} {port} {keyHash}");
-        Console.WriteLine("test 01");
 
         _fileInfos = _communication.ReceiveFileInfos();
-        Console.WriteLine("test 02");
         // TODO: check for double files in list 
         // TODO: check for absense of base rfa
 
@@ -41,6 +45,33 @@ public class DownloadManager
 
     /// <summary>
     /// Step 2 in synchronizing files
+    /// </summary>
+    /// <returns>hasMod, hasMap</returns>
+    public (bool, bool) VerifyFileList()
+    {
+        if (_fileInfos == null)
+            throw new ArgumentNullException($"{nameof(_fileInfos)} is null, make sure to run {nameof(DownloadFilesRequest)} first");
+
+        var hasMod = false;
+        var hasMap= false;
+
+        foreach (var fileInfo in _fileInfos)
+        {
+            if (fileInfo.Mod.ToLower() == _mod.ToLower())
+            {
+                hasMod = true;
+                if (fileInfo.FileType == Bf1942FileTypes.Level && Path.GetFileNameWithoutExtension(fileInfo.FileNameWithoutPatchNumber) == _map.ToLower())
+                {
+                    hasMap = true;
+                }
+            }
+        }
+        
+        return (hasMod, hasMap);
+    }
+
+    /// <summary>
+    /// Step 3 in synchronizing files
     /// </summary>
     public void DownloadFilesDownload(DownloadBackgroundWorker backgroundWorkerTotal, DownloadBackgroundWorker backgroundWorkerCurrentFile)
     {
@@ -99,7 +130,7 @@ public class DownloadManager
     }
 
     /// <summary>
-    /// Step 3 in synchronizing files
+    /// Step 4 in synchronizing files
     /// </summary>
     public void DownloadFilesWrapUp()
     {

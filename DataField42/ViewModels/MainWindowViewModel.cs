@@ -8,6 +8,9 @@ public partial class MainWindowViewModel : ObservableObject
     private string _messages = "Welcome to DataField42";
 
     [ObservableProperty]
+    private string _errorMessages = "";
+
+    [ObservableProperty]
     private int _percentage;
 
     [ObservableProperty]
@@ -141,15 +144,27 @@ public partial class MainWindowViewModel : ObservableObject
                     var downloadDecisionMaker = new DownloadDecisionMaker(_syncRuleManager, localFileCacheManager);
                     _downloadManager = new DownloadManager(_communicationWithServer, downloadDecisionMaker, localFileCacheManager);
                     var fileInfos = _downloadManager.DownloadFilesRequest(CommandLineArguments.Mod, CommandLineArguments.Map, CommandLineArguments.Ip, CommandLineArguments.Port, CommandLineArguments.KeyHash);
+                    (var hasMod, var hasMap) = _downloadManager.VerifyFileList();
                     var fileInfosOfFilesToDownload = fileInfos.Where(x => x.SyncType == SyncType.Download);
                     var numberOfFilesExpected = fileInfosOfFilesToDownload.Count();
                     _totalSizeExpected = fileInfosOfFilesToDownload.Sum(x => x.Size);
-                    PostMessage($"DataField42 wants to download {numberOfFilesExpected} files which is a total of {_totalSizeExpected.ToReadableFileSize()}, from {_communicationWithServer.DisplayName}");
 
-                    if (_syncRuleManager.IsAutoSyncEnabled(_communicationWithServer.DisplayName))
-                        Download();
+                    if (!hasMod)
+                        PostError($"Server doesn't have the mod: {CommandLineArguments.Mod}");
+                    else if (!hasMap)
+                        PostError($"Server doesn't have the map: {CommandLineArguments.Map}");
+                    else if (numberOfFilesExpected == 0)
+                        PostMessage("TODO: go to wrap up stage without downoad display");
+                        // EnterReturnToGameStage(joinServer: true);
                     else
-                        ContinueToDownloadStage = true;
+                    {
+                        PostMessage($"DataField42 wants to download {numberOfFilesExpected} files which is a total of {_totalSizeExpected.ToReadableFileSize()}, from {_communicationWithServer.DisplayName}");
+
+                        if (_syncRuleManager.IsAutoSyncEnabled(_communicationWithServer.DisplayName))
+                            Download();
+                        else
+                            ContinueToDownloadStage = true;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -243,10 +258,17 @@ public partial class MainWindowViewModel : ObservableObject
 
     private void PostMessage(string message)
     {
-        Messages += $"\n{message}";
+        if (Messages != "")
+            message = $"\n{message}";
+        Messages += message;
     }
 
-    private void PostError(string message) => PostMessage(message);
+    private void PostError(string message)
+    {
+        if (ErrorMessages != "")
+            message = $"\n{message}";
+        ErrorMessages += message;
+    }
 
     private void BackgroundWorkerCurrentFile_ProgressChanged(int percentage)
     {

@@ -80,9 +80,12 @@ public class DataField42Communication : TcpCommunicationBase
     [return: NotNull]
     public List<FileInfo> ReceiveFileInfos()
     {
-        var lengthToReceive = receiveDataLength();
-        var fileInfoSrings = receiveString(lengthToReceive).Split('\n');
         var fileInfos = new List<FileInfo>();
+        var lengthToReceive = receiveDataLength();
+        if (lengthToReceive == 0)
+            return fileInfos;
+        
+        var fileInfoSrings = receiveString(lengthToReceive).Split('\n');
         foreach (var fileInfoString in fileInfoSrings)
         {
             var fileInfoStringItems = fileInfoString.Split(' ').ToList();

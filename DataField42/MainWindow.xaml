@@ -46,6 +46,7 @@
                             <StackPanel>
                                 <!-- stage 1: -->
                                 <TextBlock Foreground="#d4d4d4" Padding="0" Text="{Binding Messages}" TextWrapping="Wrap"/>
+                                <TextBlock Foreground="#ab0909" Padding="0" Text="{Binding ErrorMessages}" TextWrapping="Wrap"/>
 
                                 <StackPanel Visibility="{Binding ContinueToDownloadStage, Converter={StaticResource BooleanToVisibilityConverter}}">
                                     <CheckBox Foreground="#d4d4d4" Margin="0" IsChecked="{Binding AutoSyncServerCheckBox}">Always trust IP/name</CheckBox>
