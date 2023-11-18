@@ -35,6 +35,7 @@ public partial class MainWindowViewModel : ObservableObject
     private ISyncRuleManager? _syncRuleManager;
     private DownloadManager? _downloadManager;
     private ulong _totalSizeExpected;
+    private bool _joinServerWhenReturnToGame = false;
 
     public MainWindowViewModel()
     {
@@ -46,9 +47,9 @@ public partial class MainWindowViewModel : ObservableObject
         try
         {
 #if DEBUG
-            CommandLineArguments.Parse(new[] { "", "map", "SOFTWARE\\test", "1.1.1.1:14567", "", "bf1942/levels/berlin/", "bf1942" });
+            CommandLineArguments.Parse(new[] { "", "map", "SOFTWARE\\Electronic Arts\\EA GAMES\\Battlefield 1942\\ergc", "1.1.1.1:14567", "", "bf1942/levels/gc_tanaab/", "gcmod" });
 #else
-    CommandLineArguments.Parse(args);
+    CommandLineArguments.Parse(Environment.GetCommandLineArgs());
 #endif
         }
         catch (Exception e)
@@ -139,8 +140,8 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 try
                 {
-                    _syncRuleManager = new SyncRuleManager("Synchronization rules.txt");
-                    ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("cache", "tmp", "game");
+                    _syncRuleManager = new SyncRuleManager("DataFiel42/Synchronization rules.txt");
+                    ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("DataFiel42/cache", "DataFiel42/tmp", "");
                     var downloadDecisionMaker = new DownloadDecisionMaker(_syncRuleManager, localFileCacheManager);
                     _downloadManager = new DownloadManager(_communicationWithServer, downloadDecisionMaker, localFileCacheManager);
                     var fileInfos = _downloadManager.DownloadFilesRequest(CommandLineArguments.Mod, CommandLineArguments.Map, CommandLineArguments.Ip, CommandLineArguments.Port, CommandLineArguments.KeyHash);
@@ -185,6 +186,7 @@ public partial class MainWindowViewModel : ObservableObject
     private void Download() {
         ContinueToDownloadStage = false;
         DownloadStage = true;
+        // TODO : Add cancel button
         Task.Run(async () =>
         {
             bool downloadSuccessful = false;
@@ -218,6 +220,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     private void EnterReturnToGameStage(bool joinServer = false, bool automaticJoinServer = false)
     {
+        _joinServerWhenReturnToGame = joinServer;
         if (joinServer)
         {
             if (automaticJoinServer)
@@ -250,7 +253,10 @@ public partial class MainWindowViewModel : ObservableObject
             _syncRuleManager.AutoJoinEnable();
         }
 #if !DEBUG
-        Bf1942Client.Start(CommandLineArguments.Mod, $"{CommandLineArguments.Ip}:{CommandLineArguments.Port}", CommandLineArguments.Password);
+        if (_joinServerWhenReturnToGame)
+            Bf1942Client.Start(CommandLineArguments.Mod, $"{CommandLineArguments.Ip}:{CommandLineArguments.Port}", CommandLineArguments.Password);
+        else
+            Bf1942Client.Start(CommandLineArguments.Mod);
 #else
         Environment.Exit(0);
 #endif

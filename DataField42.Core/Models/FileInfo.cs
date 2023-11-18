@@ -39,7 +39,7 @@ public class FileInfo
 
     public FileInfo(string localFilePath, string gamePath, bool fast = false, bool fromCache = false)
     {
-        var pathPartsBase = gamePath.Replace('\\', '/').Split("/");
+        var pathPartsBase = gamePath.Replace('\\', '/').Split("/", StringSplitOptions.RemoveEmptyEntries);
         var pathPartsFile = localFilePath.Replace('\\', '/').Split("/");
 
         if (pathPartsBase.Length >= pathPartsFile.Length)

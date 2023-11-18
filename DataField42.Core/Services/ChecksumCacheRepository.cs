@@ -31,7 +31,7 @@ public class ChecksumRepository
     private void SaveRecords()
     {
         // TODO: create dir if not exists
-        File.WriteAllText(_filename, serializer.Serialize(_records));
+        FileHelper.WriteText(_filename, serializer.Serialize(_records));
     }
 
     public void AddRecord(string checksum, long size, ulong lastTimeModified)

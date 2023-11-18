@@ -12,4 +12,7 @@
     string GetCachedFilePath(FileInfo fileInfo);
     string GetWorkingDirectoryFilePath(FileInfo fileInfo);
     string GetGameDirectoryFilePath(FileInfo fileInfo);
+
+    string WorkingDirectory { get; }
+    string WorkingDirectoryWithSlash { get; }
 }

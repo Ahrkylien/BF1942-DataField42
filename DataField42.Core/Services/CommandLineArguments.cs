@@ -3,7 +3,7 @@
 public static class CommandLineArguments
 {
     public static CommandLineArgumentIdentifier Identifier { get; set; }
-    public static string Mod { get; set; }
+    public static string Mod { get; set; } = "BF1942";
     /// <summary>
     /// Map name with underscores
     /// </summary>
@@ -63,18 +63,21 @@ public static class CommandLineArguments
     private static string _readRegistryKey(string subKey)
     {
 #pragma warning disable CA1416 // Validate platform compatibility
-        using var key = Registry.LocalMachine.OpenSubKey(subKey, false);
+        using var key = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32).OpenSubKey(subKey, false);
         string keyValue = key?.GetValue(null)?.ToString() ?? "";
-        if (string.IsNullOrWhiteSpace(keyValue) || keyValue.Length != 28)
-            throw new Exception($"Cant find key at: {keyValue}, value: {keyValue}");
+        if (string.IsNullOrWhiteSpace(keyValue))
+            throw new Exception($"Cant find key at: {subKey}, value: {keyValue}");
         return keyValue;
 #pragma warning restore CA1416 // Validate platform compatibility
     }
 
     private static string _createMd5String(string inputString)
     {
-        using var md5 = System.Security.Cryptography.MD5.Create();
         var inputBytes = System.Text.Encoding.ASCII.GetBytes(inputString);
-        return Convert.ToHexString(md5.ComputeHash(inputBytes));
+        var hashBytes = System.Security.Cryptography.MD5.Create().ComputeHash(inputBytes);
+        var hashString = Convert.ToHexString(hashBytes);
+        if (hashString.Length != 32)
+            throw new Exception($"MD5 calcuation of {inputString} gave incorrect length: {hashBytes}");
+        return hashString;
     }
 }

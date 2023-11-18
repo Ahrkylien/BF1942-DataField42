@@ -13,7 +13,7 @@ using System.Net.Sockets;
 public class DataField42Communication : TcpCommunicationBase
 {
     public const string CentralDbDomainName = "files.bf1942.eu";
-    public const int DefaultPort = 28902;
+    public const int DefaultPort = 28901;
 
     private bool _sessionIsUsed = false;
 

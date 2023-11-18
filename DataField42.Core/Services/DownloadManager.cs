@@ -60,7 +60,7 @@ public class DownloadManager
             if (fileInfo.Mod.ToLower() == _mod.ToLower())
             {
                 hasMod = true;
-                if (fileInfo.FileType == Bf1942FileTypes.Level && Path.GetFileNameWithoutExtension(fileInfo.FileNameWithoutPatchNumber) == _map.ToLower())
+                if (fileInfo.FileType == Bf1942FileTypes.Level && Path.GetFileNameWithoutExtension(fileInfo.FileNameWithoutPatchNumber).ToLower() == _map.ToLower())
                 {
                     hasMap = true;
                 }
@@ -142,8 +142,8 @@ public class DownloadManager
         // check if all downloaded files have the correct checksum and file size:
         foreach (var fileInfoOfFileToDownload in fileInfosOfFilesToDownload)
         {
-            var filePathInWorkingDirectory = $"tmp/mods/{fileInfoOfFileToDownload.Mod}/{fileInfoOfFileToDownload.FilePath}";
-            var fileInfo = new FileInfo(filePathInWorkingDirectory, "tmp"); // TODO: dont use these local strings, centralize them
+            var filePathInWorkingDirectory = $"{_localFileCacheManager.WorkingDirectoryWithSlash}mods/{fileInfoOfFileToDownload.Mod}/{fileInfoOfFileToDownload.FilePath}";
+            var fileInfo = new FileInfo(filePathInWorkingDirectory, _localFileCacheManager.WorkingDirectory);
             if (fileInfo.Checksum != fileInfoOfFileToDownload.Checksum)
                 throw new Exception($"Downloaded file has incorrect checksum: {fileInfo.Checksum}. It should be: {fileInfoOfFileToDownload.Checksum}");
             if (fileInfo.Size != fileInfoOfFileToDownload.Size)

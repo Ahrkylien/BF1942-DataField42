@@ -84,7 +84,7 @@ public class SyncRuleManager : ISyncRuleManager
         if (!IsAutoSyncEnabled(DomainOrIp))
         {
             _autoSyncEnabledServers.Add(DomainOrIp);
-            File.AppendAllText(_ruleFilePath, $"\nautoSync {DomainOrIp}");
+            FileHelper.AppendText(_ruleFilePath, $"\nautoSync {DomainOrIp}");
         }
     }
 
@@ -95,7 +95,7 @@ public class SyncRuleManager : ISyncRuleManager
         if (!IsAutoJoinEnabled())
         {
             _autoJoinEnabled = true;
-            File.AppendAllText(_ruleFilePath, $"\nautoJoin");
+            FileHelper.AppendText(_ruleFilePath, $"\nautoJoin");
         }
         
     }
