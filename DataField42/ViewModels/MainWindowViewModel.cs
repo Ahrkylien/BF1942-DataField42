@@ -47,7 +47,7 @@ public partial class MainWindowViewModel : ObservableObject
         try
         {
 #if DEBUG
-            CommandLineArguments.Parse(new[] { "", "map", "SOFTWARE\\Electronic Arts\\EA GAMES\\Battlefield 1942\\ergc", "1.1.1.1:14567", "", "bf1942/levels/gc_tanaab/", "gcmod" });
+            CommandLineArguments.Parse(new[] { "", "map", "SOFTWARE\\Electronic Arts\\EA GAMES\\Battlefield 1942\\ergc", "1.1.1.1:14567", "", "bf1942/levels/matrix/", "bf1942" });
 #else
     CommandLineArguments.Parse(Environment.GetCommandLineArgs());
 #endif
@@ -140,8 +140,8 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 try
                 {
-                    _syncRuleManager = new SyncRuleManager("DataFiel42/Synchronization rules.txt");
-                    ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("DataFiel42/cache", "DataFiel42/tmp", "");
+                    _syncRuleManager = new SyncRuleManager("DataField42/Synchronization rules.txt");
+                    ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("DataField42/cache", "DataField42/tmp", "");
                     var downloadDecisionMaker = new DownloadDecisionMaker(_syncRuleManager, localFileCacheManager);
                     _downloadManager = new DownloadManager(_communicationWithServer, downloadDecisionMaker, localFileCacheManager);
                     var fileInfos = _downloadManager.DownloadFilesRequest(CommandLineArguments.Mod, CommandLineArguments.Map, CommandLineArguments.Ip, CommandLineArguments.Port, CommandLineArguments.KeyHash);

@@ -31,7 +31,8 @@ public class DownloadManager
         _communication.SendString($"download {map} {mod} {ip} {port} {keyHash}");
 
         _fileInfos = _communication.ReceiveFileInfos();
-        // TODO: check for double files in list 
+
+        // TODO: better messaging for double files in list 
         // TODO: check for absense of base rfa
 
 
