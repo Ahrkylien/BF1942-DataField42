@@ -42,9 +42,11 @@ public static class CommandLineArguments
             if (!(mapath.ToLower().StartsWith("bf1942/levels/") && mapath.EndsWith("/")))
                 throw new ArgumentException($"Server has send an illegal map path: {mapath}");
 
-        var map = mapath[14..^1];
-        if(!(map.All(c => char.IsLetterOrDigit(c) || c.Equals('_')) && mapath.Length >= 1)) // only letters digits and underscores and at least 1 char
-            throw new ArgumentException($"Server has send an illegal map name: {map}");
+        var map = mapath == "*" ? mapath : mapath[14..^1];
+
+        if (mapath != "*")
+            if (!(map.All(c => char.IsLetterOrDigit(c) || c.Equals('_')) && mapath.Length >= 1)) // only letters digits and underscores and at least 1 char
+                throw new ArgumentException($"Server has send an illegal map name: {map}");
 
         if (!(mod.Length >= 1))
             throw new ArgumentException($"Server has send an illegal mod name: {mod}");

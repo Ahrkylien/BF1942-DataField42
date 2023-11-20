@@ -12,6 +12,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)Bf1942Client.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CheckSums.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DownloadBackgroundWorker.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\Bf1942Encoding.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\Bf1942ServerQuery.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\ChecksumCacheRepository.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\DownloadManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Enums\Bf1942FileTypes.cs" />

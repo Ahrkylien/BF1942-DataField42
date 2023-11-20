@@ -44,12 +44,14 @@ public partial class MainWindowViewModel : ObservableObject
 
     private async Task PrepareDownload()
     {
+        var stageSuccessful = false;
         try
         {
 #if DEBUG
             CommandLineArguments.Parse(new[] { "", "map", "SOFTWARE\\Electronic Arts\\EA GAMES\\Battlefield 1942\\ergc", "1.1.1.1:14567", "", "bf1942/levels/matrix/", "bf1942" });
 #else
     CommandLineArguments.Parse(Environment.GetCommandLineArgs());
+            CommandLineArguments.Parse(Environment.GetCommandLineArgs());
 #endif
         }
         catch (Exception e)
@@ -152,7 +154,7 @@ public partial class MainWindowViewModel : ObservableObject
 
                     if (!hasMod)
                         PostError($"Server doesn't have the mod: {CommandLineArguments.Mod}");
-                    else if (!hasMap)
+                    else if (!hasMap && CommandLineArguments.Map != "*") // TODO: download map right away (not only mod)
                         PostError($"Server doesn't have the map: {CommandLineArguments.Map}");
                     else if (numberOfFilesExpected == 0)
                         PostMessage("TODO: go to wrap up stage without downoad display");
@@ -160,7 +162,7 @@ public partial class MainWindowViewModel : ObservableObject
                     else
                     {
                         PostMessage($"DataField42 wants to download {numberOfFilesExpected} files which is a total of {_totalSizeExpected.ToReadableFileSize()}, from {_communicationWithServer.DisplayName}");
-
+                        stageSuccessful = true;
                         if (_syncRuleManager.IsAutoSyncEnabled(_communicationWithServer.DisplayName))
                             Download();
                         else
@@ -178,7 +180,7 @@ public partial class MainWindowViewModel : ObservableObject
             PostMessage($"Unknown Command Line Argument Identifier {CommandLineArguments.Identifier}");
         }
 
-        if (!ContinueToDownloadStage)
+        if (!stageSuccessful)
             EnterReturnToGameStage(joinServer: false);
     }
 
