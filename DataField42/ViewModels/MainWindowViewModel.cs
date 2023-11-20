@@ -50,7 +50,6 @@ public partial class MainWindowViewModel : ObservableObject
 #if DEBUG
             CommandLineArguments.Parse(new[] { "", "map", "SOFTWARE\\Electronic Arts\\EA GAMES\\Battlefield 1942\\ergc", "1.1.1.1:14567", "", "bf1942/levels/matrix/", "bf1942" });
 #else
-    CommandLineArguments.Parse(Environment.GetCommandLineArgs());
             CommandLineArguments.Parse(Environment.GetCommandLineArgs());
 #endif
         }
