@@ -12,7 +12,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)Bf1942Client.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CheckSums.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DownloadBackgroundWorker.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Models\Bf1942Server.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\Bf1942Encoding.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\Bf1942ServerLobby.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\Bf1942ServerQuery.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\ChecksumCacheRepository.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\DownloadManager.cs" />
@@ -37,6 +39,5 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Interfaces\" />
-    <Folder Include="$(MSBuildThisFileDirectory)Models\" />
   </ItemGroup>
 </Project>

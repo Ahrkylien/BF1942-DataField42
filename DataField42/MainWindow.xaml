@@ -4,7 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DataField42"
-        xmlns:VM="clr-namespace:DataField42.ViewModels"
+        xmlns:ViewModels="clr-namespace:DataField42.ViewModels"
+        xmlns:Views="clr-namespace:DataField42.Views"
         mc:Ignorable="d"
         Title="DataField42"
         Height="450" Width="800"
@@ -13,8 +14,9 @@
         Background="Transparent"
         >
     <Window.DataContext>
-        <VM:MainWindowViewModel />
+        <ViewModels:MainWindowViewModel />
     </Window.DataContext>
+    
     <WindowChrome.WindowChrome>
         <WindowChrome     
         CaptionHeight="0"  
@@ -23,6 +25,21 @@
         GlassFrameThickness="0">
         </WindowChrome>
     </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type ViewModels:ServerListViewModel}">
+            <Views:ServerList />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type ViewModels:SettingsViewModel}">
+            <Views:Settings />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type ViewModels:SyncMenuViewModel}">
+            <Views:SyncMenu />
+        </DataTemplate>
+    </Window.Resources>
+
+
+
     <Border CornerRadius="0" BorderBrush="#233050" BorderThickness="2" Padding="0" Background="#090b12">
         <DockPanel>
             <DockPanel DockPanel.Dock="Top" Height="50" MouseLeftButtonDown="ControlBar_MouseLeftButtonDown" MouseEnter="ControlBar_MouseEnter">
@@ -43,32 +60,7 @@
                 <Border Background="#090b12" BorderBrush="#233050" BorderThickness="0,2,0,0" MaxWidth="{Binding ElementName=centralControl, Path=ActualWidth}">
                     <Grid Background="#0a1225">
                         <Border Grid.Row="0" Background="#090b12" BorderBrush="#233050" BorderThickness="2" Padding="10" Margin="10">
-                            <StackPanel>
-                                <!-- stage 1: -->
-                                <TextBlock Foreground="#d4d4d4" Padding="0" Text="{Binding Messages}" TextWrapping="Wrap"/>
-                                <TextBlock Foreground="#ab0909" Padding="0" Text="{Binding ErrorMessages}" TextWrapping="Wrap"/>
-
-                                <StackPanel Visibility="{Binding ContinueToDownloadStage, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <CheckBox Foreground="#d4d4d4" Margin="0" IsChecked="{Binding AutoSyncServerCheckBox}">Always trust IP/name</CheckBox>
-                                    <Button HorizontalAlignment="Left" Margin="0,10,0,0" Width="104" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Command="{Binding DownloadCommand}" >Continue</Button>
-                                </StackPanel>
-
-                                <!-- stage 2: -->
-                                <StackPanel Visibility="{Binding DownloadStage, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <Border HorizontalAlignment="Left" Background="#0a1225" BorderBrush="#233050" BorderThickness="2" Width="104" Height="20" Margin="0,10">
-                                        <Grid>
-                                            <ProgressBar  Width="100" Minimum="0" Maximum="100" Value="{Binding Percentage}" Background="Transparent" BorderThickness="0" Foreground="#57a857" Name="pbStatus" />
-                                            <TextBlock Text="{Binding ElementName=pbStatus, Path=Value, StringFormat={}{0:0}%}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#d4d4d4" />
-                                        </Grid>
-                                    </Border>
-                                </StackPanel>
-
-                                <!-- stage 3: -->
-                                <StackPanel Visibility="{Binding ReturnToGameStage, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <CheckBox Visibility="{Binding AutoJoinServerCheckboxVisible, Converter={StaticResource BooleanToVisibilityConverter}}" IsChecked="{Binding AutoJoinServerCheckBox}" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4">Always automatically rejoin server</CheckBox>
-                                    <Button HorizontalAlignment="Left" Margin="0,10,0,0" Width="104" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Command="{Binding ReturnBackToGameCommand}">Back to Game</Button>
-                                </StackPanel>
-                            </StackPanel>
+                            <ContentControl Content="{Binding CurrentPageViewModel}" />
                         </Border>
                     </Grid>
                 </Border>

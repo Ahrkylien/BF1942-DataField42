@@ -12,6 +12,7 @@ public class Bf1942ServerQuery
         _ip = ip;
         _port = port;
     }
+    
     public Bf1942QueryResult Query()
     {
         Dictionary<string, string> properties = new();
