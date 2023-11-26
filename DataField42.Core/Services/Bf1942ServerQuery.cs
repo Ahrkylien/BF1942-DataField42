@@ -12,36 +12,53 @@ public class Bf1942ServerQuery
         _ip = ip;
         _port = port;
     }
-    
-    public Bf1942QueryResult Query()
+
+    public async Task<Bf1942QueryResult> Query(int timeoutInMs)
     {
+        var cancellationTokenSource = new CancellationTokenSource();
+        cancellationTokenSource.CancelAfter(timeoutInMs);
+
         Dictionary<string, string> properties = new();
         UdpClient udpClient = new();
-        udpClient.Connect(IPAddress.Parse(_ip), _port);
-        udpClient.Send(Encoding.UTF8.GetBytes("\\status\\"));
-        IPEndPoint RemoteIpEndPoint = new(IPAddress.Any, 0);
-        bool receivedFinalPacket = false;
-        uint expectedNumberOfPackets = 0;
-        for (int i = 0; i < 20; i++) // max 20 packets
-        {
-            byte[] receiveBytes = udpClient.Receive(ref RemoteIpEndPoint);
-            string dataString = Bf1942Encoding.Decode(receiveBytes);
-            var dataList = dataString.Split("\\");
-                
-            for (int j = 0; j < dataList.Length / 2; j++)
-                properties[dataList[j * 2 + 1]] = dataList[j * 2 + 2];
-                
-            if (properties.ContainsKey("final"))
-            {
-                receivedFinalPacket = true;
-                expectedNumberOfPackets = uint.Parse(properties["queryid"].Split('.')[1]);
-            } 
 
-            if (receivedFinalPacket && i + 1 == expectedNumberOfPackets)
-                break;
+        try
+        {
+            udpClient.Connect(IPAddress.Parse(_ip), _port);
+            await udpClient.SendAsync(Encoding.UTF8.GetBytes("\\status\\"), cancellationTokenSource.Token);
+
+            IPEndPoint RemoteIpEndPoint = new(IPAddress.Any, 0);
+            bool receivedFinalPacket = false;
+            uint expectedNumberOfPackets = 0;
+
+            for (int i = 0; i < 20; i++) // max 20 packets
+            {
+                byte[] receiveBytes = (await udpClient.ReceiveAsync(cancellationTokenSource.Token)).Buffer;
+
+                string dataString = Bf1942Encoding.Decode(receiveBytes);
+                var dataList = dataString.Split("\\");
+
+                for (int j = 0; j < dataList.Length / 2; j++)
+                    properties[dataList[j * 2 + 1]] = dataList[j * 2 + 2];
+
+                if (properties.ContainsKey("final"))
+                {
+                    receivedFinalPacket = true;
+                    expectedNumberOfPackets = uint.Parse(properties["queryid"].Split('.')[1]);
+                }
+
+                if (receivedFinalPacket && i + 1 == expectedNumberOfPackets)
+                    break;
+            }
+        }
+        catch (OperationCanceledException ex)
+        {
+            throw new TimeoutException($"Querying server {_ip}:{_port} timed out");
+        }
+        finally
+        {
+            udpClient.Close();
         }
 
-        udpClient.Close();
         return new Bf1942QueryResult(properties);
     }
 }
@@ -53,10 +70,13 @@ public class Bf1942QueryResult
     public string GameName { get; init; }
     public string GameVersion { get; init; }
     public string GameId { get; init; }
+    public uint HostPort { get; init; }
     public string HostName { get; init; }
     public string MapName { get; init; }
     public uint NumberOfPlayers { get; init; }
+    public uint MaximumNumberOfPlayers { get; init; }
     public bool HasPassword { get; init; }
+    public string Mod { get; init; }
 
     public List<Player> Players { get; init; }
 
@@ -65,10 +85,13 @@ public class Bf1942QueryResult
         GameName = properties["gamename"];
         GameVersion = properties["gamever"];
         GameId = properties["gameId"];
+        HostPort = uint.Parse(properties["hostport"]);
         HostName = properties["hostname"];
         MapName = properties["mapname"];
         NumberOfPlayers = uint.Parse(properties["numplayers"]);
+        MaximumNumberOfPlayers = uint.Parse(properties["maxplayers"]);
         HasPassword = properties["password"] == "1";
+        Mod = properties["mapId"];
 
         Players = new();
         for (int i = 0; i < NumberOfPlayers; i++)

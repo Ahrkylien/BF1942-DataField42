@@ -1,10 +1,8 @@
-﻿public delegate void FileDownloadProgressChangedEventHandler(int percentage);
-
-public class DownloadBackgroundWorker
+﻿public class DownloadBackgroundWorker
 {
     public ulong TotalSize;
     private ulong _totalDownloadedSize = 0;
-    public event FileDownloadProgressChangedEventHandler? ProgressChanged;
+    public event ProgressChangedEventHandler? ProgressChanged;
 
     public DownloadBackgroundWorker(ulong totalSize = 0)
     {

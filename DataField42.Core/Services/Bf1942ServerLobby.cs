@@ -1,7 +1,4 @@
-﻿using System.Net.Sockets;
-using System.Net;
-using System.Text;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Text.Json;
 
 public class Bf1942ServerLobby
@@ -9,14 +6,23 @@ public class Bf1942ServerLobby
     public List<Bf1942Server> Servers { get; private set; } = new();
     private string MasterApiEntryPoint = "http://master.bf1942.org/json";
 
-    public async Task GetFromMasterApi()
+    public async Task QueryAllServers()
     {
-        Servers = await GetServerListFromApi();
+        var queryTasks = new List<Task>();
         foreach (var server in Servers)
-            server.QueryServer();
+            queryTasks.Add(server.QueryServer());
+        try
+        {
+            await Task.WhenAll(queryTasks);
+        }
+        catch (Exception ex)
+        {
+            // swallow exceptions from queries
+        }
+        
     }
 
-    private async Task<List<Bf1942Server>> GetServerListFromApi()
+    public async Task GetServerListFromHttpApi()
     {
         List<Bf1942Server> servers = new();
         try
@@ -48,6 +54,6 @@ public class Bf1942ServerLobby
         {
             throw new Exception($"Failed to retrieve data from Master Api. An error occurred: {ex.Message}");
         }
-        return servers;
+        Servers = servers;
     }
 }

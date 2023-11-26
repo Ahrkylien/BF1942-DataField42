@@ -1,41 +1,81 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using System.Windows;
 
 namespace DataField42.ViewModels;
 public partial class ServerListViewModel : ObservableObject
 {
-    //[ObservableProperty]
-    //private List<Server> _servers = new();
     public ObservableCollection<Server> Servers { get; set; } = new();
 
     public ServerListViewModel()
     {
-        //Task.Run(async () => Initialize());
-        
+        Task.Run(async () => Initialize());
     }
 
-    [RelayCommand]
     public async Task Initialize()
     {
         var serverLobby = new Bf1942ServerLobby();
-        await serverLobby.GetFromMasterApi();
+        await serverLobby.GetServerListFromHttpApi();
         foreach (var server in serverLobby.Servers)
-            Servers.Add(new Server(server));
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Servers.Add(new Server(server));
+            });
+        }
+
+        
+        //await Application.Current.Dispatcher.Invoke(async () =>
+        //{
+        //    await serverLobby.QueryAllServers();
+        //});
+
+
+        OnPropertyChanged(nameof(Servers));
     }
 }
 
 
-public class Server
+public partial class Server : ObservableObject
 {
-    public string Name { get; set; }
-    public string Ip { get; set; }
+    public string Name => QueryResult?.HostName ?? string.Empty;
+    public string Ip => $"{_bf1942Server.Ip}:{QueryResult?.HostPort.ToString() ?? "xxxxx"}";
+    public string Players
+    {
+        get {
+            if (QueryResult != null)
+            {
+                return $"{QueryResult.NumberOfPlayers}/{QueryResult.MaximumNumberOfPlayers}";
+            }
+            return ""; 
+        }
+    }
+    public string Map => QueryResult?.MapName ?? string.Empty;
+    public string Mod => QueryResult?.Mod ?? string.Empty;
 
+    public Bf1942QueryResult? QueryResult => _bf1942Server.QueryResult;
     private readonly Bf1942Server _bf1942Server;
+    
     public Server(Bf1942Server bf1942Server)
     {
         _bf1942Server = bf1942Server;
-        Name = _bf1942Server.QueryResult?.HostName ?? "Not Queried";
-        Ip = _bf1942Server.Ip;
+        bf1942Server.NewQuery += RefreshData;
+    }
+
+    [RelayCommand]
+    private async Task Click()
+    {
+        await _bf1942Server.QueryServer();
+        RefreshData();
+    }
+
+    private void RefreshData()
+    {
+        OnPropertyChanged(nameof(Name));
+        OnPropertyChanged(nameof(Ip));
+        OnPropertyChanged(nameof(Players));
+        OnPropertyChanged(nameof(Map));
+        OnPropertyChanged(nameof(Mod));
     }
 }

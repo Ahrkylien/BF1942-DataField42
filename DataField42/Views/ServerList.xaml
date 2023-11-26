@@ -9,20 +9,28 @@
              mc:Ignorable="d">
 
     <Grid>
-        <Button Width="50" Command="{Binding InitializeCommand}">Init</Button>
         <ItemsControl ItemsSource="{Binding Servers}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Grid Margin="0,0,0,5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="100" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Background="red" Text="{Binding Name}" />
-                        <TextBlock Grid.Column="1" Background="green" Text="{Binding Ip}" />
-                        <TextBlock Grid.Column="2" Background="red" Text="{Binding Name}" />
-                    </Grid>
+                    <Border Background="#1b1e2a" Margin="2" Padding="7,3,7,1" CornerRadius="3">
+                        <Border.InputBindings>
+                            <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding ClickCommand}"/>
+                        </Border.InputBindings>
+                        <Grid Margin="0,0,0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="50" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Foreground="#d4d4d4" TextWrapping="Wrap" Text="{Binding Name}" />
+                            <TextBlock Grid.Column="1" Foreground="#d4d4d4" Text="{Binding Ip}" />
+                            <TextBlock Grid.Column="2" Foreground="#d4d4d4" Text="{Binding Players}" />
+                            <TextBlock Grid.Column="3" Foreground="#d4d4d4" TextAlignment="Right" Text="{Binding Map}" />
+                            <TextBlock Grid.Column="4" Foreground="#d4d4d4" TextAlignment="Right" Text="{Binding Mod}" />
+                        </Grid>
+                    </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
