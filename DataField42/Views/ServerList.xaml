@@ -12,10 +12,20 @@
         <ItemsControl ItemsSource="{Binding Servers}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Border Background="#1b1e2a" Margin="2" Padding="7,3,7,1" CornerRadius="3">
+                    <Border Margin="2" Padding="7,3,7,1" CornerRadius="3">
                         <Border.InputBindings>
-                            <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding ClickCommand}"/>
+                            <MouseBinding MouseAction="LeftClick" Command="{Binding ClickCommand}"/>
                         </Border.InputBindings>
+                        <Border.Style>
+                            <Style>
+                                <Setter Property="Border.Background" Value="#1b1e2a"/>
+                                <Style.Triggers>
+                                    <Trigger Property="Border.IsMouseOver" Value="True">
+                                        <Setter Property="Border.Background" Value="#233050" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
                         <Grid Margin="0,0,0,5">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="2*" />

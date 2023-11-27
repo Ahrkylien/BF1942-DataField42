@@ -6,7 +6,7 @@ using System.Windows;
 namespace DataField42.ViewModels;
 public partial class ServerListViewModel : ObservableObject
 {
-    public ObservableCollection<Server> Servers { get; set; } = new();
+    public ObservableCollection<ServerViewModel> Servers { get; set; } = new();
 
     public ServerListViewModel()
     {
@@ -21,15 +21,15 @@ public partial class ServerListViewModel : ObservableObject
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
-                Servers.Add(new Server(server));
+                Servers.Add(new ServerViewModel(server));
             });
         }
 
-        
-        //await Application.Current.Dispatcher.Invoke(async () =>
-        //{
-        //    await serverLobby.QueryAllServers();
-        //});
+
+        await Application.Current.Dispatcher.Invoke(async () =>
+        {
+            await serverLobby.QueryAllServers();
+        });
 
 
         OnPropertyChanged(nameof(Servers));
@@ -37,7 +37,7 @@ public partial class ServerListViewModel : ObservableObject
 }
 
 
-public partial class Server : ObservableObject
+public partial class ServerViewModel : ObservableObject
 {
     public string Name => QueryResult?.HostName ?? string.Empty;
     public string Ip => $"{_bf1942Server.Ip}:{QueryResult?.HostPort.ToString() ?? "xxxxx"}";
@@ -57,7 +57,7 @@ public partial class Server : ObservableObject
     public Bf1942QueryResult? QueryResult => _bf1942Server.QueryResult;
     private readonly Bf1942Server _bf1942Server;
     
-    public Server(Bf1942Server bf1942Server)
+    public ServerViewModel(Bf1942Server bf1942Server)
     {
         _bf1942Server = bf1942Server;
         bf1942Server.NewQuery += RefreshData;
@@ -66,8 +66,7 @@ public partial class Server : ObservableObject
     [RelayCommand]
     private async Task Click()
     {
-        await _bf1942Server.QueryServer();
-        RefreshData();
+        
     }
 
     private void RefreshData()
