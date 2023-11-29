@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using DataField42.Interfaces;
 using System.Diagnostics.CodeAnalysis;
 
@@ -10,15 +11,19 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasMessages))]
+    [NotifyPropertyChangedFor(nameof(HasMessagesOrErrors))]
     private string _messages = string.Empty;
 
     public bool HasMessages => !string.IsNullOrEmpty(Messages);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasErrorMessages))]
+    [NotifyPropertyChangedFor(nameof(HasMessagesOrErrors))]
     private string _errorMessages;
 
     public bool HasErrorMessages => !string.IsNullOrEmpty(ErrorMessages);
+
+    public bool HasMessagesOrErrors => HasMessages || HasErrorMessages;
 
 
     private Dictionary<Page, IPageViewModel> _pages = new();
@@ -47,47 +52,39 @@ public partial class MainWindowViewModel : ObservableObject
         }
         else
         {
-            GoToPage(Page.ServerList);
+            GoToPage(Page.Info);
+            //GoToPage(Page.ServerList);
         }
-        //CurrentPageViewModel = new SettingsViewModel();
     }
 
     public void DisplayMessage(string message)
     {
-        if (Messages != "")
+        message = ">> " + message;
+        if (HasMessages)
             message = $"\n{message}";
         Messages += message;
     }
 
     public void DisplayError(string message)
     {
-        if (ErrorMessages != "")
+        message = ">> " + message;
+        if (HasErrorMessages)
             message = $"\n{message}";
         ErrorMessages += message;
     }
 
-
+    [RelayCommand]
     [MemberNotNull(nameof(CurrentPageViewModel))]
     public void GoToPage(Page page)
     {
         if (!_pages.ContainsKey(page))
-            switch (page)
+            _pages[page] = page switch
             {
-                case Page.ServerList:
-                    _pages[page] = new ServerListViewModel(this);
-                    break;
-                case Page.SyncMenu:
-                    _pages[page] = new SyncMenuViewModel(this);
-                    break;
-                default: throw new Exception($"There is no linked ViewModel for Page: {page} in {nameof(GoToPage)}");
-            }
-
+                Page.ServerList => new ServerListViewModel(this),
+                Page.SyncMenu => new SyncMenuViewModel(this),
+                Page.Info => new InfoViewModel(),
+                _ => throw new Exception($"There is no linked ViewModel for Page: {page} in {nameof(GoToPage)}"),
+            };
         CurrentPageViewModel = _pages[page];
     }
-}
-
-public enum Page
-{
-    ServerList,
-    SyncMenu,
 }

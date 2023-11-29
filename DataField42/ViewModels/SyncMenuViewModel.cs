@@ -66,11 +66,11 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
             }
             catch (TimeoutException)
             {
-                PostMessage($"Can't connect to central database. It seems to be down...");
+                PostError($"Can't connect to central database. It seems to be down...");
             }
             catch (Exception e)
             {
-                PostMessage($"Can't connect to central database: {e.Message}");
+                PostError($"Can't connect to central database: {e.Message}");
             }
 
             // Update client if master is alive and client is behind:
@@ -88,7 +88,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
             }
             catch (Exception e)
             {
-                PostMessage($"Failed updating client: {e.Message}");
+                PostError($"Failed updating client: {e.Message}");
                 Environment.Exit(0);
             }
 
@@ -108,7 +108,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
             }
             catch (Exception e)
             {
-                PostMessage($"Can't connect to server: {e.Message}");
+                PostError($"Can't connect to server ({CommandLineArguments.Ip}): {e.Message}");
             }
 
             // Check if server has DataField42 otherwise use central db:
@@ -122,7 +122,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
                 }
                 else
                 {
-                    PostMessage($"And cannot resolve to central database...");
+                    PostError($"And cannot resolve to central database...");
                     readyToDownload = false;
                 }
             }

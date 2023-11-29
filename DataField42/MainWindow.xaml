@@ -16,7 +16,7 @@
     <Window.DataContext>
         <ViewModels:MainWindowViewModel />
     </Window.DataContext>
-    
+
     <WindowChrome.WindowChrome>
         <WindowChrome     
         CaptionHeight="0"  
@@ -30,8 +30,8 @@
         <DataTemplate DataType="{x:Type ViewModels:ServerListViewModel}">
             <Views:ServerList />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type ViewModels:SettingsViewModel}">
-            <Views:Settings />
+        <DataTemplate DataType="{x:Type ViewModels:InfoViewModel}">
+            <Views:Info />
         </DataTemplate>
         <DataTemplate DataType="{x:Type ViewModels:SyncMenuViewModel}">
             <Views:SyncMenu />
@@ -48,27 +48,34 @@
                 <Button Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Click="MinimizeButton_Click">-</Button>
                 <Label Margin="120,0,0,0" Height="30" Foreground="#d4d4d4" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="15">DataField42</Label>
             </DockPanel>
-            <Border DockPanel.Dock="Left" Visibility="Collapsed" CornerRadius="0" BorderBrush="#233050" BorderThickness="0,0,2,0" Padding="0" Background="#090b12">
-                <StackPanel Width="115" Margin="0,55,0,0">
-                    <Button Margin="0,10,0,0" Width="90" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4">Servers</Button>
-                    <Button Margin="0,10,0,0" Width="90" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4">Download</Button>
-                    <Button Margin="0,10,0,0" Width="90" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4">Settings</Button>
+            <Border DockPanel.Dock="Left" Visibility="Visible" CornerRadius="0" BorderBrush="#233050" BorderThickness="0,0,2,0" Padding="0" Background="#090b12">
+                <StackPanel Width="115" Margin="0,2,0,0">
+                    <Button Margin="0,10,0,0" Width="90" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Command="{Binding GoToPageCommand}" CommandParameter="{x:Static local:Page.ServerList}">Servers</Button>
+                    <Button Margin="0,10,0,0" Width="90" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Command="{Binding GoToPageCommand}" CommandParameter="{x:Static local:Page.Info}">Info</Button>
                 </StackPanel>
             </Border>
             <Canvas DockPanel.Dock="Right" Width="0"></Canvas>
-            <ScrollViewer x:Name="centralControl" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                <Border Background="#090b12" BorderBrush="#233050" BorderThickness="0,2,0,0" MaxWidth="{Binding ElementName=centralControl, Path=ActualWidth}">
-                    <Grid Background="#0a1225">
-                        <Border Grid.Row="0" Background="#090b12" BorderBrush="#233050" BorderThickness="2" Padding="10" Margin="10">
-                            <StackPanel>
-                                <TextBlock Foreground="#d4d4d4" Padding="0" Visibility="{Binding HasMessages, Converter={StaticResource BooleanToVisibilityConverter}}" Text="{Binding Messages}" TextWrapping="Wrap"/>
-                                <TextBlock Foreground="#ab0909" Padding="0" Visibility="{Binding HasErrorMessages, Converter={StaticResource BooleanToVisibilityConverter}}" Text="{Binding ErrorMessages}" TextWrapping="Wrap"/>
+            <Border Background="#0a1225" BorderBrush="#233050" BorderThickness="0,2,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Visibility="{Binding HasMessagesOrErrors, Converter={StaticResource BooleanToVisibilityConverter}}" Background="#090b12" BorderBrush="#233050" BorderThickness="2" Padding="10" Margin="10,10,10,0">
+                        <StackPanel>
+                            <TextBlock Foreground="#d4d4d4" Padding="0" Visibility="{Binding HasMessages, Converter={StaticResource BooleanToVisibilityConverter}}" Text="{Binding Messages}" TextWrapping="Wrap"/>
+                            <TextBlock Foreground="#ab0909" Padding="0" Visibility="{Binding HasErrorMessages, Converter={StaticResource BooleanToVisibilityConverter}}" Text="{Binding ErrorMessages}" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                    <ScrollViewer Grid.Row="1" x:Name="centralControl" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                        <Grid Background="#0a1225" MaxWidth="{Binding ElementName=centralControl, Path=ActualWidth}">
+                            <Border Grid.Row="0" Background="#090b12" BorderBrush="#233050" BorderThickness="2" Padding="10" Margin="10">
                                 <ContentControl Content="{Binding CurrentPageViewModel}" />
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-                </Border>
-            </ScrollViewer>
+                            </Border>
+                        </Grid>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
         </DockPanel>
     </Border>
 </Window>
