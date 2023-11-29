@@ -1,11 +1,27 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
+using DataField42.Interfaces;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DataField42.ViewModels;
 public partial class MainWindowViewModel : ObservableObject
 {
     [ObservableProperty]
-    private ObservableObject _currentPageViewModel;
+    private IPageViewModel _currentPageViewModel;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasMessages))]
+    private string _messages = string.Empty;
+
+    public bool HasMessages => !string.IsNullOrEmpty(Messages);
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasErrorMessages))]
+    private string _errorMessages;
+
+    public bool HasErrorMessages => !string.IsNullOrEmpty(ErrorMessages);
+
+
+    private Dictionary<Page, IPageViewModel> _pages = new();
 
     public MainWindowViewModel()
     {
@@ -21,20 +37,57 @@ public partial class MainWindowViewModel : ObservableObject
         }
         catch (Exception e)
         {
-            // TODO: add message 
-            //PostError($"Can't parse command line arguments: {e.Message}");
-            throw new Exception("ahum");
+            DisplayError($"Can't parse command line arguments: {e.Message}");
             successfulCommandLineArguments = false;
         }
 
         if (successfulCommandLineArguments && CommandLineArguments.Identifier == CommandLineArgumentIdentifier.DownloadAndJoinServer)
         {
-            CurrentPageViewModel = new SyncMenuViewModel();
+            GoToPage(Page.SyncMenu);
         }
         else
         {
-            CurrentPageViewModel = new ServerListViewModel();
+            GoToPage(Page.ServerList);
         }
         //CurrentPageViewModel = new SettingsViewModel();
     }
+
+    public void DisplayMessage(string message)
+    {
+        if (Messages != "")
+            message = $"\n{message}";
+        Messages += message;
+    }
+
+    public void DisplayError(string message)
+    {
+        if (ErrorMessages != "")
+            message = $"\n{message}";
+        ErrorMessages += message;
+    }
+
+
+    [MemberNotNull(nameof(CurrentPageViewModel))]
+    public void GoToPage(Page page)
+    {
+        if (!_pages.ContainsKey(page))
+            switch (page)
+            {
+                case Page.ServerList:
+                    _pages[page] = new ServerListViewModel(this);
+                    break;
+                case Page.SyncMenu:
+                    _pages[page] = new SyncMenuViewModel(this);
+                    break;
+                default: throw new Exception($"There is no linked ViewModel for Page: {page} in {nameof(GoToPage)}");
+            }
+
+        CurrentPageViewModel = _pages[page];
+    }
+}
+
+public enum Page
+{
+    ServerList,
+    SyncMenu,
 }

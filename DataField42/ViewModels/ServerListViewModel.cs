@@ -1,15 +1,19 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DataField42.Interfaces;
 using System.Collections.ObjectModel;
 using System.Windows;
 
 namespace DataField42.ViewModels;
-public partial class ServerListViewModel : ObservableObject
+public partial class ServerListViewModel : ObservableObject, IPageViewModel
 {
     public ObservableCollection<ServerViewModel> Servers { get; set; } = new();
 
-    public ServerListViewModel()
+    private MainWindowViewModel _mainWindowViewModel;
+
+    public ServerListViewModel(MainWindowViewModel mainWindowViewModel)
     {
+        _mainWindowViewModel = mainWindowViewModel;
         Task.Run(async () => Initialize());
     }
 
@@ -21,7 +25,7 @@ public partial class ServerListViewModel : ObservableObject
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
-                Servers.Add(new ServerViewModel(server));
+                Servers.Add(new ServerViewModel(_mainWindowViewModel, server));
             });
         }
 
@@ -55,10 +59,13 @@ public partial class ServerViewModel : ObservableObject
     public string Mod => QueryResult?.Mod ?? string.Empty;
 
     public Bf1942QueryResult? QueryResult => _bf1942Server.QueryResult;
+
+    private MainWindowViewModel _mainWindowViewModel;
     private readonly Bf1942Server _bf1942Server;
     
-    public ServerViewModel(Bf1942Server bf1942Server)
+    public ServerViewModel(MainWindowViewModel mainWindowViewModel, Bf1942Server bf1942Server)
     {
+        _mainWindowViewModel = mainWindowViewModel;
         _bf1942Server = bf1942Server;
         bf1942Server.NewQuery += RefreshData;
     }
@@ -66,7 +73,7 @@ public partial class ServerViewModel : ObservableObject
     [RelayCommand]
     private async Task Click()
     {
-        
+        _mainWindowViewModel.DisplayMessage("test");
     }
 
     private void RefreshData()

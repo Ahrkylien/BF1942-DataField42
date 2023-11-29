@@ -1,8 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DataField42.Interfaces;
 
 namespace DataField42.ViewModels;
-public partial class SyncMenuViewModel : ObservableObject
+public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
 {
     [ObservableProperty]
     private string _messages = "Welcome to DataField42";
@@ -31,14 +32,16 @@ public partial class SyncMenuViewModel : ObservableObject
     [ObservableProperty]
     private bool _autoJoinServerCheckboxVisible;
 
+    private MainWindowViewModel _mainWindowViewModel;
     private DataField42Communication? _communicationWithServer;
     private ISyncRuleManager? _syncRuleManager;
     private DownloadManager? _downloadManager;
     private ulong _totalSizeExpected;
     private bool _joinServerWhenReturnToGame = false;
 
-    public SyncMenuViewModel()
+    public SyncMenuViewModel(MainWindowViewModel mainWindowViewModel)
     {
+        _mainWindowViewModel = mainWindowViewModel;
         Task.Run(async () => PrepareDownload());
     }
 
@@ -250,19 +253,8 @@ public partial class SyncMenuViewModel : ObservableObject
 #endif
     }
 
-    private void PostMessage(string message)
-    {
-        if (Messages != "")
-            message = $"\n{message}";
-        Messages += message;
-    }
-
-    private void PostError(string message)
-    {
-        if (ErrorMessages != "")
-            message = $"\n{message}";
-        ErrorMessages += message;
-    }
+    private void PostMessage(string message) => _mainWindowViewModel.DisplayMessage(message);
+    private void PostError(string message) => _mainWindowViewModel.DisplayError(message);
 
     private void BackgroundWorkerCurrentFile_ProgressChanged(int percentage)
     {

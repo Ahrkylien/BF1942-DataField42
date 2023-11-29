@@ -13,9 +13,6 @@
     <Grid>
         <StackPanel>
             <!-- stage 1: -->
-            <TextBlock Foreground="#d4d4d4" Padding="0" Text="{Binding Messages}" TextWrapping="Wrap"/>
-            <TextBlock Foreground="#ab0909" Padding="0" Text="{Binding ErrorMessages}" TextWrapping="Wrap"/>
-
             <StackPanel Visibility="{Binding ContinueToDownloadStage, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <CheckBox Foreground="#d4d4d4" Margin="0" IsChecked="{Binding AutoSyncServerCheckBox}">Always trust IP/name</CheckBox>
                 <Button HorizontalAlignment="Left" Margin="0,10,0,0" Width="104" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Command="{Binding DownloadCommand}" >Continue</Button>

@@ -60,7 +60,11 @@
                 <Border Background="#090b12" BorderBrush="#233050" BorderThickness="0,2,0,0" MaxWidth="{Binding ElementName=centralControl, Path=ActualWidth}">
                     <Grid Background="#0a1225">
                         <Border Grid.Row="0" Background="#090b12" BorderBrush="#233050" BorderThickness="2" Padding="10" Margin="10">
-                            <ContentControl Content="{Binding CurrentPageViewModel}" />
+                            <StackPanel>
+                                <TextBlock Foreground="#d4d4d4" Padding="0" Visibility="{Binding HasMessages, Converter={StaticResource BooleanToVisibilityConverter}}" Text="{Binding Messages}" TextWrapping="Wrap"/>
+                                <TextBlock Foreground="#ab0909" Padding="0" Visibility="{Binding HasErrorMessages, Converter={StaticResource BooleanToVisibilityConverter}}" Text="{Binding ErrorMessages}" TextWrapping="Wrap"/>
+                                <ContentControl Content="{Binding CurrentPageViewModel}" />
+                            </StackPanel>
                         </Border>
                     </Grid>
                 </Border>
