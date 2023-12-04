@@ -38,135 +38,130 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
     private DownloadManager? _downloadManager;
     private ulong _totalSizeExpected;
     private bool _joinServerWhenReturnToGame = false;
+    private readonly SyncParameters _syncParameters;
 
-    public SyncMenuViewModel(MainWindowViewModel mainWindowViewModel)
+    public SyncMenuViewModel(MainWindowViewModel mainWindowViewModel, SyncParameters syncParameters)
     {
         _mainWindowViewModel = mainWindowViewModel;
+        _syncParameters = syncParameters;
         Task.Run(async () => PrepareDownload());
     }
 
     private async Task PrepareDownload()
     {
         var stageSuccessful = false;
-        if (CommandLineArguments.Identifier == CommandLineArgumentIdentifier.DownloadAndJoinServer)
+        PostMessage($"Map: {_syncParameters.Map}, Mod: {_syncParameters.Mod}");
+        // TODO: Try to connect to master and server paralel, but since master is always up it might not be much extra performance
+        // Try to connect to master:
+        DataField42Communication? communicationWithMaster = null;
+        UpdateManager? updateManager = null;
+        int masterVersion = 0;
+        var connectedToMaster = false;
+        try
         {
-            PostMessage($"Map: {CommandLineArguments.Map}, Mod: {CommandLineArguments.Mod}");
-            // TODO: Try to connect to master and server paralel, but since master is always up it might not be much extra performance
-            // Try to connect to master:
-            DataField42Communication? communicationWithMaster = null;
-            UpdateManager? updateManager = null;
-            int masterVersion = 0;
-            var connectedToMaster = false;
-            try
-            {
-                communicationWithMaster = communicationWithMaster = new DataField42Communication();
-                updateManager = new UpdateManager(communicationWithMaster);
-                masterVersion = updateManager.RequestVersion();
-                connectedToMaster = true;
-            }
-            catch (TimeoutException)
-            {
-                PostError($"Can't connect to central database. It seems to be down...");
-            }
-            catch (Exception e)
-            {
-                PostError($"Can't connect to central database: {e.Message}");
-            }
+            communicationWithMaster = communicationWithMaster = new DataField42Communication();
+            updateManager = new UpdateManager(communicationWithMaster);
+            masterVersion = updateManager.RequestVersion();
+            connectedToMaster = true;
+        }
+        catch (TimeoutException)
+        {
+            PostError($"Can't connect to central database. It seems to be down...");
+        }
+        catch (Exception e)
+        {
+            PostError($"Can't connect to central database: {e.Message}");
+        }
 
-            // Update client if master is alive and client is behind:
-            try
+        // Update client if master is alive and client is behind:
+        try
+        {
+            if (connectedToMaster && updateManager != null)
             {
-                if (connectedToMaster && updateManager != null)
+                if (masterVersion > UpdateManager.Version)
                 {
-                    if (masterVersion > UpdateManager.Version)
-                    {
-                        PostMessage($"Starting to update to version: {masterVersion}");
-                        var backgroundWorker = new DownloadBackgroundWorker();
-                        updateManager.Update(backgroundWorker);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                PostError($"Failed updating client: {e.Message}");
-                Environment.Exit(0);
-            }
-
-            // Try to connect to server:
-            var connectedToServer = false;
-            try
-            {
-                _communicationWithServer = new DataField42Communication(CommandLineArguments.Ip);
-                var serverVersion = UpdateManager.RequestVersion(_communicationWithServer);
-                if (serverVersion != UpdateManager.Version)
-                    throw new Exception($"Server has wrong version running: {serverVersion}");
-                connectedToServer = true;
-            }
-            catch (TimeoutException)
-            {
-                PostMessage($"Server doesn't have DataField42");
-            }
-            catch (Exception e)
-            {
-                PostError($"Can't connect to server ({CommandLineArguments.Ip}): {e.Message}");
-            }
-
-            // Check if server has DataField42 otherwise use central db:
-            var readyToDownload = true;
-            if (!connectedToServer)
-            {
-                if (connectedToMaster && communicationWithMaster != null)
-                {
-                    _communicationWithServer = communicationWithMaster;
-                    PostMessage($"Resolved to central database.");
-                }
-                else
-                {
-                    PostError($"And cannot resolve to central database...");
-                    readyToDownload = false;
-                }
-            }
-
-            if (readyToDownload && _communicationWithServer != null)
-            {
-                try
-                {
-                    _syncRuleManager = new SyncRuleManager("DataField42/Synchronization rules.txt");
-                    ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("DataField42/cache", "DataField42/tmp", "");
-                    var downloadDecisionMaker = new DownloadDecisionMaker(_syncRuleManager, localFileCacheManager);
-                    _downloadManager = new DownloadManager(_communicationWithServer, downloadDecisionMaker, localFileCacheManager);
-                    var fileInfos = _downloadManager.DownloadFilesRequest(CommandLineArguments.Mod, CommandLineArguments.Map, CommandLineArguments.Ip, CommandLineArguments.Port, CommandLineArguments.KeyHash);
-                    (var hasMod, var hasMap) = _downloadManager.VerifyFileList();
-                    var fileInfosOfFilesToDownload = fileInfos.Where(x => x.SyncType == SyncType.Download);
-                    var numberOfFilesExpected = fileInfosOfFilesToDownload.Count();
-                    _totalSizeExpected = fileInfosOfFilesToDownload.Sum(x => x.Size);
-
-                    if (!hasMod)
-                        PostError($"Server doesn't have the mod: {CommandLineArguments.Mod}");
-                    else if (!hasMap && CommandLineArguments.Map != "*") // TODO: download map right away (not only mod)
-                        PostError($"Server doesn't have the map: {CommandLineArguments.Map}");
-                    else if (numberOfFilesExpected == 0)
-                        PostMessage("TODO: go to wrap up stage without downoad display");
-                        // EnterReturnToGameStage(joinServer: true);
-                    else
-                    {
-                        PostMessage($"DataField42 wants to download {numberOfFilesExpected} files which is a total of {_totalSizeExpected.ToReadableFileSize()}, from {_communicationWithServer.DisplayName}");
-                        stageSuccessful = true;
-                        if (_syncRuleManager.IsAutoSyncEnabled(_communicationWithServer.DisplayName))
-                            Download();
-                        else
-                            ContinueToDownloadStage = true;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    PostError($"Error: {ex.Message}");
+                    PostMessage($"Starting to update to version: {masterVersion}");
+                    var backgroundWorker = new DownloadBackgroundWorker();
+                    updateManager.Update(backgroundWorker);
                 }
             }
         }
-        else
+        catch (Exception e)
         {
-            PostMessage($"Unknown Command Line Argument Identifier {CommandLineArguments.Identifier}");
+            PostError($"Failed updating client: {e.Message}");
+            Environment.Exit(0);
+        }
+
+        // Try to connect to server:
+        var connectedToServer = false;
+        try
+        {
+            _communicationWithServer = new DataField42Communication(_syncParameters.Ip);
+            var serverVersion = UpdateManager.RequestVersion(_communicationWithServer);
+            if (serverVersion != UpdateManager.Version)
+                throw new Exception($"Server has wrong version running: {serverVersion}");
+            connectedToServer = true;
+        }
+        catch (TimeoutException)
+        {
+            PostMessage($"Server doesn't have DataField42");
+        }
+        catch (Exception e)
+        {
+            PostError($"Can't connect to server ({_syncParameters.Ip}): {e.Message}");
+        }
+
+        // Check if server has DataField42 otherwise use central db:
+        var readyToDownload = true;
+        if (!connectedToServer)
+        {
+            if (connectedToMaster && communicationWithMaster != null)
+            {
+                _communicationWithServer = communicationWithMaster;
+                PostMessage($"Resolved to central database.");
+            }
+            else
+            {
+                PostError($"And cannot resolve to central database...");
+                readyToDownload = false;
+            }
+        }
+
+        if (readyToDownload && _communicationWithServer != null)
+        {
+            try
+            {
+                _syncRuleManager = new SyncRuleManager("DataField42/Synchronization rules.txt");
+                ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("DataField42/cache", "DataField42/tmp", "");
+                var downloadDecisionMaker = new DownloadDecisionMaker(_syncRuleManager, localFileCacheManager);
+                _downloadManager = new DownloadManager(_communicationWithServer, downloadDecisionMaker, localFileCacheManager);
+                var fileInfos = _downloadManager.DownloadFilesRequest(_syncParameters.Mod, _syncParameters.Map, _syncParameters.Ip, _syncParameters.Port, _syncParameters.KeyHash);
+                (var hasMod, var hasMap) = _downloadManager.VerifyFileList();
+                var fileInfosOfFilesToDownload = fileInfos.Where(x => x.SyncType == SyncType.Download);
+                var numberOfFilesExpected = fileInfosOfFilesToDownload.Count();
+                _totalSizeExpected = fileInfosOfFilesToDownload.Sum(x => x.Size);
+
+                if (!hasMod)
+                    PostError($"Server doesn't have the mod: {_syncParameters.Mod}");
+                else if (!hasMap && _syncParameters.Map != "*") // TODO: download map right away (not only mod)
+                    PostError($"Server doesn't have the map: {_syncParameters.Map}");
+                else if (numberOfFilesExpected == 0)
+                    PostMessage("TODO: go to wrap up stage without downoad display");
+                    // EnterReturnToGameStage(joinServer: true);
+                else
+                {
+                    PostMessage($"DataField42 wants to download {numberOfFilesExpected} files which is a total of {_totalSizeExpected.ToReadableFileSize()}, from {_communicationWithServer.DisplayName}");
+                    stageSuccessful = true;
+                    if (_syncRuleManager.IsAutoSyncEnabled(_communicationWithServer.DisplayName))
+                        Download();
+                    else
+                        ContinueToDownloadStage = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                PostError($"Error: {ex.Message}");
+            }
         }
 
         if (!stageSuccessful)
@@ -245,9 +240,9 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
         }
 #if !DEBUG
         if (_joinServerWhenReturnToGame)
-            Bf1942Client.Start(CommandLineArguments.Mod, $"{CommandLineArguments.Ip}:{CommandLineArguments.Port}", CommandLineArguments.Password);
+            Bf1942Client.Start(_syncParameters.Mod, $"{_syncParameters.Ip}:{_syncParameters.Port}", _syncParameters.Password);
         else
-            Bf1942Client.Start(CommandLineArguments.Mod);
+            Bf1942Client.Start(_syncParameters.Mod);
 #else
         Environment.Exit(0);
 #endif

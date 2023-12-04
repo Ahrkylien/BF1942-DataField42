@@ -48,7 +48,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         if (successfulCommandLineArguments && CommandLineArguments.Identifier == CommandLineArgumentIdentifier.DownloadAndJoinServer)
         {
-            GoToPage(Page.SyncMenu);
+            GoToSyncMenu(new SyncParameters(CommandLineArguments.Mod, CommandLineArguments.Map, CommandLineArguments.Ip, CommandLineArguments.Port, CommandLineArguments.KeyHash));
         }
         else
         {
@@ -73,6 +73,12 @@ public partial class MainWindowViewModel : ObservableObject
         ErrorMessages += message;
     }
 
+    public void GoToSyncMenu(SyncParameters syncParameters)
+    {
+        _pages[Page.SyncMenu] = new SyncMenuViewModel(this, syncParameters);
+        GoToPage(Page.SyncMenu);
+    }
+
     [RelayCommand]
     [MemberNotNull(nameof(CurrentPageViewModel))]
     public void GoToPage(Page page)
@@ -81,7 +87,6 @@ public partial class MainWindowViewModel : ObservableObject
             _pages[page] = page switch
             {
                 Page.ServerList => new ServerListViewModel(this),
-                Page.SyncMenu => new SyncMenuViewModel(this),
                 Page.Info => new InfoViewModel(),
                 _ => throw new Exception($"There is no linked ViewModel for Page: {page} in {nameof(GoToPage)}"),
             };

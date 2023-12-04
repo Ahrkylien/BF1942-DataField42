@@ -17,7 +17,7 @@ If a server is compatible with DataField42, it syncs your game files to match it
 In the scenario that the central database (bf1942.eu) is down DataField42 should still work when joining servers that support DataField42.
 
 Limitations:
-Joining a server in-game with the wrong version of the mod+map can cause your game to crash or display an error message. To prevent this, it's advisable to connect to the server through DataField42, provided the server supports it. This precaution is necessary because DataField42 is not automatically used in this scenario.
+Joining a server in-game with the wrong version of the mod or map can cause your game to crash or display an error message. To prevent this, it's advisable to connect to the server through DataField42, provided the server supports it. This precaution is necessary because DataField42 is not automatically used in this scenario.
 
 Here is some explanation on how to use the sync rule file:
 --

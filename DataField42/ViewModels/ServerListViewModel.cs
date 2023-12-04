@@ -71,9 +71,12 @@ public partial class ServerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task Click()
+    private void Click()
     {
-        _mainWindowViewModel.DisplayMessage("test");
+        if (_bf1942Server.QueryResult != null)
+            _mainWindowViewModel.GoToSyncMenu(new SyncParameters(_bf1942Server.QueryResult.Mod, _bf1942Server.QueryResult.MapName.Replace(' ', '_'), _bf1942Server.Ip, DataField42Communication.DefaultPort, "-"));
+        else
+            _mainWindowViewModel.DisplayError("Can't sync with server because its not queried.");
     }
 
     private void RefreshData()

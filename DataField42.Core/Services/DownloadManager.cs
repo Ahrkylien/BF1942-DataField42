@@ -40,7 +40,6 @@ public class DownloadManager
             throw new Exception($"Server wants to sync {_fileInfos.Count} files which is more than 100");
 
         _downloadDecisionMaker.CheckDownloadRequests(_fileInfos);
-        Console.WriteLine("test 03");
         return _fileInfos;
     }
 
