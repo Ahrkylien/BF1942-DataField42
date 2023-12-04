@@ -35,7 +35,7 @@ public class FileInfo
         }
     }
 
-    const string AllowableChars = "0-9a-zA-Z_";
+    const string AllowableChars = @"0-9a-zA-Z_-";
 
     public FileInfo(string localFilePath, string gamePath, bool fast = false, bool fromCache = false)
     {

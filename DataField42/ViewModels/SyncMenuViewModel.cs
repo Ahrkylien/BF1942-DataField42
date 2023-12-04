@@ -135,6 +135,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
                 ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("DataField42/cache", "DataField42/tmp", "");
                 var downloadDecisionMaker = new DownloadDecisionMaker(_syncRuleManager, localFileCacheManager);
                 _downloadManager = new DownloadManager(_communicationWithServer, downloadDecisionMaker, localFileCacheManager);
+                _mainWindowViewModel.DisplayMessage("Server is calculating files..");
                 var fileInfos = _downloadManager.DownloadFilesRequest(_syncParameters.Mod, _syncParameters.Map, _syncParameters.Ip, _syncParameters.Port, _syncParameters.KeyHash);
                 (var hasMod, var hasMap) = _downloadManager.VerifyFileList();
                 var fileInfosOfFilesToDownload = fileInfos.Where(x => x.SyncType == SyncType.Download);
