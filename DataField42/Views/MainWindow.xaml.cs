@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Input;
 
-namespace DataField42;
+namespace DataField42.Views;
 public partial class MainWindow : Window
 {
     public MainWindow() => InitializeComponent();

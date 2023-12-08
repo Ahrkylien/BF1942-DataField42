@@ -2,4 +2,5 @@
 
 public interface IPageViewModel
 {
+    Task LeavePage() => Task.CompletedTask;
 }

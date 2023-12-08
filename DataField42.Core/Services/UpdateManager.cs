@@ -13,28 +13,28 @@ public class UpdateManager
         _communication = communication;
     }
 
-    public void Update(DownloadBackgroundWorker backgroundWorker)
+    public async Task Update(DownloadBackgroundWorker backgroundWorker, CancellationToken cancellationToken)
     {
         _communication.StartSession();
         _communication.SendString($"update {Version}");
-        var fileSize = _communication.ReceiveUlong();
+        var fileSize = await _communication.ReceiveUlong();
         backgroundWorker.TotalSize = fileSize;
 
         // TODO: check file size
         _communication.SendAcknowledgement();
 
         using var fileStream = new FileStream(UpdaterFileName, FileMode.Create, FileAccess.Write);
-        _communication.ReceiveFile(fileSize, fileStream, backgroundWorker);
+        await _communication.ReceiveFile(fileSize, fileStream, backgroundWorker, cancellationToken);
 
         ExternalProcess.SwitchTo(UpdaterFileName);
     }
 
-    public int RequestVersion() => RequestVersion(_communication);
+    public async Task<int> RequestVersion() => await RequestVersion(_communication);
 
-    public static int RequestVersion(DataField42Communication communication)
+    public static async Task<int> RequestVersion(DataField42Communication communication)
     {
         communication.StartSession();
         communication.SendString($"handshake {Version}");
-        return communication.ReceiveInt();
+        return await communication.ReceiveInt();
     }
 }

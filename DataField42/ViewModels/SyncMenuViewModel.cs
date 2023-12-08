@@ -6,12 +6,6 @@ namespace DataField42.ViewModels;
 public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
 {
     [ObservableProperty]
-    private string _messages = "Welcome to DataField42";
-
-    [ObservableProperty]
-    private string _errorMessages = "";
-
-    [ObservableProperty]
     private int _percentage;
 
     [ObservableProperty]
@@ -32,6 +26,24 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
     [ObservableProperty]
     private bool _autoJoinServerCheckboxVisible;
 
+
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasMessages))]
+    [NotifyPropertyChangedFor(nameof(HasMessagesOrErrors))]
+    private string _messages = string.Empty;
+
+    public bool HasMessages => !string.IsNullOrEmpty(Messages);
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasErrorMessages))]
+    [NotifyPropertyChangedFor(nameof(HasMessagesOrErrors))]
+    private string _errorMessages = string.Empty;
+
+    public bool HasErrorMessages => !string.IsNullOrEmpty(ErrorMessages);
+
+    public bool HasMessagesOrErrors => HasMessages || HasErrorMessages;
+
     private MainWindowViewModel _mainWindowViewModel;
     private DataField42Communication? _communicationWithServer;
     private ISyncRuleManager? _syncRuleManager;
@@ -39,6 +51,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
     private ulong _totalSizeExpected;
     private bool _joinServerWhenReturnToGame = false;
     private readonly SyncParameters _syncParameters;
+    private readonly CancellationTokenSource _cancelationTokenSource = new();
 
     public SyncMenuViewModel(MainWindowViewModel mainWindowViewModel, SyncParameters syncParameters)
     {
@@ -61,7 +74,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
         {
             communicationWithMaster = communicationWithMaster = new DataField42Communication();
             updateManager = new UpdateManager(communicationWithMaster);
-            masterVersion = updateManager.RequestVersion();
+            masterVersion = await updateManager.RequestVersion();
             connectedToMaster = true;
         }
         catch (TimeoutException)
@@ -82,13 +95,13 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
                 {
                     PostMessage($"Starting to update to version: {masterVersion}");
                     var backgroundWorker = new DownloadBackgroundWorker();
-                    updateManager.Update(backgroundWorker);
+                    await updateManager.Update(backgroundWorker, _cancelationTokenSource.Token);
                 }
             }
         }
-        catch (Exception e)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            PostError($"Failed updating client: {e.Message}");
+            PostError($"Failed updating client: {ex.Message}");
             Environment.Exit(0);
         }
 
@@ -97,7 +110,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
         try
         {
             _communicationWithServer = new DataField42Communication(_syncParameters.Ip);
-            var serverVersion = UpdateManager.RequestVersion(_communicationWithServer);
+            var serverVersion = await UpdateManager.RequestVersion(_communicationWithServer);
             if (serverVersion != UpdateManager.Version)
                 throw new Exception($"Server has wrong version running: {serverVersion}");
             connectedToServer = true;
@@ -135,8 +148,8 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
                 ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("DataField42/cache", "DataField42/tmp", "");
                 var downloadDecisionMaker = new DownloadDecisionMaker(_syncRuleManager, localFileCacheManager);
                 _downloadManager = new DownloadManager(_communicationWithServer, downloadDecisionMaker, localFileCacheManager);
-                _mainWindowViewModel.DisplayMessage("Server is calculating files..");
-                var fileInfos = _downloadManager.DownloadFilesRequest(_syncParameters.Mod, _syncParameters.Map, _syncParameters.Ip, _syncParameters.Port, _syncParameters.KeyHash);
+                PostMessage("Server is calculating files..");
+                var fileInfos = await _downloadManager.DownloadFilesRequest(_syncParameters.Mod, _syncParameters.Map, _syncParameters.Ip, _syncParameters.Port, _syncParameters.KeyHash, _cancelationTokenSource.Token);
                 (var hasMod, var hasMap) = _downloadManager.VerifyFileList();
                 var fileInfosOfFilesToDownload = fileInfos.Where(x => x.SyncType == SyncType.Download);
                 var numberOfFilesExpected = fileInfosOfFilesToDownload.Count();
@@ -159,7 +172,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
                         ContinueToDownloadStage = true;
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 PostError($"Error: {ex.Message}");
             }
@@ -192,12 +205,12 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
                 var backgroundWorkerCurrentFile = new DownloadBackgroundWorker(0);
                 backgroundWorkerTotal.ProgressChanged += BackgroundWorkerCurrentFile_ProgressChanged;
                 //backgroundWorkerCurrentFile.ProgressChanged += BackgroundWorkerCurrentFile_ProgressChanged;
-                _downloadManager.DownloadFilesDownload(backgroundWorkerTotal, backgroundWorkerCurrentFile);
+                await _downloadManager.DownloadFilesDownload(backgroundWorkerTotal, backgroundWorkerCurrentFile, _cancelationTokenSource.Token);
                 _downloadManager.DownloadFilesWrapUp();
                 automaticJoinServer = _syncRuleManager.IsAutoJoinEnabled();
                 downloadSuccessful = true;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 PostError($"Failed to Download Files: {ex.Message}");
             }
@@ -249,11 +262,33 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
 #endif
     }
 
-    private void PostMessage(string message) => _mainWindowViewModel.DisplayMessage(message);
-    private void PostError(string message) => _mainWindowViewModel.DisplayError(message);
+    private void PostMessage(string message)
+    {
+        message = ">> " + message;
+        if (HasMessages)
+            message = $"\n{message}";
+        Messages += message;
+    }
+
+    private void PostError(string message)
+    {
+        message = ">> " + message;
+        if (HasErrorMessages)
+            message = $"\n{message}";
+        ErrorMessages += message;
+    }
 
     private void BackgroundWorkerCurrentFile_ProgressChanged(int percentage)
     {
         Percentage = percentage;
+    }
+
+    public Task LeavePage()
+    {
+        var taskCompletionSource = new TaskCompletionSource();
+        _cancelationTokenSource.Cancel();
+        _communicationWithServer?.Dispose();
+        taskCompletionSource.SetResult();
+        return taskCompletionSource.Task;
     }
 }

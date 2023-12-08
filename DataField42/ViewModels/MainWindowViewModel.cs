@@ -2,12 +2,19 @@
 using CommunityToolkit.Mvvm.Input;
 using DataField42.Interfaces;
 using System.Diagnostics.CodeAnalysis;
+using System.Windows.Controls;
 
 namespace DataField42.ViewModels;
 public partial class MainWindowViewModel : ObservableObject
 {
     [ObservableProperty]
     private IPageViewModel _currentPageViewModel;
+
+    [ObservableProperty]
+    private IPageViewModel _currentPopUpViewModel;
+
+    [ObservableProperty]
+    private bool _showPopup;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasMessages))]
@@ -48,6 +55,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         if (successfulCommandLineArguments && CommandLineArguments.Identifier == CommandLineArgumentIdentifier.DownloadAndJoinServer)
         {
+            GoToPage(Page.Info);
             GoToSyncMenu(new SyncParameters(CommandLineArguments.Mod, CommandLineArguments.Map, CommandLineArguments.Ip, CommandLineArguments.Port, CommandLineArguments.KeyHash));
         }
         else
@@ -76,13 +84,29 @@ public partial class MainWindowViewModel : ObservableObject
     public void GoToSyncMenu(SyncParameters syncParameters)
     {
         _pages[Page.SyncMenu] = new SyncMenuViewModel(this, syncParameters);
-        GoToPage(Page.SyncMenu);
+        DisplayPopup();
+    }
+
+    public void DisplayPopup()
+    {
+        CurrentPopUpViewModel = _pages[Page.SyncMenu];
+        ShowPopup = true;
+    }
+
+    [RelayCommand]
+    public async Task ClosePopUp()
+    {
+        CurrentPopUpViewModel.LeavePage();
+        ShowPopup = false;
     }
 
     [RelayCommand]
     [MemberNotNull(nameof(CurrentPageViewModel))]
-    public void GoToPage(Page page)
+    public async Task GoToPage(Page page)
     {
+        if (CurrentPageViewModel != null)
+            await CurrentPageViewModel.LeavePage();
+        
         if (!_pages.ContainsKey(page))
             _pages[page] = page switch
             {

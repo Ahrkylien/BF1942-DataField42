@@ -17,10 +17,17 @@ public partial class ServerListViewModel : ObservableObject, IPageViewModel
         Task.Run(async () => Initialize());
     }
 
-    public async Task Initialize()
+    private async Task Initialize()
     {
         var serverLobby = new Bf1942ServerLobby();
-        await serverLobby.GetServerListFromHttpApi();
+        try
+        {
+            await serverLobby.GetServerListFromHttpApi();
+        }
+        catch (Exception ex)
+        {
+            _mainWindowViewModel.DisplayError($"Can't get server list: {ex.Message}");
+        }
         foreach (var server in serverLobby.Servers)
         {
             Application.Current.Dispatcher.Invoke(() =>

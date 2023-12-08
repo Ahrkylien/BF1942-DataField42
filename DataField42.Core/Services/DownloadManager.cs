@@ -6,8 +6,8 @@ public class DownloadManager
     private readonly DownloadDecisionMaker _downloadDecisionMaker;
     private readonly ILocalFileCacheManager _localFileCacheManager;
 
-    private string _mod;
-    private string _map;
+    private string? _mod;
+    private string? _map;
 
     private List<FileInfo>? _fileInfos;
 
@@ -21,7 +21,7 @@ public class DownloadManager
     /// <summary>
     /// Step 1 in synchronizing files
     /// </summary>
-    public IEnumerable<FileInfo> DownloadFilesRequest(string mod, string map, string ip, int port, string keyHash)
+    public async Task<IEnumerable<FileInfo>> DownloadFilesRequest(string mod, string map, string ip, int port, string keyHash, CancellationToken cancellationToken)
     {
         _mod = mod;
         _map = map;
@@ -30,7 +30,7 @@ public class DownloadManager
         _communication.StartSession();
         _communication.SendString($"download {map} {mod} {ip} {port} {keyHash}");
 
-        _fileInfos = _communication.ReceiveFileInfos();
+        _fileInfos = await _communication.ReceiveFileInfos(cancellationToken);
 
         // TODO: better messaging for double files in list 
         // TODO: check for absense of base rfa
@@ -51,6 +51,10 @@ public class DownloadManager
     {
         if (_fileInfos == null)
             throw new ArgumentNullException($"{nameof(_fileInfos)} is null, make sure to run {nameof(DownloadFilesRequest)} first");
+        if (_mod == null)
+            throw new ArgumentNullException($"{nameof(_mod)} is null, make sure to run {nameof(DownloadFilesRequest)} first");
+        if (_map == null)
+            throw new ArgumentNullException($"{nameof(_map)} is null, make sure to run {nameof(DownloadFilesRequest)} first");
 
         var hasMod = false;
         var hasMap= false;
@@ -73,7 +77,7 @@ public class DownloadManager
     /// <summary>
     /// Step 3 in synchronizing files
     /// </summary>
-    public void DownloadFilesDownload(DownloadBackgroundWorker backgroundWorkerTotal, DownloadBackgroundWorker backgroundWorkerCurrentFile)
+    public async Task DownloadFilesDownload(DownloadBackgroundWorker backgroundWorkerTotal, DownloadBackgroundWorker backgroundWorkerCurrentFile, CancellationToken cancellationToken)
     {
         // TODO: add to protocol a way to tell the client that it does not have mod or map, maybe dont do this in download manager but in a new manager (downloadCheck)
 
@@ -92,7 +96,7 @@ public class DownloadManager
 
         _communication.SendString(string.Join(' ', responses));
 
-        var data = _communication.ReceiveSpaceSeperatedString(3); // acknowledgement numberOfFiles totalSize
+        var data = await _communication.ReceiveSpaceSeperatedString(3); // acknowledgement numberOfFiles totalSize
 
         var numberOfFiles = int.Parse(data.ElementAt(1));
         if (numberOfFiles != numberOfFilesExpected)
@@ -103,12 +107,14 @@ public class DownloadManager
             throw new Exception($"totalSize: {totalSize} != {totalSizeExpected} ");
 
 
-
         _communication.SendAcknowledgement();
 
         foreach (var fileInfoOfFileToDownload in fileInfosOfFilesToDownload)
         {
-            var fileInfo = _communication.ReceiveFileInfo();
+            // Check for cancellation before processing each file
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var fileInfo = await _communication.ReceiveFileInfo();
             if (!fileInfo.IsEqualTo(fileInfoOfFileToDownload))
                 throw new Exception("File info send right before file download does not match the file info sequence on which was agreed");
 
@@ -116,17 +122,18 @@ public class DownloadManager
             _communication.SendAcknowledgement();
             var filePath = _localFileCacheManager.GetWorkingDirectoryFilePath(fileInfo);
             Directory.CreateDirectory(Path.GetDirectoryName(filePath) ?? "");
+
             using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
-            _communication.ReceiveFile(fileInfo.Size, fileStream, backgroundWorkers);
+
+            // Check for cancellation while downloading the file
+            await _communication.ReceiveFile(fileInfo.Size, fileStream, backgroundWorkers, cancellationToken);
+
             _communication.SendAcknowledgement();
             fileStream.Close();
             FileHelper.SetLastWriteTime(filePath, fileInfo.LastModifiedTimestamp);
         }
         _communication.SendAcknowledgement();
         _communication.Dispose();
-
-
-        
     }
 
     /// <summary>

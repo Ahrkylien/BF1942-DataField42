@@ -12,6 +12,12 @@
 
     <Grid>
         <StackPanel>
+            <Border Grid.Row="0" Visibility="{Binding HasMessagesOrErrors, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel>
+                    <TextBlock Foreground="#d4d4d4" Padding="0" Visibility="{Binding HasMessages, Converter={StaticResource BooleanToVisibilityConverter}}" Text="{Binding Messages}" TextWrapping="Wrap"/>
+                    <TextBlock Foreground="#ab0909" Padding="0" Visibility="{Binding HasErrorMessages, Converter={StaticResource BooleanToVisibilityConverter}}" Text="{Binding ErrorMessages}" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
             <!-- stage 1: -->
             <StackPanel Visibility="{Binding ContinueToDownloadStage, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <CheckBox Foreground="#d4d4d4" Margin="0" IsChecked="{Binding AutoSyncServerCheckBox}">Always trust IP/name</CheckBox>

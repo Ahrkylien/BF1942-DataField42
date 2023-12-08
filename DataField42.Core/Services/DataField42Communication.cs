@@ -1,9 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Net;
 using System.Net.Sockets;
-
+using System;
 
 /// <summary>
 /// Communication tcp protocol layer between client and server.
@@ -31,61 +30,68 @@ public class DataField42Communication : TcpCommunicationBase
         _sessionIsUsed = false;
     }
 
-    public void ReceiveFile(ulong length, FileStream fileStream, DownloadBackgroundWorker backgroundWorker)
+    public async Task ReceiveFile(ulong length, FileStream fileStream, DownloadBackgroundWorker backgroundWorker, CancellationToken cancellationToken)
     {
-        ReceiveFile(length, fileStream, new List<DownloadBackgroundWorker>() { backgroundWorker });
+        await ReceiveFile(length, fileStream, new List<DownloadBackgroundWorker>() { backgroundWorker }, cancellationToken);
     }
 
-    public void ReceiveFile(ulong length, FileStream fileStream, IEnumerable<DownloadBackgroundWorker> backgroundWorkers, int millisecondsWithoutReceivingBeforeTimout = 1000)
+    public async Task ReceiveFile(
+        ulong length,
+        FileStream fileStream,
+        IEnumerable<DownloadBackgroundWorker> backgroundWorkers,
+        CancellationToken cancellationToken,
+        int millisecondsWithoutReceivingBeforeTimeout = 1000)
     {
-
-        ulong totalReceivedLenth = 0;
-
+        ulong totalReceivedLength = 0;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
 
-        while (totalReceivedLenth != length)
+        while (totalReceivedLength != length)
         {
-            (var receivedLenth, var data) = tryReceiveBytes(4096);
-            fileStream.Write(data, 0, receivedLenth);
-            totalReceivedLenth += (ulong)receivedLenth;
-            foreach (var backgroundWorker in backgroundWorkers)
-                backgroundWorker.ReportProgressAmount((ulong)receivedLenth);
+            cancellationToken.ThrowIfCancellationRequested();
 
-            if (receivedLenth != 0)
+            (var receivedLength, var data) = await tryReceiveBytes(4096, cancellationToken);
+            fileStream.Write(data, 0, receivedLength);
+            totalReceivedLength += (ulong)receivedLength;
+
+            foreach (var backgroundWorker in backgroundWorkers)
+                backgroundWorker.ReportProgressAmount((ulong)receivedLength);
+
+            if (receivedLength != 0)
                 stopWatch.Restart();
 
-            if (stopWatch.ElapsedMilliseconds > millisecondsWithoutReceivingBeforeTimout)
-                throw new TimeoutException($"Can't receive data in time ({millisecondsWithoutReceivingBeforeTimout} ms)");
+            if (stopWatch.ElapsedMilliseconds > millisecondsWithoutReceivingBeforeTimeout)
+                throw new TimeoutException($"Can't receive data in time ({millisecondsWithoutReceivingBeforeTimeout} ms)");
         }
     }
 
-    public string ReceiveString() => receiveString(receiveDataLength());
 
-    public int ReceiveInt() => int.Parse(receiveString(receiveDataLength()));
+    public async Task<string> ReceiveString() => await receiveString(await receiveDataLength());
 
-    public ulong ReceiveUlong() => ulong.Parse(receiveString(receiveDataLength()));
+    public async Task<int> ReceiveInt() => int.Parse(await receiveString(await receiveDataLength()));
 
-    public IEnumerable<string> ReceiveSpaceSeperatedString(uint expectNumber)
+    public async Task<ulong> ReceiveUlong() => ulong.Parse(await receiveString(await receiveDataLength()));
+
+    public async Task<IEnumerable<string>> ReceiveSpaceSeperatedString(uint expectNumber)
     {
-        var lengthToReceive = receiveDataLength();
-        var list = receiveString(lengthToReceive).Split(' ').ToList();
+        var lengthToReceive = await receiveDataLength();
+        var list = (await receiveString(lengthToReceive)).Split(' ').ToList();
         if (list.Count != expectNumber)
             throw new Exception($"Expected number spaces in space seperated string is {list.Count} while it should be {expectNumber}");
         return list;
     }
 
-    public FileInfo ReceiveFileInfo() => new(ReceiveSpaceSeperatedString(5));
+    public async Task<FileInfo> ReceiveFileInfo() => new(await ReceiveSpaceSeperatedString(5));
 
     [return: NotNull]
-    public List<FileInfo> ReceiveFileInfos()
+    public async Task<List<FileInfo>> ReceiveFileInfos(CancellationToken cancellationToken = default)
     {
         var fileInfos = new List<FileInfo>();
-        var lengthToReceive = receiveDataLength();
+        var lengthToReceive = await receiveDataLength(cancellationToken);
         if (lengthToReceive == 0)
             return fileInfos;
         
-        var fileInfoSrings = receiveString(lengthToReceive).Split('\n');
+        var fileInfoSrings = (await receiveString(lengthToReceive, cancellationToken)).Split('\n');
         foreach (var fileInfoString in fileInfoSrings)
         {
             var fileInfoStringItems = fileInfoString.Split(' ').ToList();
@@ -142,25 +148,25 @@ public class TcpCommunicationBase : IDisposable
         _connect();
     }
 
-    protected (int, byte[]) tryReceiveBytes(int length)
+    protected async Task<(int, byte[])> tryReceiveBytes(int length, CancellationToken cancellationToken)
     {
-        var data = new byte[length];
-        int numberOfBytes = _stream.Read(data, 0, length);
-        return (numberOfBytes, data);
+        var buffer = new byte[length];
+        var numberOfBytes = await _stream.ReadAsync(new Memory<byte>(buffer), cancellationToken);
+        return (numberOfBytes, buffer);
     }
 
-    protected byte[] receiveBytes(int length, int millisecondsWithoutReceivingBeforeTimout = 1000)
+    protected async Task<byte[]> receiveBytes(int length, CancellationToken cancellationToken = default, int millisecondsWithoutReceivingBeforeTimout = 1000)
     {
         // TODO: remove double timout (custom and buildin)
         int bytesRead = 0;
-        byte[] buffer = new byte[length];
+        var buffer = new byte[length];
 
         var stopWatch = new Stopwatch();
         stopWatch.Start();
 
         while (bytesRead < length)
         {
-            int bytesReadThisIteration = _stream.Read(buffer, bytesRead, length - bytesRead);
+            int bytesReadThisIteration = await _stream.ReadAsync(buffer.AsMemory(bytesRead, length - bytesRead));
 
             bytesRead += bytesReadThisIteration;
 
@@ -173,22 +179,15 @@ public class TcpCommunicationBase : IDisposable
         return buffer;
     }
 
-    protected int receiveDataLength()
+    protected async Task<int> receiveDataLength(CancellationToken cancellationToken = default)
     {
-        var data = receiveBytes(4);
+        var data = await receiveBytes(4, cancellationToken);
         return BitConverter.ToInt32(data);
     }
 
-
-    protected int receiveByt()
+    protected async Task<string> receiveString(int length, CancellationToken cancellationToken = default)
     {
-        var data = receiveBytes(4);
-        return BitConverter.ToInt32(data);
-    }
-
-    protected string receiveString(int length)
-    {
-        var data = receiveBytes(length);
+        var data = await receiveBytes(length, cancellationToken);
         return System.Text.Encoding.ASCII.GetString(data, 0, length);
     }
 
