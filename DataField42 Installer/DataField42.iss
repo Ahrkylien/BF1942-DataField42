@@ -15,6 +15,7 @@ SolidCompression=yes
 UninstallFilesDir={app}\{#AppId}
 DirExistsWarning=no  
 AppendDefaultDirName=no
+OutputDir=bin
 OutputBaseFilename={#AppId} v{#AppVersion} Installer
 
 [Files]
@@ -135,20 +136,21 @@ end;
 
 function GetIsUpgrade: Boolean;
 var
-  setupReg: string;
+  SetupReg: string;
 begin
-  setupReg := 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#AppId}_is1';
-  Result := RegKeyExists(HKEY_LOCAL_MACHINE, setupReg) or RegKeyExists(HKEY_CURRENT_USER, setupReg);
+  SetupReg := 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#AppId}_is1';
+  Result := RegKeyExists(HKEY_LOCAL_MACHINE, SetupReg) or RegKeyExists(HKEY_CURRENT_USER, SetupReg);
 end;
 
 
-function PrepareToInstall(var NeedsRestart: Boolean): String;
+function OnDownloadProgress(const Url, FileName: String; const Progress, ProgressMax: Int64): Boolean;
 begin
-  Result := '';
-  if RuntimeDownloaded then
-    Result := InstallDotNetRuntime();
+  if Progress = ProgressMax then
+    Log(Format('Successfully downloaded file to {tmp}: %s', [FileName]));
+  Result := True;
 end;
 
+(* Event Functions: *)
 
 function InitializeSetup(): Boolean;
 begin
@@ -161,29 +163,23 @@ begin
 end;
 
 
-function OnDownloadProgress(const Url, FileName: String; const Progress, ProgressMax: Int64): Boolean;
-begin
-  if Progress = ProgressMax then
-    Log(Format('Successfully downloaded file to {tmp}: %s', [FileName]));
-  Result := True;
-end;
-
-
 procedure InitializeWizard;
 begin
   DownloadPage := CreateDownloadPage(SetupMessage(msgWizardPreparing), SetupMessage(msgPreparingDesc), @OnDownloadProgress);
 end;
 
 
-function NextButtonClick(CurPageID: Integer): Boolean;
+function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
-  Result := True;
-  if (CurPageID = wpReady) and not DotNetRuntimeAlreadyExists('Microsoft.WindowsDesktop.App 6.0.') then begin
+  if not DotNetRuntimeAlreadyExists('Microsoft.WindowsDesktop.App 6.0.') then begin
     RuntimeDownloaded := DownloadDotNetRuntime();
-    if not RuntimeDownloaded then
-      Result := False; // TODO: give warning instead of return false
+    if RuntimeDownloaded then
+      Result := InstallDotNetRuntime()
+    else
+      Result := 'Failed Downloading the .NET runtime';
   end;
 end;
+
 
 function NeedRestart(): Boolean;
 begin
