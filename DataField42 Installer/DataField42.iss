@@ -1,4 +1,4 @@
-#define AppId "DataField42"
+﻿#define AppId "DataField42"
 #define AppVersion "2.0"
 #define DotNetRuntimeIntallerName "DotNetRuntimeInstaller.exe"
 
@@ -8,15 +8,62 @@ AppName={#AppId}
 UninstallDisplayName={#AppId}
 AppVersion={#AppVersion}
 WizardStyle=modern
+ShowLanguageDialog=auto
 DefaultDirName={code:GetBF1942Directory}
-DefaultGroupName={#AppId}
-UninstallDisplayIcon={app}\{#AppId}.exe
-SolidCompression=yes
-UninstallFilesDir={app}\{#AppId}
-DirExistsWarning=no  
+DirExistsWarning=no
 AppendDefaultDirName=no
+DefaultGroupName={code:GetBF1942Group}
+DisableProgramGroupPage=yes
+DisableReadyPage=yes
+SolidCompression=yes
+Compression=lzma2/ultra
+UninstallDisplayIcon={app}\{#AppId}.exe
+UninstallFilesDir={app}\{#AppId}
 OutputDir=bin
 OutputBaseFilename={#AppId} v{#AppVersion} Installer
+
+[Languages]
+Name: "en"; MessagesFile: "compiler:Default.isl"
+Name: "sp"; MessagesFile: "compiler:Languages\Spanish.isl"
+Name: "fr"; MessagesFile: "compiler:Languages\French.isl"
+Name: "it"; MessagesFile: "compiler:Languages\Italian.isl"
+Name: "de"; MessagesFile: "compiler:Languages\German.isl"
+Name: "ru"; MessagesFile: "compiler:Languages\Russian.isl"
+Name: "ja"; MessagesFile: "compiler:Languages\Japanese.isl"
+
+[Messages]
+WizardSelectDir=Select the Battlefield 1942 installation folder
+sp.WizardSelectDir=Selecciona la carpeta de instalación de Battlefield 1942
+fr.WizardSelectDir=Sélectionnez le dossier d'installation de Battlefield 1942
+it.WizardSelectDir=Seleziona la cartella di installazione di Battlefield 1942
+de.WizardSelectDir=Wählen Sie den Installationsordner von Battlefield 1942 aus
+ru.WizardSelectDir=Выберите папку установки Battlefield 1942
+ja.WizardSelectDir=Battlefield 1942 のインストールフォルダを選択してください
+
+SelectDirLabel3=Setup will install [name] into the following folder. This must be the Battlefield 1942 installation folder.
+sp.SelectDirLabel3=La instalación colocará [name] en la siguiente carpeta. Esta debe ser la carpeta de instalación de Battlefield 1942.
+fr.SelectDirLabel3=L'installation placera [name] dans le dossier suivant. Ceci doit être le dossier d'installation de Battlefield 1942.
+it.SelectDirLabel3=L'installazione installerà [name] nella seguente cartella. Questa deve essere la cartella di installazione di Battlefield 1942.
+de.SelectDirLabel3=Die Installation wird [name] in den folgenden Ordner installieren. Dies muss der Installationsordner von Battlefield 1942 sein.
+ru.SelectDirLabel3=Установка разместит [name] в следующей папке. Это должна быть папка установки Battlefield 1942.
+ja.SelectDirLabel3=Setupは[name]を次のフォルダにインストールします。これはBattlefield 1942のインストールフォルダである必要があります。
+
+DiskSpaceMBLabel=The installation process will include setting up the .NET runtime, which is necessary for DataField42 to function properly.
+sp.DiskSpaceMBLabel=El proceso de instalación incluirá la configuración del tiempo de ejecución de .NET, necesario para que DataField42 funcione correctamente.
+fr.DiskSpaceMBLabel=Le processus d'installation inclura la configuration de l'environnement d'exécution .NET, nécessaire au bon fonctionnement de DataField42.
+it.DiskSpaceMBLabel=Il processo di installazione includerà l'installazione dell'ambiente di runtime .NET, necessario per il corretto funzionamento di DataField42.
+de.DiskSpaceMBLabel=Der Installationsprozess umfasst die Einrichtung der .NET-Runtime, die für die ordnungsgemäße Funktion von DataField42 erforderlich ist.
+ru.DiskSpaceMBLabel=Процесс установки будет включать настройку среды выполнения .NET, необходимой для правильной работы DataField42.
+ja.DiskSpaceMBLabel=インストールプロセスでは、DataField42の正常な動作に必要な.NETランタイムの設定が含まれます。
+
+[CustomMessages]
+en.NotValidBF1942Directory=Please select a valid BF1942 directory!
+sp.NotValidBF1942Directory=¡Por favor, selecciona un directorio de BF1942 válido!
+fr.NotValidBF1942Directory=Veuillez sélectionner un répertoire BF1942 valide !
+it.NotValidBF1942Directory=Si prega di selezionare una directory BF1942 valida!
+de.NotValidBF1942Directory=Bitte wählen Sie ein gültiges BF1942-Verzeichnis aus!
+ru.NotValidBF1942Directory=Выберите действительный каталог BF1942, пожалуйста!
+ja.NotValidBF1942Directory=有効なBF1942ディレクトリを選択してください！
 
 [Files]
 Source: ..\DataField42\bin\Publish\{#AppId}.exe; DestDir: {app}
@@ -30,25 +77,47 @@ var
   DownloadPage: TDownloadWizardPage;
   RuntimeDownloaded: Boolean;
 
-  
-function GetBF1942Directory(def: string): string;
+
+function CheckBF1942Directory(DirectoryPath: String): Boolean;
+begin
+  Result := FileExists(DirectoryPath + '\BF1942.exe');
+end;
+
+
+function GetBF1942Directory(def: String): String;
 var
-  sTemp : string;
+  PathFromRegistry : string;
 begin
   Result := ''; // Default path
   
-  if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\EA GAMES\Battlefield 1942', 'GAMEDIR', sTemp) and FileExists(sTemp + '\BF1942.exe') then
-    Result := sTemp
-  else if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Origin\Battlefield 1942', 'GAMEDIR', sTemp) and FileExists(sTemp + '\BF1942.exe') then
-    Result := sTemp
-  else if FileExists(ExpandConstant('{pf32}') + '\EA Games\Battlefield 1942\BF1942.exe') then
+  if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\EA GAMES\Battlefield 1942', 'GAMEDIR', PathFromRegistry) and CheckBF1942Directory(PathFromRegistry) then
+    Result := PathFromRegistry
+  else if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Origin\Battlefield 1942', 'GAMEDIR', PathFromRegistry) and CheckBF1942Directory(PathFromRegistry) then
+    Result := PathFromRegistry
+  else if CheckBF1942Directory(ExpandConstant('{pf32}') + '\EA Games\Battlefield 1942') then
     Result := ExpandConstant('{pf32}') + '\EA Games\Battlefield 1942'
-  else if FileExists(ExpandConstant('{pf64}') + '\EA Games\Battlefield 1942\BF1942.exe') then
+  else if CheckBF1942Directory(ExpandConstant('{pf64}') + '\EA Games\Battlefield 1942') then
     Result := ExpandConstant('{pf64}') + '\EA Games\Battlefield 1942'
-  else if FileExists(ExpandConstant('{pf}') + '\EA Games\Battlefield 1942\BF1942.exe') then // very future proof
+  else if CheckBF1942Directory(ExpandConstant('{pf}') + '\EA Games\Battlefield 1942') then // very future proof
     Result := ExpandConstant('{pf}') + '\EA Games\Battlefield 1942';
 end;
 
+
+function GetBF1942Group(def: String): String;
+var
+sTemp : string;
+begin
+  Result := 'EA Games\Battlefield 1942';
+
+  if DirExists(ExpandConstant('{userprograms}') + '\EA Games\Battlefield 1942') then
+    Result := 'EA Games\Battlefield 1942'
+  else if DirExists(ExpandConstant('{userprograms}') + '\EA Games\Battlefield 1942 HD') then
+    Result := 'EA Games\Battlefield 1942 HD'
+  else if DirExists(ExpandConstant('{userprograms}') + '\EA Games\Battlefield 1942 WWII Anthology HD') then
+    Result := 'EA Games\Battlefield 1942 WWII Anthology HD'
+  else if DirExists(ExpandConstant('{userprograms}') + '\Battlefield 1942') then
+    Result := 'Battlefield 1942'
+end;
 
 function DotNetRuntimeAlreadyExists(DotNetName: string): Boolean;
 var
@@ -166,6 +235,22 @@ end;
 procedure InitializeWizard;
 begin
   DownloadPage := CreateDownloadPage(SetupMessage(msgWizardPreparing), SetupMessage(msgPreparingDesc), @OnDownloadProgress);
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  Result := True
+  if (CurPageID = wpSelectDir) and (not CheckBF1942Directory(WizardDirValue)) then begin
+    MsgBox(ExpandConstant('{cm:NotValidBF1942Directory}'), mbError, MB_OK)
+    Result := False;
+  end;
+end;
+
+
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if CurPageID = wpSelectDir then
+    WizardForm.NextButton.Caption := SetupMessage(msgButtonInstall);
 end;
 
 
