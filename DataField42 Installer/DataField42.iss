@@ -70,6 +70,7 @@ Source: ..\DataField42\bin\Publish\{#AppId}.exe; DestDir: {app}
 
 [Icons]
 Name: {commondesktop}\{#AppId}; Filename: {app}\{#AppId}.exe; WorkingDir: {app}
+Name: {group}\{#AppId}; Filename: {app}\{#AppId}.exe; WorkingDir: {app}
 
 [Code]
 var
