@@ -56,7 +56,7 @@ public partial class MainWindowViewModel : ObservableObject
         if (successfulCommandLineArguments && CommandLineArguments.Identifier == CommandLineArgumentIdentifier.DownloadAndJoinServer)
         {
             GoToPage(Page.Info);
-            GoToSyncMenu(new SyncParameters(CommandLineArguments.Mod, CommandLineArguments.Map, CommandLineArguments.Ip, CommandLineArguments.Port, CommandLineArguments.KeyHash));
+            GoToSyncMenu(new SyncParameters(CommandLineArguments.Mod, CommandLineArguments.Map, CommandLineArguments.Ip, CommandLineArguments.Port, CommandLineArguments.KeyHash, CommandLineArguments.Password));
         }
         else
         {

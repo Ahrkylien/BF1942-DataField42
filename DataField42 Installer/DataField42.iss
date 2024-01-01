@@ -17,6 +17,7 @@ DisableProgramGroupPage=yes
 DisableReadyPage=yes
 SolidCompression=yes
 Compression=lzma2/ultra
+SetupIconFile=../DataField42/logo.ico
 UninstallDisplayIcon={app}\{#AppId}.exe
 UninstallFilesDir={app}\{#AppId}
 OutputDir=bin
