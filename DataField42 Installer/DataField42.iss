@@ -105,11 +105,9 @@ end;
 
 
 function GetBF1942Group(def: String): String;
-var
-sTemp : string;
 begin
   Result := 'EA Games\Battlefield 1942';
-
+  
   if DirExists(ExpandConstant('{userprograms}') + '\EA Games\Battlefield 1942') then
     Result := 'EA Games\Battlefield 1942'
   else if DirExists(ExpandConstant('{userprograms}') + '\EA Games\Battlefield 1942 HD') then
