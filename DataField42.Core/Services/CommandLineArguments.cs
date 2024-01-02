@@ -22,6 +22,8 @@ public static class CommandLineArguments
         {
             if (arguments[1] == "map" || arguments[1] == "mod")
                 Identifier = CommandLineArgumentIdentifier.DownloadAndJoinServer;
+            else if (arguments[1] == "install")
+                Identifier = CommandLineArgumentIdentifier.Install;
             else
                 Identifier = CommandLineArgumentIdentifier.Unknown;
         }
