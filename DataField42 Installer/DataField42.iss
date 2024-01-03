@@ -66,12 +66,24 @@ de.NotValidBF1942Directory=Bitte wählen Sie ein gültiges BF1942-Verzeichnis au
 ru.NotValidBF1942Directory=Выберите действительный каталог BF1942, пожалуйста!
 ja.NotValidBF1942Directory=有効なBF1942ディレクトリを選択してください！
 
+en.Run=Run %1
+sp.Run=Ejecutar %1
+fr.Run=Lancer %1
+it.Run=Esegui %1
+de.Run=%1 starten
+ru.Run=Запустить %1
+ja.Run=%1を実行
+
 [Files]
 Source: ..\DataField42\bin\Publish\{#AppId}.exe; DestDir: {app}
 
 [Icons]
 Name: {commondesktop}\{#AppId}; Filename: {app}\{#AppId}.exe; WorkingDir: {app}
 Name: {group}\{#AppId}; Filename: {app}\{#AppId}.exe; WorkingDir: {app}
+
+[Run]
+Filename: "{app}\{#AppId}.exe"; Parameters: "install"; 
+Filename: "{app}\{#AppId}.exe"; Description: {cm:Run,{#AppId}}; Flags: nowait postinstall 
 
 [Code]
 var
@@ -119,6 +131,7 @@ begin
     Result := 'Battlefield 1942'
 end;
 
+
 function DotNetRuntimeAlreadyExists(DotNetName: string): Boolean;
 var
   Cmd, Args: string;
@@ -135,7 +148,6 @@ begin
   if ExecAsOriginalUser(Cmd, Args, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
     if LoadStringFromFile(FileName, Output) then
       Result := Pos(DotNetName, Output) > 0;
-  Log('DotNetRuntimeAlreadyExists: ' + IntToStr(Integer(Result)));
 end;
 
 
