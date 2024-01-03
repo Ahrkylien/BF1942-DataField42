@@ -1,5 +1,6 @@
 ﻿#define AppId "DataField42"
-#define AppVersion "2.0"
+#define AppExePath "..\DataField42\bin\Publish\" + AppId + ".exe"
+#define AppVersion GetFileVersion(AppExePath)
 #define DotNetRuntimeIntallerName "DotNetRuntimeInstaller.exe"
 
 [Setup]
@@ -75,7 +76,7 @@ ru.Run=Запустить %1
 ja.Run=%1を実行
 
 [Files]
-Source: ..\DataField42\bin\Publish\{#AppId}.exe; DestDir: {app}
+Source: {#AppExePath}; DestDir: {app}
 
 [Icons]
 Name: {commondesktop}\{#AppId}; Filename: {app}\{#AppId}.exe; WorkingDir: {app}
