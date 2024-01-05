@@ -90,7 +90,7 @@
                             <MouseBinding MouseAction="LeftClick" Command="{Binding ClosePopUpCommand}"/>
                         </Border.InputBindings>
                     </Border>
-                    <Grid Margin="100">
+                    <Grid Margin="100, 50">
                         <Border Grid.Row="0" Background="#1b1e2a" BorderBrush="#233050" BorderThickness="2">
                             <Grid>
                                 <Grid.RowDefinitions>

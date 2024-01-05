@@ -39,7 +39,7 @@ public class DownloadManager
         if (_fileInfos.Count > 100) // TODO: check a resonable max
             throw new Exception($"Server wants to sync {_fileInfos.Count} files which is more than 100");
 
-        _downloadDecisionMaker.CheckDownloadRequests(_fileInfos);
+        await _downloadDecisionMaker.CheckDownloadRequests(_fileInfos, cancellationToken);
         return _fileInfos;
     }
 

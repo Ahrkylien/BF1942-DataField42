@@ -9,11 +9,13 @@
         _localFileCacheManager = localFileCacheManager;
     }
 
-    public void CheckDownloadRequests(List<FileInfo> fileInfos)
+    public async Task CheckDownloadRequests(List<FileInfo> fileInfos, CancellationToken cancellationToken)
     {
         List<FileInfo> checkedFileInfos = new();
         foreach (FileInfo fileInfo in fileInfos)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var ignoreSyncScenario = _syncRuleManager.GetIgnoreFileSyncScenario(fileInfo);
             if (CheckIfAlreadyInList(checkedFileInfos, fileInfo)) // TODO: add some warning in UI
                 fileInfo.SyncType = SyncType.None;
@@ -28,6 +30,8 @@
             else
                 fileInfo.SyncType = SyncType.Download;
             checkedFileInfos.Add(fileInfo);
+
+            await Task.Yield();
         }
     }
 

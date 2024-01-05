@@ -22,6 +22,6 @@ public static class FileHelper
     public static void WriteText(string filePath, string text)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(filePath) ?? "");
-        File.AppendAllText(filePath, text);
+        File.WriteAllText(filePath, text);
     }
 }

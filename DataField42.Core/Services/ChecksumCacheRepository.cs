@@ -30,7 +30,6 @@ public class ChecksumRepository
 
     private void SaveRecords()
     {
-        // TODO: create dir if not exists
         FileHelper.WriteText(_filename, serializer.Serialize(_records));
     }
 

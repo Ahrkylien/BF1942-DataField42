@@ -64,6 +64,35 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
     {
         var stageSuccessful = false;
         PostMessage($"Map: {_syncParameters.Map}, Mod: {_syncParameters.Mod}");
+
+        if (_syncParameters.Map == "*")
+        {
+            PostMessage($"Querying server to get current map: {_syncParameters.Ip}:{_syncParameters.Port}");
+            var serverQuery = new Bf1942ServerQuery(_syncParameters.Ip, _syncParameters.Port);
+            try
+            {
+                var queryResult = await serverQuery.Query(2000);
+                var map = queryResult.MapName;
+
+                if (!(map.All(c => char.IsLetterOrDigit(c) || c.Equals('_')) && map.Length >= 1)) // only letters digits and underscores and at least 1 char
+                    throw new ArgumentException($"Server has send an illegal map name: {map}");
+
+                _syncParameters.Map = map;
+            }
+            catch (TimeoutException ex)
+            {
+                PostError($"Server did not respond in time");
+                return;
+            }
+            catch (Exception ex)
+            {
+                PostError(ex.Message);
+                return;
+            }
+            
+            PostMessage($"Map: {_syncParameters.Map}, Mod: {_syncParameters.Mod}");
+        }
+
         // TODO: Try to connect to master and server paralel, but since master is always up it might not be much extra performance
         // Try to connect to master:
         DataField42Communication? communicationWithMaster = null;
@@ -148,7 +177,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
                 ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("DataField42/cache", "DataField42/tmp", "");
                 var downloadDecisionMaker = new DownloadDecisionMaker(_syncRuleManager, localFileCacheManager);
                 _downloadManager = new DownloadManager(_communicationWithServer, downloadDecisionMaker, localFileCacheManager);
-                PostMessage("Server is calculating files..");
+                PostMessage("DataField42 is calculating files..");
                 var fileInfos = await _downloadManager.DownloadFilesRequest(_syncParameters.Mod, _syncParameters.Map, _syncParameters.Ip, _syncParameters.Port, _syncParameters.KeyHash, _cancelationTokenSource.Token);
                 (var hasMod, var hasMap) = _downloadManager.VerifyFileList();
                 var fileInfosOfFilesToDownload = fileInfos.Where(x => x.SyncType == SyncType.Download);
