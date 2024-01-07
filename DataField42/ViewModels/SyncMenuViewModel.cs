@@ -67,12 +67,34 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
 
         if (_syncParameters.Map == "*")
         {
-            PostMessage($"Querying server to get current map: {_syncParameters.Ip}:{_syncParameters.Port}");
-            var serverQuery = new Bf1942ServerQuery(_syncParameters.Ip, _syncParameters.Port);
+            PostMessage($"Querying master server to get query port...");
+            var serverLobby = new Bf1942ServerLobby();
+            try
+            {
+                await serverLobby.GetServerListFromHttpApi();
+            }
+            catch (Exception ex)
+            {
+                PostError($"Can't get server list: {ex.Message}");
+            }
+            await serverLobby.QueryAllServers();
+
+            int port = 23000;
+            foreach (var server in serverLobby.Servers)
+            {
+                if(server.QueryResult != null && server.Ip == _syncParameters.Ip && server.QueryResult.HostPort == _syncParameters.Port)
+                {
+                    port = server.QueryPort;
+                    break;
+                }
+            }
+
+            PostMessage($"Querying server to get current map: {_syncParameters.Ip}:{port}");
+            var serverQuery = new Bf1942ServerQuery(_syncParameters.Ip, port);
             try
             {
                 var queryResult = await serverQuery.Query(2000);
-                var map = queryResult.MapName;
+                var map = queryResult.MapName.Replace(' ', '_');
 
                 if (!(map.All(c => char.IsLetterOrDigit(c) || c.Equals('_')) && map.Length >= 1)) // only letters digits and underscores and at least 1 char
                     throw new ArgumentException($"Server has send an illegal map name: {map}");
@@ -186,11 +208,13 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
 
                 if (!hasMod)
                     PostError($"Server doesn't have the mod: {_syncParameters.Mod}");
-                else if (!hasMap && _syncParameters.Map != "*") // TODO: download map right away (not only mod)
+                else if (!hasMap && _syncParameters.Map != "*")
                     PostError($"Server doesn't have the map: {_syncParameters.Map}");
                 else if (numberOfFilesExpected == 0)
-                    PostMessage("TODO: go to wrap up stage without downoad display");
-                    // EnterReturnToGameStage(joinServer: true);
+                {
+                    PostMessage("All files are already synchronized");
+                    EnterReturnToGameStage(true, _syncRuleManager.IsAutoJoinEnabled());
+                }
                 else
                 {
                     PostMessage($"DataField42 wants to download {numberOfFilesExpected} files which is a total of {_totalSizeExpected.ToReadableFileSize()}, from {_communicationWithServer.DisplayName}");

@@ -37,7 +37,7 @@
             <!-- stage 3: -->
             <StackPanel Visibility="{Binding ReturnToGameStage, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <CheckBox Visibility="{Binding AutoJoinServerCheckboxVisible, Converter={StaticResource BooleanToVisibilityConverter}}" IsChecked="{Binding AutoJoinServerCheckBox}" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4">Always automatically rejoin server</CheckBox>
-                <Button HorizontalAlignment="Left" Margin="0,10,0,0" Width="104" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Command="{Binding ReturnBackToGameCommand}">Back to Game</Button>
+                <Button HorizontalAlignment="Left" Margin="0,10,0,0" Width="104" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Command="{Binding ReturnBackToGameCommand}">Go to Game</Button>
             </StackPanel>
         </StackPanel>
     </Grid>
