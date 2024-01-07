@@ -81,7 +81,7 @@ public partial class ServerViewModel : ObservableObject
     private void Click()
     {
         if (_bf1942Server.QueryResult != null)
-            _mainWindowViewModel.GoToSyncMenu(new SyncParameters(_bf1942Server.QueryResult.Mod, _bf1942Server.QueryResult.MapName.Replace(' ', '_'), _bf1942Server.Ip, DataField42Communication.DefaultPort, "-", ""));
+            _mainWindowViewModel.GoToSyncMenu(new SyncParameters(_bf1942Server.QueryResult.Mod, _bf1942Server.QueryResult.MapName.Replace(' ', '_'), _bf1942Server.Ip, (int)_bf1942Server.QueryResult.HostPort, "-", ""));
         else
             _mainWindowViewModel.DisplayError("Can't sync with server because its not queried.");
     }
