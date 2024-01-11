@@ -119,7 +119,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
         // Try to connect to master:
         DataField42Communication? communicationWithMaster = null;
         UpdateManager? updateManager = null;
-        int masterVersion = 0;
+        Version masterVersion = new Version();
         var connectedToMaster = false;
         try
         {
@@ -162,7 +162,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
         {
             _communicationWithServer = new DataField42Communication(_syncParameters.Ip);
             var serverVersion = await UpdateManager.RequestVersion(_communicationWithServer);
-            if (serverVersion != UpdateManager.Version)
+            if (serverVersion.Major != UpdateManager.Version.Major || serverVersion.Minor != UpdateManager.Version.Minor)
                 throw new Exception($"Server has wrong version running: {serverVersion}");
             connectedToServer = true;
         }

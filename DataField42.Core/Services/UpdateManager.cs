@@ -2,7 +2,7 @@
 
 public class UpdateManager
 {
-    public static int Version { get; } = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.Major ?? 0;
+    public static Version Version { get; } = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
 
     private readonly DataField42Communication _communication;
 
@@ -29,12 +29,12 @@ public class UpdateManager
         ExternalProcess.SwitchTo(UpdaterFileName);
     }
 
-    public async Task<int> RequestVersion() => await RequestVersion(_communication);
+    public async Task<Version> RequestVersion() => await RequestVersion(_communication);
 
-    public static async Task<int> RequestVersion(DataField42Communication communication)
+    public static async Task<Version> RequestVersion(DataField42Communication communication)
     {
         communication.StartSession();
         communication.SendString($"handshake {Version}");
-        return await communication.ReceiveInt();
+        return new Version(await communication.ReceiveString());
     }
 }
