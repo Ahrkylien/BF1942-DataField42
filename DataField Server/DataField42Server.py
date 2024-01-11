@@ -1,11 +1,44 @@
 import socket
 import socketserver
 import os
+import sys
+import subprocess
 import threading
+import select
+import time
 import json
 import google_crc32c
+from datetime import datetime
 
-DataField42Version = 2
+class Version:
+    def __init__(self, version_string):
+        self.version_numbers = [int(num) for num in version_string.split('.')]
+        self.major = self.version_numbers[0]
+        self.minor = self.version_numbers[0]
+        self.patch = self.version_numbers[0]
+
+    def __gt__(self, other):
+        return self.version_numbers > other.version_numbers
+    
+    def __str__(self):
+        return ".".join(str(item) for item in self.version_numbers)
+
+DataField42ServerVersion = Version("2.0.0.0")
+
+def log(level, message):
+    print(f"{datetime.now().isoformat()} [{level}] {message}")
+
+def logError(message):
+    log("Error", message)
+    
+def logWarning(message):
+    log("Warning", message)
+    
+def logInfo(message):
+    log("Info", message)
+    
+def logDebug(message):
+    log("Debug", message)
 
 class ChecksumRepository:
     def __init__(self, filename):
@@ -31,7 +64,7 @@ class ChecksumRepository:
             'lastTimeModified': int(lastTimeModified)
         }
         with self.lock:
-            print(f"Adding Checksum to ChecksumRepository: {checksum}")
+            logInfo(f"Adding Checksum to ChecksumRepository: {checksum}")
             self.records.append(record)
             self.save_records()
 
@@ -51,8 +84,33 @@ class DataField42Communication:
         data = self.socket.recv(length)
         if len(data) == 0:
             raise Exception("socket contains no data to receive")
-        print(f"<< {data}")
+        logDebug(f"<< {data}")
         return data
+    
+    def receiveBytes(self, length, timeout=10):
+        total_data = b""
+        start_time = time.time()
+
+        while len(total_data) < length:
+            ready, _, _ = select.select([self.socket], [], [], timeout)
+
+            if not ready:
+                raise TimeoutError(f"Timeout occurred while waiting to receive {length} bytes")
+
+            data = self.socket.recv(length - len(total_data))
+
+            if not data:
+                raise Exception("Socket closed or no more data to receive")
+
+            total_data += data
+
+            # Update timeout based on elapsed time
+            elapsed_time = time.time() - start_time
+            timeout -= elapsed_time
+            start_time = time.time()
+
+        logDebug(f"<< {total_data}")
+        return total_data
     
     def receiveDataLength(self):
         return int.from_bytes(self.receiveBytes(4), 'little')
@@ -74,14 +132,30 @@ class DataField42Communication:
         
         if prependWithLength:
             message = len(message).to_bytes(4, byteorder = 'little') + message
-            print(f">> {message}")
+            logDebug(f">> {message}")
         else:
-            print(f">> ~file~")
+            logDebug(f">> ~file~")
         
         send = self.socket.sendall(message)
         if awaitAcknowledgement:
             self.awaitAcknowledgement()
         return send
+
+def updateAndRestartScript(newScriptString):
+    with open(sys.argv[0], 'w') as file:
+        file.write(newScriptString)
+    
+    if not restartSystemdService("DataField42Server"):
+        python = sys.executable
+        os.execl(python, python, *sys.argv)
+
+def restartSystemdService(serviceName):
+    try:
+        subprocess.run(["sudo", "systemctl", "restart", serviceName], check=True)
+        return True
+    except Exception as e:
+        logInfo(f"Failed to restart SystemD service '{serviceName}'. Reason: {e}")
+        return False
 
 def smartPathJoin(baseDir, relPath, isDir = False): #append baseDir with relPath
     currentDir = baseDir
@@ -113,14 +187,14 @@ def getChecksum(path):
 
 class MyTCPHandler(socketserver.BaseRequestHandler):
     def handle(self):
-        print(f"#### New Connection: {self.client_address[0]} ####")
+        logInfo(f"#### New Connection: {self.client_address[0]} ####")
         socket = self.request
         communication = DataField42Communication(socket)
         
         arguments = communication.receiveSpaceSeperatedString()
         header = arguments.pop(0)
         
-        print(f"{header} : {arguments}")
+        logInfo(f"{header} : {arguments}")
         
         if header == "handshake" and len(arguments) == 1:
             handshake(communication, *arguments)
@@ -129,10 +203,10 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
             downloadFiles(communication, *arguments)
         else:
             communication.send("unknown identifier")
-        print("####  Connection Closed  ####")
+        logInfo("####  Connection Closed  ####")
 
 def handshake(communication, version):
-    communication.send(DataField42Version, awaitAcknowledgement = False);
+    communication.send(DataField42ServerVersion, awaitAcknowledgement = False);
 
 MOD_BASE_FILES = [
     "contentCrc32.con",
@@ -196,7 +270,7 @@ def getFilesToSync(mapName, modName):
             for relevantModName in allRelevantModNames:
                 modFolder = smartPathJoin(gameDirectory, f"mods/{relevantModName}", True)
                 if modFolder == None:
-                    else: print("no such mod")
+                    logWarning(f"Cant find mod: {relevantModName}")
                     return [] # mod should exist
                 # mod map RFAs:
                 levelsFolder = smartPathJoin(gameDirectory, f"mods/{relevantModName}/Archives/bf1942/levels", True)
@@ -218,8 +292,8 @@ def getFilesToSync(mapName, modName):
                 musicFolder = smartPathJoin(modFolder, "music", True)
                 if musicFolder != None:
                     files += [[relevantModName, os.path.relpath(os.path.join(dp, f), modFolder), os.path.join(dp, f)] for dp, dn, filenames in os.walk(musicFolder) for f in filenames if os.path.splitext(f)[1].lower() == '.bik']
-        else: print("no such mod")
-    else: print("cant find mods folder")
+        logWarning(f"Cant find mod: {modName}")
+    else: logError("Can't find mods folder")
     return files
 
 def downloadFiles(communication, mapName, modName, IP, port, keyhash, keyValuePair = []):
@@ -262,17 +336,57 @@ def downloadFiles(communication, mapName, modName, IP, port, keyhash, keyValuePa
     
     communication.awaitAcknowledgement()
 
+class ConnectionToDataField42Master:
+    def __init__(self):
+        self.socket = None
+        self.communication = None
+        
+    def connect(self):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect(('bf1942.eu', 28901))
+        self.communication = DataField42Communication(self.socket)
+    
+    def sendHeartbeat(self):
+        self.connect()
+        self.communication.send(f"heartbeatServer {DataField42ServerVersion}", awaitAcknowledgement = False)
+        version = self.communication.receiveString()
+        return version
+    
+    def update(self):
+        self.connect()
+        self.communication.send(f"updateServer {DataField42ServerVersion}", awaitAcknowledgement = False)
+        newScript = self.communication.receiveString()
+        updateAndRestartScript(newScript)
+    
 class DataField42Server:
     def __init__(self, gameDirectory=""):
         self.gameDirectory = gameDirectory
     
     def start(self):
-        print("Starting DataField42 server")
+        logInfo("Starting DataField42 server")
+        self.startHeartbeatAndUpdateMonitor()
+        self.startFileServer()
+    
+    def startFileServer(self):
         s = socketserver.ThreadingTCPServer(('0.0.0.0', 28901), MyTCPHandler, False) # Do not automatically bind
         s.allow_reuse_address = True # Prevent 'cannot bind to address' errors on restart
-        s.server_bind()     # Manually bind, to support allow_reuse_address
+        s.server_bind() # Manually bind, to support allow_reuse_address
         s.server_activate() # (see above comment)
         s.serve_forever()
-
+    
+    def startHeartbeatAndUpdateMonitor(self):
+        threading.Thread(target=self.heartbeatAndUpdateMonitorThread).start()
+    
+    def heartbeatAndUpdateMonitorThread(self):
+        connectionToDataField42Master = ConnectionToDataField42Master()
+        while True:
+            try:
+                masterDataField42ServerVersion = connectionToDataField42Master.sendHeartbeat()
+                if Version(masterDataField42ServerVersion) > DataField42ServerVersion:
+                    connectionToDataField42Master.update()
+            except Exception as e:
+                logError(f"Can't send heartbeat to bf1942.eu: {e}")
+            time.sleep(60) 
+    
 dataField42Server = DataField42Server("")
 dataField42Server.start()
