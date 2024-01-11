@@ -80,14 +80,7 @@ class DataField42Communication:
     def __init__(self, socket):
         self.socket = socket
     
-    def receiveBytes(self, length): # need to add loop
-        data = self.socket.recv(length)
-        if len(data) == 0:
-            raise Exception("socket contains no data to receive")
-        logDebug(f"<< {data}")
-        return data
-    
-    def receiveBytes(self, length, timeout=10):
+    def receiveBytes(self, length, timeout=10, log=True):
         total_data = b""
         start_time = time.time()
 
@@ -109,10 +102,13 @@ class DataField42Communication:
             timeout -= elapsed_time
             start_time = time.time()
         
-        if len(total_data) < 400:
+        if log:
             logDebug(f"<< {total_data}")
-        else:
-            logDebug(f"<< ~long string~")
+        return total_data
+    
+    def receiveFile(self, length, timeout=10):
+        total_data = self.receiveBytes(length, log=False)
+        logDebug(f"<< ~file~")
         return total_data
     
     def receiveDataLength(self):
@@ -121,6 +117,9 @@ class DataField42Communication:
     def receiveString(self):
         length = self.receiveDataLength()
         return self.receiveBytes(length).decode('utf-8')
+        
+    def receiveInt(self):
+        return int(self.receiveString())
         
     def receiveSpaceSeperatedString(self):
         return self.receiveString().split()
@@ -144,9 +143,9 @@ class DataField42Communication:
             self.awaitAcknowledgement()
         return send
 
-def updateAndRestartScript(newScriptString):
-    with open(sys.argv[0], 'w') as file:
-        file.write(newScriptString)
+def updateAndRestartScript(newScriptBytes):
+    with open(sys.argv[0], 'wb') as file:
+        file.write(newScriptBytes)
     
     if not restartSystemdService("DataField42Server"):
         pythonPath = sys.executable
@@ -359,7 +358,8 @@ class ConnectionToDataField42Master:
     def update(self):
         self.connect()
         self.communication.send(f"updateServer {DataField42ServerVersion}", awaitAcknowledgement = False)
-        newScript = self.communication.receiveString()
+        fileSize = self.communication.receiveInt()
+        newScript = self.communication.receiveFile(fileSize)
         updateAndRestartScript(newScript)
     
 class DataField42Server:
