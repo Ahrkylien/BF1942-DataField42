@@ -108,8 +108,11 @@ class DataField42Communication:
             elapsed_time = time.time() - start_time
             timeout -= elapsed_time
             start_time = time.time()
-
-        logDebug(f"<< {total_data}")
+        
+        if len() < 400:
+            logDebug(f"<< {total_data}")
+        else:
+            logDebug(f"<< ~long string~")
         return total_data
     
     def receiveDataLength(self):
