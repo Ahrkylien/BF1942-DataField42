@@ -149,8 +149,9 @@ def updateAndRestartScript(newScriptString):
         file.write(newScriptString)
     
     if not restartSystemdService("DataField42Server"):
-        python = sys.executable
-        os.execl(python, python, *sys.argv)
+        pythonPath = sys.executable
+        args = [f"\"{arg}\"" for arg in [pythonPath] + sys.argv]
+        os.execl(pythonPath, *args)
 
 def restartSystemdService(serviceName):
     try:
