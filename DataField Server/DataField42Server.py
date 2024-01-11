@@ -109,7 +109,7 @@ class DataField42Communication:
             timeout -= elapsed_time
             start_time = time.time()
         
-        if len() < 400:
+        if len(total_data) < 400:
             logDebug(f"<< {total_data}")
         else:
             logDebug(f"<< ~long string~")
