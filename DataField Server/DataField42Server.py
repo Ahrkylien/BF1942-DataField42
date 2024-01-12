@@ -23,8 +23,6 @@ class Version:
     def __str__(self):
         return ".".join(str(item) for item in self.version_numbers)
 
-DataField42ServerVersion = Version("2.0.0.0")
-
 def log(level, message):
     print(f"{datetime.now().isoformat()} [{level}] {message}")
 
@@ -39,6 +37,95 @@ def logInfo(message):
     
 def logDebug(message):
     log("Debug", message)
+
+class SyncRuleManager:
+    def __init__(self, rule_file_path):
+        self.rule_file_path = rule_file_path
+        self.ignore_file_sync_rules = []
+        self.parse_rule_file()
+
+    def parse_rule_file(self):
+        lines = []
+        try:
+            with open(self.rule_file_path, 'r') as file:
+                lines = file.readlines()
+        except IOError:
+            pass
+
+        for line in lines:
+            if line.strip().startswith("//"):  # comment
+                continue
+
+            line_parts = line.split(' ')
+
+            if line_parts[0] == "ignore" and len(line_parts) == 5:
+                try:
+                    file_rule = FileRule(line_parts[1], line_parts[2], line_parts[3], line_parts[4])
+                    self.ignore_file_sync_rules.append(file_rule)
+                except Exception as ex:
+                    logWarning(f"Can't parse line: {line} in: {rule_file_path}, Exception: {ex}")
+
+    def get_ignore_file_sync_scenario(self, file_info):
+        for file_rule in self.ignore_file_sync_rules:
+            if file_rule.matches(file_info):
+                return file_rule.ignore_sync_scenario
+        return IgnoreSyncScenarios.Never
+
+class FileRule:
+    def __init__(self, ignore_sync_scenario, file_type, mod, file_name):
+        self.ignore_sync_scenario = IgnoreSyncScenarios[ignore_sync_scenario.lower()]
+        self.file_type = Bf1942FileTypes[file_type.lower()] # will this work??
+        self.mod = mod.lower()
+        self.file_name = file_name.lower()
+
+        if (self.file_type == Bf1942FileTypes.Level or self.file_type == Bf1942FileTypes.Archive) and not self.file_name.endswith(".rfa"):
+            self.file_name += ".rfa"
+        elif (self.file_type == Bf1942FileTypes.Movie or self.file_type == Bf1942FileTypes.Music) and not self.file_name.endswith(".bik"):
+            self.file_name += ".bik"
+        elif self.file_type == Bf1942FileTypes.ModMiscFile:
+            if self.file_name in ["contentcrc32", "init"]:
+                self.file_name += ".con"
+            elif self.file_name == "mod":
+                self.file_name += ".dll"
+            elif self.file_name == "lexiconall":
+                self.file_name += ".dat"
+            elif self.file_name == "serverinfo":
+                self.file_name += ".dds"
+
+    def matches(self, file_info):
+        return (self.mod == "*" or self.mod == file_info.mod.lower()) and \
+               self.file_type == file_info.file_type and \
+               (self.file_name == "*" or self.file_name == file_info.file_name_without_patch_number.lower())
+
+class FileInfo:
+    def __init__(self, file_name, file_type, mod):
+        self.file_name = file_name
+        self.file_type = file_type
+        self.mod = mod
+
+    @property
+    def file_name_without_patch_number(self):
+        if self.file_type == Bf1942FileTypes.Level or self.file_type == Bf1942FileTypes.Archive:
+            file_name_without_extension = os.path.splitext(self.file_name)[0]
+            file_extension = os.path.splitext(self.file_name)[1]
+            match = re.match(f"^([{AllowableChars}]+)(_{{1}})([0-9]{{1,3}})$", file_name_without_extension)
+            return f"{match.group(1)}{file_extension}" if match else self.file_name
+        else:
+            return self.file_name
+
+AllowableChars = "0-9a-zA-Z_-";
+
+class Bf1942FileTypes:
+    NoneType = 0
+    Movie = 1
+    Music = 2
+    ModMiscFile = 3
+    Archive = 4
+    Level = 5
+
+class IgnoreSyncScenarios:
+    Always = 0
+    Never = 2
 
 class ChecksumRepository:
     def __init__(self, filename):
@@ -73,8 +160,6 @@ class ChecksumRepository:
             if record['size'] == int(size) and record['lastTimeModified'] == int(lastTimeModified):
                 return record['checksum']
         return None
-
-checksumRepository = ChecksumRepository("ChecksumRepository.json")
 
 class DataField42Communication:
     def __init__(self, socket):
@@ -211,12 +296,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 def handshake(communication, version):
     communication.send(DataField42ServerVersion, awaitAcknowledgement = False);
 
-MOD_BASE_FILES = [
-    "contentCrc32.con",
-    "init.con",
-    "mod.dll",
-    "lexiconAll.dat",
-    "serverInfo.dds",
+ARCHIVES = [
     "Archives/ai.rfa",
     "Archives/aiMeshes.rfa",
     "Archives/animations.rfa",
@@ -233,6 +313,13 @@ MOD_BASE_FILES = [
     "Archives/texture_001.rfa",
     "Archives/treeMesh.rfa",
     "Archives/bf1942/game.rfa",
+]
+MOD_MISC_FILES = [
+    "contentCrc32.con",
+    "init.con",
+    "mod.dll",
+    "lexiconAll.dat",
+    "serverInfo.dds",
 ]
 
 def getRelavantModNames(initConPath):
@@ -281,23 +368,34 @@ def getFilesToSync(mapName, modName):
                     for filename in os.listdir(levelsFolder):
                         fileInfo = getNameParts(filename)
                         if fileInfo["name"].lower() == mapName.lower() and fileInfo["extension"].lower() == ".rfa":
-                            files.append([relevantModName, "Archives/bf1942/levels/"+filename, os.path.join(levelsFolder, filename)])
+                            files.append([relevantModName, "Archives/bf1942/levels/"+filename, os.path.join(levelsFolder, filename), Bf1942FileTypes.Level])
                 # mod base files:
-                for filePathRelative in MOD_BASE_FILES:
+                for filePathRelative in ARCHIVES:
                     path = smartPathJoin(modFolder, filePathRelative)
                     if path != None:
-                        files.append([relevantModName, filePathRelative, path])
+                        files.append([relevantModName, filePathRelative, path, Bf1942FileTypes.Archive])
+                for filePathRelative in MOD_MISC_FILES:
+                    path = smartPathJoin(modFolder, filePathRelative)
+                    if path != None:
+                        files.append([relevantModName, filePathRelative, path, Bf1942FileTypes.ModMiscFile])
                 # mod movies:
                 moviesFolder = smartPathJoin(modFolder, "movies", True)
                 if moviesFolder != None:
-                    files += [[relevantModName, os.path.relpath(os.path.join(dp, f), modFolder), os.path.join(dp, f)] for dp, dn, filenames in os.walk(moviesFolder) for f in filenames if os.path.splitext(f)[1].lower() == '.bik']
+                    files += [[relevantModName, os.path.relpath(os.path.join(dp, f), modFolder), os.path.join(dp, f), Bf1942FileTypes.Movie] for dp, dn, filenames in os.walk(moviesFolder) for f in filenames if os.path.splitext(f)[1].lower() == '.bik']
                 # mod music:
                 musicFolder = smartPathJoin(modFolder, "music", True)
                 if musicFolder != None:
-                    files += [[relevantModName, os.path.relpath(os.path.join(dp, f), modFolder), os.path.join(dp, f)] for dp, dn, filenames in os.walk(musicFolder) for f in filenames if os.path.splitext(f)[1].lower() == '.bik']
+                    files += [[relevantModName, os.path.relpath(os.path.join(dp, f), modFolder), os.path.join(dp, f), Bf1942FileTypes.Music] for dp, dn, filenames in os.walk(musicFolder) for f in filenames if os.path.splitext(f)[1].lower() == '.bik']
         logWarning(f"Cant find mod: {modName}")
     else: logError("Can't find mods folder")
-    return files
+    
+    filesAfterRulesApplied = []
+    for file in files:
+        fileInfo = FileInfo(os.path.basename(file[1]), file[3], file[0])
+        if syncRuleManager.get_ignore_file_sync_scenario(fileInfo) == IgnoreSyncScenarios.Never:
+            filesAfterRulesApplied.append(file)
+    
+    return filesAfterRulesApplied
 
 def downloadFiles(communication, mapName, modName, IP, port, keyhash, keyValuePair = []):
     files = getFilesToSync(mapName, modName)
@@ -391,6 +489,14 @@ class DataField42Server:
             except Exception as e:
                 logError(f"Can't send heartbeat to bf1942.eu: {e}")
             time.sleep(60) 
-    
+
+
+
+DataField42ServerVersion = Version("2.0.0.0")
+checksumRepository = ChecksumRepository("ChecksumRepository.json")
+syncRuleManager = SyncRuleManager("Synchronization rules.txt")
+
+
+
 dataField42Server = DataField42Server("")
 dataField42Server.start()
