@@ -2,11 +2,13 @@ import socket
 import socketserver
 import os
 import sys
+import re
 import subprocess
 import threading
 import select
 import time
 import json
+from enum import Enum
 import google_crc32c
 from datetime import datetime
 
@@ -63,13 +65,13 @@ class SyncRuleManager:
                     file_rule = FileRule(line_parts[1], line_parts[2], line_parts[3], line_parts[4])
                     self.ignore_file_sync_rules.append(file_rule)
                 except Exception as ex:
-                    logWarning(f"Can't parse line: {line} in: {rule_file_path}, Exception: {ex}")
+                    logWarning(f"Can't parse line: {line} in: {self.rule_file_path}, Exception: {ex}")
 
     def get_ignore_file_sync_scenario(self, file_info):
         for file_rule in self.ignore_file_sync_rules:
             if file_rule.matches(file_info):
                 return file_rule.ignore_sync_scenario
-        return IgnoreSyncScenarios.Never
+        return IgnoreSyncScenarios.never
 
 class FileRule:
     def __init__(self, ignore_sync_scenario, file_type, mod, file_name):
@@ -78,11 +80,11 @@ class FileRule:
         self.mod = mod.lower()
         self.file_name = file_name.lower()
 
-        if (self.file_type == Bf1942FileTypes.Level or self.file_type == Bf1942FileTypes.Archive) and not self.file_name.endswith(".rfa"):
+        if (self.file_type == Bf1942FileTypes.level or self.file_type == Bf1942FileTypes.archive) and not self.file_name.endswith(".rfa"):
             self.file_name += ".rfa"
-        elif (self.file_type == Bf1942FileTypes.Movie or self.file_type == Bf1942FileTypes.Music) and not self.file_name.endswith(".bik"):
+        elif (self.file_type == Bf1942FileTypes.movie or self.file_type == Bf1942FileTypes.music) and not self.file_name.endswith(".bik"):
             self.file_name += ".bik"
-        elif self.file_type == Bf1942FileTypes.ModMiscFile:
+        elif self.file_type == Bf1942FileTypes.modmiscfile:
             if self.file_name in ["contentcrc32", "init"]:
                 self.file_name += ".con"
             elif self.file_name == "mod":
@@ -105,7 +107,7 @@ class FileInfo:
 
     @property
     def file_name_without_patch_number(self):
-        if self.file_type == Bf1942FileTypes.Level or self.file_type == Bf1942FileTypes.Archive:
+        if self.file_type == Bf1942FileTypes.level or self.file_type == Bf1942FileTypes.archive:
             file_name_without_extension = os.path.splitext(self.file_name)[0]
             file_extension = os.path.splitext(self.file_name)[1]
             match = re.match(f"^([{AllowableChars}]+)(_{{1}})([0-9]{{1,3}})$", file_name_without_extension)
@@ -115,17 +117,17 @@ class FileInfo:
 
 AllowableChars = "0-9a-zA-Z_-";
 
-class Bf1942FileTypes:
-    NoneType = 0
-    Movie = 1
-    Music = 2
-    ModMiscFile = 3
-    Archive = 4
-    Level = 5
+class Bf1942FileTypes(Enum):
+    nonetype = 0
+    movie = 1
+    music = 2
+    modmiscfile = 3
+    archive = 4
+    level = 5
 
-class IgnoreSyncScenarios:
-    Always = 0
-    Never = 2
+class IgnoreSyncScenarios(Enum):
+    always = 0
+    never = 1
 
 class ChecksumRepository:
     def __init__(self, filename):
@@ -165,15 +167,18 @@ class DataField42Communication:
     def __init__(self, socket):
         self.socket = socket
     
-    def receiveBytes(self, length, timeout=10, log=True):
+    def receiveBytes(self, length, timeout=None, log=True):
         total_data = b""
         start_time = time.time()
 
         while len(total_data) < length:
-            ready, _, _ = select.select([self.socket], [], [], timeout)
+            if timeout is not None:
+                ready, _, _ = select.select([self.socket], [], [], timeout)
 
-            if not ready:
-                raise TimeoutError(f"Timeout occurred while waiting to receive {length} bytes")
+                if not ready:
+                    raise TimeoutError(f"Timeout occurred while waiting to receive {length} bytes")
+            else:
+                ready, _, _ = select.select([self.socket], [], [])
 
             data = self.socket.recv(length - len(total_data))
 
@@ -184,33 +189,34 @@ class DataField42Communication:
 
             # Update timeout based on elapsed time
             elapsed_time = time.time() - start_time
-            timeout -= elapsed_time
+            if timeout is not None:
+                timeout -= elapsed_time
             start_time = time.time()
-        
+
         if log:
             logDebug(f"<< {total_data}")
         return total_data
     
-    def receiveFile(self, length, timeout=10):
-        total_data = self.receiveBytes(length, log=False)
+    def receiveFile(self, length, timeout=None):
+        total_data = self.receiveBytes(length, timeout, log=False)
         logDebug(f"<< ~file~")
         return total_data
     
-    def receiveDataLength(self):
-        return int.from_bytes(self.receiveBytes(4), 'little')
+    def receiveDataLength(self, timeout=None):
+        return int.from_bytes(self.receiveBytes(4, timeout), 'little')
         
-    def receiveString(self):
-        length = self.receiveDataLength()
-        return self.receiveBytes(length).decode('utf-8')
+    def receiveString(self, timeout=None):
+        length = self.receiveDataLength(timeout)
+        return self.receiveBytes(length, timeout).decode('utf-8')
         
-    def receiveInt(self):
-        return int(self.receiveString())
+    def receiveInt(self, timeout=None):
+        return int(self.receiveString(timeout))
         
-    def receiveSpaceSeperatedString(self):
-        return self.receiveString().split()
+    def receiveSpaceSeperatedString(self, timeout=None):
+        return self.receiveString(timeout).split()
         
-    def awaitAcknowledgement(self):
-        if self.receiveString() != "ok":
+    def awaitAcknowledgement(self, timeout=None):
+        if self.receiveString(timeout) != "ok":
             raise Exception("Acknowledge not received")
         
     def send(self, message, awaitAcknowledgement = True, prependWithLength = True):
@@ -246,7 +252,7 @@ def restartSystemdService(serviceName):
         return False
 
 def smartPathJoin(baseDir, relPath, isDir = False): #append baseDir with relPath
-    currentDir = baseDir
+    currentDir = "." if baseDir == "" else baseDir
     relPathParts = relPath.replace('\\', '/').split('/')
     for i, path_part in enumerate(relPathParts):
         entryToJoin = None
@@ -368,31 +374,31 @@ def getFilesToSync(mapName, modName):
                     for filename in os.listdir(levelsFolder):
                         fileInfo = getNameParts(filename)
                         if fileInfo["name"].lower() == mapName.lower() and fileInfo["extension"].lower() == ".rfa":
-                            files.append([relevantModName, "Archives/bf1942/levels/"+filename, os.path.join(levelsFolder, filename), Bf1942FileTypes.Level])
+                            files.append([relevantModName, "Archives/bf1942/levels/"+filename, os.path.join(levelsFolder, filename), Bf1942FileTypes.level])
                 # mod base files:
                 for filePathRelative in ARCHIVES:
                     path = smartPathJoin(modFolder, filePathRelative)
                     if path != None:
-                        files.append([relevantModName, filePathRelative, path, Bf1942FileTypes.Archive])
+                        files.append([relevantModName, filePathRelative, path, Bf1942FileTypes.archive])
                 for filePathRelative in MOD_MISC_FILES:
                     path = smartPathJoin(modFolder, filePathRelative)
                     if path != None:
-                        files.append([relevantModName, filePathRelative, path, Bf1942FileTypes.ModMiscFile])
+                        files.append([relevantModName, filePathRelative, path, Bf1942FileTypes.modmiscfile])
                 # mod movies:
                 moviesFolder = smartPathJoin(modFolder, "movies", True)
                 if moviesFolder != None:
-                    files += [[relevantModName, os.path.relpath(os.path.join(dp, f), modFolder), os.path.join(dp, f), Bf1942FileTypes.Movie] for dp, dn, filenames in os.walk(moviesFolder) for f in filenames if os.path.splitext(f)[1].lower() == '.bik']
+                    files += [[relevantModName, os.path.relpath(os.path.join(dp, f), modFolder), os.path.join(dp, f), Bf1942FileTypes.movie] for dp, dn, filenames in os.walk(moviesFolder) for f in filenames if os.path.splitext(f)[1].lower() == '.bik']
                 # mod music:
                 musicFolder = smartPathJoin(modFolder, "music", True)
                 if musicFolder != None:
-                    files += [[relevantModName, os.path.relpath(os.path.join(dp, f), modFolder), os.path.join(dp, f), Bf1942FileTypes.Music] for dp, dn, filenames in os.walk(musicFolder) for f in filenames if os.path.splitext(f)[1].lower() == '.bik']
+                    files += [[relevantModName, os.path.relpath(os.path.join(dp, f), modFolder), os.path.join(dp, f), Bf1942FileTypes.music] for dp, dn, filenames in os.walk(musicFolder) for f in filenames if os.path.splitext(f)[1].lower() == '.bik']
         logWarning(f"Cant find mod: {modName}")
     else: logError("Can't find mods folder")
     
     filesAfterRulesApplied = []
     for file in files:
         fileInfo = FileInfo(os.path.basename(file[1]), file[3], file[0])
-        if syncRuleManager.get_ignore_file_sync_scenario(fileInfo) == IgnoreSyncScenarios.Never:
+        if syncRuleManager.get_ignore_file_sync_scenario(fileInfo) == IgnoreSyncScenarios.never:
             filesAfterRulesApplied.append(file)
     
     return filesAfterRulesApplied
@@ -413,7 +419,7 @@ def downloadFiles(communication, mapName, modName, IP, port, keyhash, keyValuePa
     fileInfoStrings = []
     
     for file in files:
-        fileInfoStrings.append(f"{file[0]} \"{file[1]}\" {file[4]} {file[3]} {int(os.path.getmtime(file[2]))}") # mod filePath crc32 size lastModified
+        fileInfoStrings.append(f"{file[0]} \"{file[1]}\" {file[5]} {file[4]} {int(os.path.getmtime(file[2]))}") # mod filePath crc32 size lastModified
     
     communication.send('\n'.join(fileInfoStrings), awaitAcknowledgement = False)
     fileInfoResponseStrings = communication.receiveSpaceSeperatedString()
@@ -426,13 +432,13 @@ def downloadFiles(communication, mapName, modName, IP, port, keyhash, keyValuePa
         if fileInfoResponseString == "yes":
             filesToSend.append(files[i])
     
-    totalSize = sum(file[3] for file in filesToSend)
+    totalSize = sum(file[4] for file in filesToSend)
     communication.send(f"yes {len(filesToSend)} {totalSize}")
     
     for file in filesToSend:
         with open(file[2], "rb") as f:
             fileBytes = f.read()
-        communication.send(f"{file[0]} \"{file[1]}\" {file[4]} {file[3]} {int(os.path.getmtime(file[2]))}") # mod filePath crc32 size lastModified
+        communication.send(f"{file[0]} \"{file[1]}\" {file[5]} {file[4]} {int(os.path.getmtime(file[2]))}") # mod filePath crc32 size lastModified
         communication.send(fileBytes, prependWithLength = False)
     
     communication.awaitAcknowledgement()
