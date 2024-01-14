@@ -23,8 +23,11 @@ public class UpdateManager
         // TODO: check file size
         _communication.SendAcknowledgement();
 
-        using var fileStream = new FileStream(UpdaterFileName, FileMode.Create, FileAccess.Write);
-        await _communication.ReceiveFile(fileSize, fileStream, backgroundWorker, cancellationToken);
+        using (var fileStream = new FileStream(UpdaterFileName, FileMode.Create, FileAccess.Write))
+        {
+            await _communication.ReceiveFile(fileSize, fileStream, backgroundWorker, cancellationToken);
+        }
+        _communication.SendAcknowledgement();
 
         ExternalProcess.SwitchTo(UpdaterFileName);
     }

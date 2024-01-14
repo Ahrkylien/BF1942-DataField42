@@ -138,6 +138,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
         }
 
         // Update client if master is alive and client is behind:
+        var hasCorrectVersion = true;
         try
         {
             if (connectedToMaster && updateManager != null)
@@ -153,82 +154,85 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             PostError($"Failed updating client: {ex.Message}");
-            Environment.Exit(0);
+            hasCorrectVersion = false;
         }
 
-        // Try to connect to server:
-        var connectedToServer = false;
-        try
+        if (hasCorrectVersion)
         {
-            _communicationWithServer = new DataField42Communication(_syncParameters.Ip);
-            var serverVersion = await UpdateManager.RequestVersion(_communicationWithServer);
-            if (serverVersion.Major != UpdateManager.Version.Major || serverVersion.Minor != UpdateManager.Version.Minor)
-                throw new Exception($"Server has wrong version running: {serverVersion}");
-            connectedToServer = true;
-        }
-        catch (TimeoutException)
-        {
-            PostMessage($"Server doesn't have DataField42");
-        }
-        catch (Exception e)
-        {
-            PostError($"Can't connect to server ({_syncParameters.Ip}): {e.Message}");
-        }
-
-        // Check if server has DataField42 otherwise use central db:
-        var readyToDownload = true;
-        if (!connectedToServer)
-        {
-            if (connectedToMaster && communicationWithMaster != null)
-            {
-                _communicationWithServer = communicationWithMaster;
-                PostMessage($"Resolved to central database.");
-            }
-            else
-            {
-                PostError($"And cannot resolve to central database...");
-                readyToDownload = false;
-            }
-        }
-
-        if (readyToDownload && _communicationWithServer != null)
-        {
+            // Try to connect to server:
+            var connectedToServer = false;
             try
             {
-                _syncRuleManager = new SyncRuleManager("DataField42/Synchronization rules.txt");
-                ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("DataField42/cache", "DataField42/tmp", "");
-                var downloadDecisionMaker = new DownloadDecisionMaker(_syncRuleManager, localFileCacheManager);
-                _downloadManager = new DownloadManager(_communicationWithServer, downloadDecisionMaker, localFileCacheManager);
-                PostMessage("DataField42 is calculating files..");
-                var fileInfos = await _downloadManager.DownloadFilesRequest(_syncParameters.Mod, _syncParameters.Map, _syncParameters.Ip, _syncParameters.Port, _syncParameters.KeyHash, _cancelationTokenSource.Token);
-                (var hasMod, var hasMap) = _downloadManager.VerifyFileList();
-                var fileInfosOfFilesToDownload = fileInfos.Where(x => x.SyncType == SyncType.Download);
-                var numberOfFilesExpected = fileInfosOfFilesToDownload.Count();
-                _totalSizeExpected = fileInfosOfFilesToDownload.Sum(x => x.Size);
+                _communicationWithServer = new DataField42Communication(_syncParameters.Ip);
+                var serverVersion = await UpdateManager.RequestVersion(_communicationWithServer);
+                if (serverVersion.Major != UpdateManager.Version.Major || serverVersion.Minor != UpdateManager.Version.Minor)
+                    throw new Exception($"Server has wrong version running: {serverVersion}");
+                connectedToServer = true;
+            }
+            catch (TimeoutException)
+            {
+                PostMessage($"Server doesn't have DataField42");
+            }
+            catch (Exception e)
+            {
+                PostError($"Can't connect to server ({_syncParameters.Ip}): {e.Message}");
+            }
 
-                if (!hasMod)
-                    PostError($"Server doesn't have the mod: {_syncParameters.Mod}");
-                else if (!hasMap && _syncParameters.Map != "*")
-                    PostError($"Server doesn't have the map: {_syncParameters.Map}");
-                else if (numberOfFilesExpected == 0)
+            // Check if server has DataField42 otherwise use central db:
+            var readyToDownload = true;
+            if (!connectedToServer)
+            {
+                if (connectedToMaster && communicationWithMaster != null)
                 {
-                    PostMessage("All files are already synchronized");
-                    stageSuccessful = true;
-                    EnterReturnToGameStage(joinServer: true, _syncRuleManager.IsAutoJoinEnabled());
+                    _communicationWithServer = communicationWithMaster;
+                    PostMessage($"Resolved to central database.");
                 }
                 else
                 {
-                    PostMessage($"DataField42 wants to download {numberOfFilesExpected} files which is a total of {_totalSizeExpected.ToReadableFileSize()}, from {_communicationWithServer.DisplayName}");
-                    stageSuccessful = true;
-                    if (_syncRuleManager.IsAutoSyncEnabled(_communicationWithServer.DisplayName))
-                        Download();
-                    else
-                        ContinueToDownloadStage = true;
+                    PostError($"And cannot resolve to central database...");
+                    readyToDownload = false;
                 }
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+
+            if (readyToDownload && _communicationWithServer != null)
             {
-                PostError($"Error: {ex.Message}");
+                try
+                {
+                    _syncRuleManager = new SyncRuleManager("DataField42/Synchronization rules.txt");
+                    ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("DataField42/cache", "DataField42/tmp", "");
+                    var downloadDecisionMaker = new DownloadDecisionMaker(_syncRuleManager, localFileCacheManager);
+                    _downloadManager = new DownloadManager(_communicationWithServer, downloadDecisionMaker, localFileCacheManager);
+                    PostMessage("DataField42 is calculating files..");
+                    var fileInfos = await _downloadManager.DownloadFilesRequest(_syncParameters.Mod, _syncParameters.Map, _syncParameters.Ip, _syncParameters.Port, _syncParameters.KeyHash, _cancelationTokenSource.Token);
+                    (var hasMod, var hasMap) = _downloadManager.VerifyFileList();
+                    var fileInfosOfFilesToDownload = fileInfos.Where(x => x.SyncType == SyncType.Download);
+                    var numberOfFilesExpected = fileInfosOfFilesToDownload.Count();
+                    _totalSizeExpected = fileInfosOfFilesToDownload.Sum(x => x.Size);
+
+                    if (!hasMod)
+                        PostError($"Server doesn't have the mod: {_syncParameters.Mod}");
+                    else if (!hasMap && _syncParameters.Map != "*")
+                        PostError($"Server doesn't have the map: {_syncParameters.Map}");
+                    else if (numberOfFilesExpected == 0)
+                    {
+                        PostMessage("All files are already synchronized");
+                        stageSuccessful = true;
+                        EnterReturnToGameStage(joinServer: true, _syncRuleManager.IsAutoJoinEnabled());
+                    }
+                    else
+                    {
+                        PostMessage($"DataField42 wants to download {numberOfFilesExpected} files which is a total of {_totalSizeExpected.ToReadableFileSize()}, from {_communicationWithServer.DisplayName}");
+                        stageSuccessful = true;
+                        if (_syncRuleManager.IsAutoSyncEnabled(_communicationWithServer.DisplayName))
+                            Download();
+                        else
+                            ContinueToDownloadStage = true;
+                    }
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    PostError($"Error: {ex.Message}");
+                }
             }
         }
 

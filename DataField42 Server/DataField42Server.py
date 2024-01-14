@@ -233,6 +233,9 @@ class DataField42Communication:
         if awaitAcknowledgement:
             self.awaitAcknowledgement()
         return send
+        
+    def sendAcknowledgement(self):
+        self.send("ok", awaitAcknowledgement = False)
 
 def updateAndRestartScript(newScriptBytes):
     with open(sys.argv[0], 'wb') as file:
@@ -464,6 +467,7 @@ class ConnectionToDataField42Master:
         self.communication.send(f"updateServer {DataField42ServerVersion}", awaitAcknowledgement = False)
         fileSize = self.communication.receiveInt()
         newScript = self.communication.receiveFile(fileSize)
+        self.sendAcknowledgement()
         updateAndRestartScript(newScript)
     
 class DataField42Server:
