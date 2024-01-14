@@ -213,7 +213,8 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
                 else if (numberOfFilesExpected == 0)
                 {
                     PostMessage("All files are already synchronized");
-                    EnterReturnToGameStage(true, _syncRuleManager.IsAutoJoinEnabled());
+                    stageSuccessful = true;
+                    EnterReturnToGameStage(joinServer: true, _syncRuleManager.IsAutoJoinEnabled());
                 }
                 else
                 {
