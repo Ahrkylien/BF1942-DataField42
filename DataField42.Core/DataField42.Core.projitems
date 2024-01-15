@@ -35,7 +35,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Interfaces\ISyncRuleManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\LocalFileCacheManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\SyncRuleManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Enums\SyncScenarios.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Enums\IgnoreSyncScenarios.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\UpdateManager.cs" />
   </ItemGroup>
   <ItemGroup>

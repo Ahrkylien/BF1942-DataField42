@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Windows.Shapes;
 
 public class SyncRuleManager : ISyncRuleManager
 {
@@ -17,6 +18,9 @@ public class SyncRuleManager : ISyncRuleManager
     /// Parses the rule file while swallowing parsing errors
     /// </summary>
     private void _parseRuleFile() {
+        if (!File.Exists(_ruleFilePath))
+            FileHelper.WriteText(_ruleFilePath, "ignore Always ModMiscFile * mod.dll");
+        
         string[] lines = Array.Empty<string>();
         try
         {

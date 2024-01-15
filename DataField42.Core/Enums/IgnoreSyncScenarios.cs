@@ -1,15 +1,8 @@
-﻿public enum SyncScenarios
+﻿public enum IgnoreSyncScenarios
 {
-    Always,
     /// <summary>
-    /// This scenario is when no singe version of that file is in the game dir
+    /// In this scenario the file(s) will always be synced.
     /// </summary>
-    NoFileYet,
-    Never,
-}
-
-public enum IgnoreSyncScenarios
-{
     Always,
     /// <summary>
     /// This scenario is when there is already (another) version of that file in the game dir
