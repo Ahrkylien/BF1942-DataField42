@@ -1,5 +1,5 @@
 # BF1942 DataField42
-A Battlefield 1942 tool for automatic map/mod downloads.\
+A Battlefield 1942 tool for automatic map/mod downloads.
 ## Features:
 - Download maps and mods seamlessly from the central database or the server you're joining, eliminating the "MAP NOT FOUND" pop-up message.
 - Utilize an extra Desktop application with its own game server lobby for a convenient server joining experience while synchronizing files with the selected server.
@@ -22,4 +22,4 @@ Some Folder/
 
 The only dependency that you need to manually download is google_crc32c:\
 pip3 install google-crc32c\
-https://pypi.org/project/google-crc32c/\
+https://pypi.org/project/google-crc32c/
