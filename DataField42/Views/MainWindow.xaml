@@ -1,0 +1,114 @@
+﻿<Window x:Class="DataField42.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:DataField42="clr-namespace:DataField42"
+        xmlns:ViewModels="clr-namespace:DataField42.ViewModels"
+        xmlns:Views="clr-namespace:DataField42.Views"
+        mc:Ignorable="d"
+        Title="DataField42"
+        Height="450" Width="800"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="SingleBorderWindow"
+        Background="Transparent"
+        >
+    <Window.DataContext>
+        <ViewModels:MainWindowViewModel />
+    </Window.DataContext>
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome     
+        CaptionHeight="0"  
+        CornerRadius ="0"
+        ResizeBorderThickness="4"
+        GlassFrameThickness="0">
+        </WindowChrome>
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type ViewModels:ServerListViewModel}">
+            <Views:ServerList />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type ViewModels:InfoViewModel}">
+            <Views:Info />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type ViewModels:SyncMenuViewModel}">
+            <Views:SyncMenu />
+        </DataTemplate>
+    </Window.Resources>
+
+
+
+    <Border CornerRadius="0" BorderBrush="#233050" BorderThickness="2" Padding="0" Background="#090b12">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <DockPanel Grid.Row="0" Height="50" MouseLeftButtonDown="ControlBar_MouseLeftButtonDown" MouseEnter="ControlBar_MouseEnter">
+                <Button Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Background="#c33c3c" BorderThickness="2" BorderBrush="#c33c3c" Foreground="#d4d4d4" Click="CloseButton_Click">X</Button>
+                <Button Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Click="MaximizeButton_Click">[ ]</Button>
+                <Button Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Click="MinimizeButton_Click">-</Button>
+                <Label Margin="120,0,0,0" Height="30" Foreground="#d4d4d4" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="15">DataField42</Label>
+            </DockPanel>
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Visibility="Visible" CornerRadius="0" BorderBrush="#233050" BorderThickness="0,0,2,0" Padding="0" Background="#090b12">
+                    <StackPanel Width="115" Margin="0,2,0,0">
+                        <Button Margin="0,10,0,0" Width="90" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Command="{Binding GoToPageCommand}" CommandParameter="{x:Static DataField42:Page.ServerList}">Servers</Button>
+                        <Button Margin="0,10,0,0" Width="90" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Command="{Binding GoToPageCommand}" CommandParameter="{x:Static DataField42:Page.Info}">Info</Button>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="1" Background="#0a1225" BorderBrush="#233050" BorderThickness="0,2,0,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" Visibility="{Binding HasMessagesOrErrors, Converter={StaticResource BooleanToVisibilityConverter}}" Background="#090b12" BorderBrush="#233050" BorderThickness="2" Padding="10" Margin="10,10,10,0">
+                            <StackPanel>
+                                <TextBlock Foreground="#d4d4d4" Padding="0" Visibility="{Binding HasMessages, Converter={StaticResource BooleanToVisibilityConverter}}" Text="{Binding Messages}" TextWrapping="Wrap"/>
+                                <TextBlock Foreground="#ab0909" Padding="0" Visibility="{Binding HasErrorMessages, Converter={StaticResource BooleanToVisibilityConverter}}" Text="{Binding ErrorMessages}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                        <ScrollViewer Grid.Row="1" x:Name="centralControl" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Hidden">
+                            <Grid Background="#0a1225" MaxWidth="{Binding ElementName=centralControl, Path=ActualWidth}">
+                                <Border Grid.Row="0" Background="#090b12" BorderBrush="#233050" BorderThickness="2" Padding="10" Margin="10">
+                                    <ContentControl Content="{Binding CurrentPageViewModel}" />
+                                </Border>
+                            </Grid>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+                <Grid Grid.Column="0" Grid.ColumnSpan="2" Visibility="{Binding ShowPopup, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border Background="#090b12" Opacity=".6">
+                        <Border.InputBindings>
+                            <MouseBinding MouseAction="LeftClick" Command="{Binding ClosePopUpCommand}"/>
+                        </Border.InputBindings>
+                    </Border>
+                    <Grid Margin="100, 50">
+                        <Border Grid.Row="0" Background="#1b1e2a" BorderBrush="#233050" BorderThickness="2">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <DockPanel Grid.Row="0" Height="32" Background="#233050">
+                                    <Button Margin="0,0,0,2" DockPanel.Dock="Right" Width="30" Height="30" Background="#c33c3c" BorderThickness="2" BorderBrush="#c33c3c" Foreground="#d4d4d4" Command="{Binding ClosePopUpCommand}">X</Button>
+                                    <Label Margin="30,0,0,0" Height="30" Foreground="#d4d4d4" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="15">File Synchronization</Label>
+                                </DockPanel>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                    <ContentControl Content="{Binding CurrentPopUpViewModel}" Margin="10" />
+                                </ScrollViewer>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
