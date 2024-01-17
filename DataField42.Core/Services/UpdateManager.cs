@@ -29,7 +29,7 @@ public class UpdateManager
         }
         _communication.SendAcknowledgement();
 
-        ExternalProcess.SwitchTo(UpdaterFileName);
+        ExternalProcess.SwitchTo(UpdaterFileName, arguments: string.Join(" ", Environment.GetCommandLineArgs()[1..]));
     }
 
     public async Task<Version> RequestVersion() => await RequestVersion(_communication);

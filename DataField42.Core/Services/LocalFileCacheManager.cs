@@ -122,7 +122,8 @@ public class LocalFileCacheManager : ILocalFileCacheManager
             }
             else
             {
-                if (!(fileInfoGroup.FileInfos[0].SyncType == SyncType.LocalFile)) {
+                if (fileInfoGroup.FileInfos[0].SyncType == SyncType.LocalFileCache || fileInfoGroup.FileInfos[0].SyncType == SyncType.Download)
+                {
                     var filePath = GetGameDirectoryFilePath(fileInfoGroup.FileInfos[0]);
                     if (File.Exists(filePath))
                     {
