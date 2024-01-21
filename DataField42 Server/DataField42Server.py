@@ -491,7 +491,7 @@ def get_files_to_sync(map_name: str, mod_name: str) -> list[list[str]]:
 
     files_after_rules_applied = [file for file in files
                         if sync_rule_manager.get_ignore_file_sync_scenario(FileInfo(os.path.basename(file[1]), file[3], file[0]))
-                        != IgnoreSyncScenarios.never]
+                        == IgnoreSyncScenarios.never]
 
     return files_after_rules_applied
 
