@@ -13,6 +13,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)CheckSums.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DownloadBackgroundWorker.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\EventHandlers.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)helpers\Md5.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)helpers\Registry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Models\Bf1942Server.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\Bf1942Encoding.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\Bf1942ServerLobby.cs" />

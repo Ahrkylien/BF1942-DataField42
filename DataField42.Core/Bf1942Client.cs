@@ -1,10 +1,11 @@
 ﻿using System.IO;
+using System.Text;
 
 public static class Bf1942Client
 {
-    public const string path = "BF1942.exe";
+    public const string Path = "BF1942.exe";
 
-    public static void Start(string? modId = null, string? ipPort = null, string? password = null, string path = path)
+    public static void Start(string? modId = null, string? ipPort = null, string? password = null, string path = Path)
     {
         string arguments = " +restart 1"; // is space required?
         if (modId != null) 
@@ -31,12 +32,35 @@ public static class Bf1942Client
 
         try
         {
-            using var clientExe = new FileStream(path, FileMode.Open, FileAccess.ReadWrite);
+            using var clientExe = new FileStream(Path, FileMode.Open, FileAccess.ReadWrite);
             foreach (var patch in patches)
             {
                 clientExe.Seek(patch.Item1, SeekOrigin.Begin);
                 clientExe.Write(patch.Item2, 0, patch.Item2.Length);
             }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Failed Patching BF1942.exe: " + ex.Message, ex);
+        }
+    }
+
+    public static string GetKeyRegistryPath()
+    {
+        var bytes = Read(0x4C52D0, 100);
+        int nullIndex = Array.IndexOf(bytes, (byte)0x00);
+        return Encoding.UTF8.GetString(bytes[..nullIndex]);
+    }
+
+    private static byte[] Read(int offset, int length)
+    {
+        try
+        {
+            var buffer = new byte[length];
+            using var clientExe = new FileStream(Path, FileMode.Open, FileAccess.Read);
+            clientExe.Seek(offset, SeekOrigin.Begin);
+            clientExe.Read(buffer, 0, length);
+            return buffer;
         }
         catch (Exception ex)
         {

@@ -1,5 +1,4 @@
-﻿using Microsoft.Win32;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 public static class CommandLineArguments
 {
@@ -56,33 +55,12 @@ public static class CommandLineArguments
 
 
         KeyRegisterPath = keyRegisterPath;
-        Key = ReadRegistryKey(KeyRegisterPath);
-        KeyHash = CreateMd5String(Key);
+        Key = Registry.ReadKey(KeyRegisterPath);
+        KeyHash = Md5.Hash(Key);
         Ip = ipPort.Split(':')[0];
         Port = int.Parse(ipPort.Split(':')[1]);
         Password = password;
         Map = map;
         Mod = mod;
-    }
-
-    private static string ReadRegistryKey(string subKey)
-    {
-#pragma warning disable CA1416 // Validate platform compatibility
-        using var key = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32).OpenSubKey(subKey, false);
-        string keyValue = key?.GetValue(null)?.ToString() ?? "";
-        if (string.IsNullOrWhiteSpace(keyValue))
-            throw new Exception($"Cant find key at: {subKey}, value: {keyValue}");
-        return keyValue;
-#pragma warning restore CA1416 // Validate platform compatibility
-    }
-
-    private static string CreateMd5String(string inputString)
-    {
-        var inputBytes = System.Text.Encoding.ASCII.GetBytes(inputString);
-        var hashBytes = System.Security.Cryptography.MD5.Create().ComputeHash(inputBytes);
-        var hashString = Convert.ToHexString(hashBytes);
-        if (hashString.Length != 32)
-            throw new Exception($"MD5 calcuation of {inputString} gave incorrect length: {hashBytes}");
-        return hashString;
     }
 }
