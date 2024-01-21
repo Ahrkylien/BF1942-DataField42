@@ -58,7 +58,7 @@ public partial class MainWindowViewModel : ObservableObject
             }
             communication.SendAcknowledgement();
 
-            ExternalProcess.SwitchTo(clientExeName, arguments: string.Join(" ", Environment.GetCommandLineArgs()[1..]));
+            ExternalProcess.SwitchTo(clientExeName, arguments: CommandLineArguments.RawString);
         }
         catch (Exception ex)
         {

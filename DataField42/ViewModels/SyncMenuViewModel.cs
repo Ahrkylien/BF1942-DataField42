@@ -148,7 +148,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
                 {
                     PostMessage($"Starting to update to version: {masterVersion}");
                     var backgroundWorker = new DownloadBackgroundWorker();
-                    await updateManager.Update(backgroundWorker, _cancelationTokenSource.Token);
+                    await updateManager.Update(backgroundWorker, _cancelationTokenSource.Token, _syncParameters.ToString());
                 }
             }
         }

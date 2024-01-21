@@ -13,7 +13,7 @@ public class UpdateManager
         _communication = communication;
     }
 
-    public async Task Update(DownloadBackgroundWorker backgroundWorker, CancellationToken cancellationToken)
+    public async Task Update(DownloadBackgroundWorker backgroundWorker, CancellationToken cancellationToken, string restartArguments)
     {
         _communication.StartSession();
         _communication.SendString($"update {Version}");
@@ -29,7 +29,7 @@ public class UpdateManager
         }
         _communication.SendAcknowledgement();
 
-        ExternalProcess.SwitchTo(UpdaterFileName, arguments: string.Join(" ", Environment.GetCommandLineArgs()[1..]));
+        ExternalProcess.SwitchTo(UpdaterFileName, arguments: restartArguments);
     }
 
     public async Task<Version> RequestVersion() => await RequestVersion(_communication);
