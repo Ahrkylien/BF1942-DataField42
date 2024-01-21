@@ -525,7 +525,7 @@ def download_files(communication: DataField42Communication, map_name: str, mod_n
         if file_info_response_string == "yes":
             files_to_send.append(files[i])
 
-    total_size = sum(file[4] for file in files_to_send)
+    total_size = sum(int(file[4]) for file in files_to_send)
     communication.send(f"yes {len(files_to_send)} {total_size}")
 
     for file in files_to_send:
