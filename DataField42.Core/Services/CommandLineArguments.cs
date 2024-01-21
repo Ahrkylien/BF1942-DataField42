@@ -47,7 +47,7 @@ public static class CommandLineArguments
         var map = mapath == "*" ? mapath : mapath[14..^1];
 
         if (mapath != "*")
-            if (!(map.All(c => char.IsLetterOrDigit(c) || c.Equals('_')) && map.Length >= 1)) // only letters digits and underscores and at least 1 char
+            if (!(map.All(c => char.IsLetterOrDigit(c) || c.Equals('_') || c.Equals('-')) && map.Length >= 1)) // only letters digits and underscores and hyphens and at least 1 char
                 throw new ArgumentException($"Server has send an illegal map name: {map}");
 
         if (!(mod.Length >= 1))
