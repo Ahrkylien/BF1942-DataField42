@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using System.Text.RegularExpressions;
 
 public static class CommandLineArguments
 {
@@ -33,12 +34,12 @@ public static class CommandLineArguments
         }
 
         if (arguments.Length == 7 && arguments[1] == "map")
-            _parseMapMod(arguments[2], arguments[3], arguments[4], arguments[5], arguments[6]);
+            ParseMapMod(arguments[2], arguments[3], arguments[4], arguments[5], arguments[6]);
         else if (arguments.Length == 6 && arguments[1] == "mod") // TODO: patch asm to have * for map path for mod
-            _parseMapMod(arguments[2], arguments[3], arguments[4], "*", arguments[5]);
+            ParseMapMod(arguments[2], arguments[3], arguments[4], "*", arguments[5]);
     }
 
-    private static void _parseMapMod(string keyRegisterPath, string ipPort, string password, string mapath, string mod)
+    private static void ParseMapMod(string keyRegisterPath, string ipPort, string password, string mapath, string mod)
     {
         if (mapath != "*")
             if (!(mapath.ToLower().StartsWith("bf1942/levels/") && mapath.EndsWith("/")))
@@ -47,16 +48,16 @@ public static class CommandLineArguments
         var map = mapath == "*" ? mapath : mapath[14..^1];
 
         if (mapath != "*")
-            if (!(map.All(c => char.IsLetterOrDigit(c) || c.Equals('_') || c.Equals('-')) && map.Length >= 1)) // only letters digits and underscores and hyphens and at least 1 char
+            if (!(Regex.IsMatch(map, $"^[{FileInfo.AllowableChars}]*$") && map.Length >= 1)) // only letters digits and underscores and hyphens and at least 1 char
                 throw new ArgumentException($"Server has send an illegal map name: {map}");
 
-        if (!(mod.Length >= 1))
+        if (!(Regex.IsMatch(mod, $"^[{FileInfo.AllowableChars}]*$") && mod.Length >= 1)) // only letters digits and underscores and hyphens and at least 1 char
             throw new ArgumentException($"Server has send an illegal mod name: {mod}");
 
 
         KeyRegisterPath = keyRegisterPath;
-        Key = _readRegistryKey(KeyRegisterPath);
-        KeyHash = _createMd5String(Key);
+        Key = ReadRegistryKey(KeyRegisterPath);
+        KeyHash = CreateMd5String(Key);
         Ip = ipPort.Split(':')[0];
         Port = int.Parse(ipPort.Split(':')[1]);
         Password = password;
@@ -64,7 +65,7 @@ public static class CommandLineArguments
         Mod = mod;
     }
 
-    private static string _readRegistryKey(string subKey)
+    private static string ReadRegistryKey(string subKey)
     {
 #pragma warning disable CA1416 // Validate platform compatibility
         using var key = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32).OpenSubKey(subKey, false);
@@ -75,7 +76,7 @@ public static class CommandLineArguments
 #pragma warning restore CA1416 // Validate platform compatibility
     }
 
-    private static string _createMd5String(string inputString)
+    private static string CreateMd5String(string inputString)
     {
         var inputBytes = System.Text.Encoding.ASCII.GetBytes(inputString);
         var hashBytes = System.Security.Cryptography.MD5.Create().ComputeHash(inputBytes);

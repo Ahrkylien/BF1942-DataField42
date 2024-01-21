@@ -35,7 +35,7 @@ public class FileInfo
         }
     }
 
-    const string AllowableChars = @"0-9a-zA-Z_-";
+    public const string AllowableChars = @"0-9a-zA-Z_-";
 
     public FileInfo(string localFilePath, string gamePath, bool fast = false, bool fromCache = false)
     {
@@ -83,6 +83,9 @@ public class FileInfo
         Checksum = fast ? "" : crc32;
         Size = fast ? 0 : ulong.Parse(size);
         LastModifiedTimestamp = fast ? 0 : ulong.Parse(lastModifiedTimestamp);
+
+        if (!Regex.IsMatch(Mod, $"^[{AllowableChars}]*$"))
+            throw new Exception($"File name contains illegal characters: {Mod}");
 
         //TODO Parse/validate Crc32 & Size & LastModifiedTimestamp, except if fast
 
@@ -143,8 +146,8 @@ public class FileInfo
                 break;
         }
 
-        if(!Regex.IsMatch(fileNameWithoutExtension, $"^[{AllowableChars}]*$"))
-            throw new Exception($"File name contains illegal characters: {fileNameWithoutExtension}");
+        if (!Regex.IsMatch(fileNameWithoutExtension, $"^[{AllowableChars}]*$"))
+            throw new Exception($"File name contains illegal characters: {filePath}");
     }
 
     public override string ToString() => $"{Mod} \"{FilePath}\" {Checksum} {Size.ToReadableFileSize()} {LastModifiedTimestamp}";
