@@ -354,7 +354,7 @@ def get_relevant_mod_names(init_con_path: str) -> list[str]:
     mod_names = []
     with open(init_con_path, 'r') as file:
         for line in file:
-            if line.startswith('game.addModPath'):
+            if line.lower().startswith('game.addmodpath'):
                 _, mod_path = line.split(' ', 1)
                 mod_names.append(mod_path.split("/")[1].strip())
     return mod_names
