@@ -2,6 +2,6 @@
 {
     None,
     Unknown,
-    DownloadAndJoinServer,
+    SyncAndJoinServer,
     Install
 }
