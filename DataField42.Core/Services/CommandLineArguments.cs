@@ -13,7 +13,7 @@ public static class CommandLineArguments
     public static int Port { get; set; }
     public static string Password { get; set; }
 
-    public static string? RawString => string.Join(" ", Environment.GetCommandLineArgs()[1..]);
+    public static string? RawString => Environment.GetCommandLineArgs().Length > 1 ? "\"" + string.Join("\" \"", Environment.GetCommandLineArgs()[1..]) + "\"" : "";
 
     public static void Parse(string[] arguments)
     {

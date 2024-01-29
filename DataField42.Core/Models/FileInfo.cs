@@ -25,7 +25,7 @@ public class FileInfo
             {
                 var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(FileName);
                 var fileExtension = Path.GetExtension(FileName);
-                var match = Regex.Match(fileNameWithoutExtension, $"^([{AllowableChars}]+)(_{{1}})([0-9]{{1,3}})$");
+                var match = Regex.Match(fileNameWithoutExtension, $"^([{AllowableChars}]+)(_{{1}})([0-9]+)$");
                 return match.Success ? $"{match.Groups[1].Value}{fileExtension}" : FileName;
             }
             else
