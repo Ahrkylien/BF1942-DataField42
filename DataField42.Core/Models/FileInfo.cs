@@ -70,13 +70,13 @@ public class FileInfo
 
     public FileInfo(IEnumerable<string> spaceSeperatedString)
     {
-        ParseArguments(spaceSeperatedString.ElementAt(0), spaceSeperatedString.ElementAt(1), spaceSeperatedString.ElementAt(2), spaceSeperatedString.ElementAt(3), spaceSeperatedString.ElementAt(4));
+        ParseArguments(spaceSeperatedString.ElementAt(0), spaceSeperatedString.ElementAt(1), spaceSeperatedString.ElementAt(2), spaceSeperatedString.ElementAt(3), spaceSeperatedString.ElementAt(4), checkSafety: true);
     }
 
     [MemberNotNull(nameof(Mod))]
     [MemberNotNull(nameof(FilePath))]
     [MemberNotNull(nameof(Checksum))]
-    public void ParseArguments(string mod, string filePath, string crc32, string size, string lastModifiedTimestamp, bool fast = false)
+    public void ParseArguments(string mod, string filePath, string crc32, string size, string lastModifiedTimestamp, bool fast = false, bool checkSafety = false)
     {
         Mod = mod;
         FilePath = Regex.Replace(filePath, "^\"|\"$", ""); //remove quotes around string
@@ -84,8 +84,8 @@ public class FileInfo
         Size = fast ? 0 : ulong.Parse(size);
         LastModifiedTimestamp = fast ? 0 : ulong.Parse(lastModifiedTimestamp);
 
-        if (!Regex.IsMatch(Mod, $"^[{AllowableChars}]*$"))
-            throw new Exception($"File name contains illegal characters: {Mod}");
+        if (checkSafety && !Regex.IsMatch(Mod, $"^[{AllowableChars}]*$"))
+            throw new Exception($"Mod name contains illegal characters: {Mod}");
 
         //TODO Parse/validate Crc32 & Size & LastModifiedTimestamp, except if fast
 
@@ -146,7 +146,7 @@ public class FileInfo
                 break;
         }
 
-        if (!Regex.IsMatch(fileNameWithoutExtension, $"^[{AllowableChars}]*$"))
+        if (checkSafety && !Regex.IsMatch(fileNameWithoutExtension, $"^[{AllowableChars}]*$"))
             throw new Exception($"File name contains illegal characters: {filePath}");
     }
 
