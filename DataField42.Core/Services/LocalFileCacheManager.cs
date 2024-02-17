@@ -61,7 +61,12 @@ public class LocalFileCacheManager : ILocalFileCacheManager
         // Double check that the file has this Crc
         // if it makes it too slow another approach should be taken
         if (!(fileInfoLocalFile.Checksum == fileInfo.Checksum && fileInfoLocalFile.Size == fileInfo.Size))
-            throw new Exception($"Unexpected file in file cache: {filePath}, expected crc: {fileInfo.Checksum} & size: {fileInfo.Size}");
+        {
+            // throw new Exception($"Unexpected file in file cache: {filePath}, expected crc: {fileInfo.Checksum} & size: {fileInfo.Size}");
+            // TODO: add this to some warning system instead of swallowing
+            return false;
+        }
+            
         
         return true;
     }
@@ -82,7 +87,7 @@ public class LocalFileCacheManager : ILocalFileCacheManager
     /// Move all files matching the FileInfoGroup.
     /// It might be that there are no files, this is allowed.
     /// </summary>
-    /// <param name="fileInfoGroup"></param>
+    /// <param name="fileInfoGroups"></param>
     public void MoveFilesFromGameToCacheDirectory(IEnumerable<FileInfoGroup> fileInfoGroups)
     {
         foreach (var fileInfoGroup in fileInfoGroups)
@@ -101,11 +106,11 @@ public class LocalFileCacheManager : ILocalFileCacheManager
                     var fileInfoLocalFile = new FileInfo(filePathToCheck, GameDirectory, fast: true);
 
                     // continue to next iteration if file should stay in game dir:
-                    var fileInfoFromGroup = fileInfoGroup.FileInfos.Where(x => x.FilePath.ToLower() == fileInfoLocalFile.FilePath.ToLower());
-                    if (fileInfoFromGroup.Any()) // should be one though
+                    var matchingFileInfosInGroup = fileInfoGroup.FileInfos.Where(x => x.FilePath.ToLower() == fileInfoLocalFile.FilePath.ToLower());
+                    if (matchingFileInfosInGroup.Any()) // should be one though
                     {
-                        fileInfoLocalFile = fileInfoFromGroup.ElementAt(0);
-                        if (fileInfoLocalFile.SyncType == SyncType.LocalFile)
+                        fileInfoLocalFile = matchingFileInfosInGroup.ElementAt(0);
+                        if (!(fileInfoLocalFile.SyncType == SyncType.LocalFileCache || fileInfoLocalFile.SyncType == SyncType.Download))
                             continue;
                     }
                     else // get with checksum for cache:
@@ -127,7 +132,9 @@ public class LocalFileCacheManager : ILocalFileCacheManager
                     var filePath = GetGameDirectoryFilePath(fileInfoGroup.FileInfos[0]);
                     if (File.Exists(filePath))
                     {
-                        var filePathInCache = GetCachedFilePath(fileInfoGroup.FileInfos[0]);
+                        // get info for checksum in cache name:
+                        var fileInfoLocalFile = new FileInfo(filePath, GameDirectory);
+                        var filePathInCache = GetCachedFilePath(fileInfoLocalFile);
                         FileHelper.MoveAndCreateDirectory(filePath, filePathInCache, true);
                     }
                 }
