@@ -106,19 +106,17 @@ public class LocalFileCacheManager : ILocalFileCacheManager
 
                     // continue to next iteration if file should stay in game dir:
                     var matchingFileInfosInGroup = fileInfoGroup.FileInfos.Where(x => x.FilePath.ToLower() == fileInfoLocalFile.FilePath.ToLower());
-                    if (matchingFileInfosInGroup.Any()) // should be one though
+                    if (matchingFileInfosInGroup.Any()) // should be one or zero though
                     {
-                        fileInfoLocalFile = matchingFileInfosInGroup.ElementAt(0);
-                        if (!(fileInfoLocalFile.SyncType == SyncType.LocalFileCache || fileInfoLocalFile.SyncType == SyncType.Download))
+                        var fileInfoInGroup = matchingFileInfosInGroup.ElementAt(0);
+                        if (!(fileInfoInGroup.SyncType == SyncType.LocalFileCache || fileInfoInGroup.SyncType == SyncType.Download))
                             continue;
                     }
-                    else // get with checksum for cache:
-                    {
-                        fileInfoLocalFile = new FileInfo(filePathToCheck, GameDirectory);
-                    }
-
+                    
                     if (fileInfoGroup.FileNameWithoutPatchNumber.ToLower() == fileInfoLocalFile.FileNameWithoutPatchNumber.ToLower())
                     {
+                        // get with checksum for cache:
+                        fileInfoLocalFile = new FileInfo(filePathToCheck, GameDirectory);
                         var filePathInCache = GetCachedFilePath(fileInfoLocalFile);
                         FileHelper.MoveAndCreateDirectory(filePathToCheck, filePathInCache, true);
                     }
