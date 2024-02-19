@@ -16,27 +16,30 @@
         _fileName = fileName.ToLower();
 
         // append file extension to FileName if not provided
-        if ((_fileType == Bf1942FileTypes.Level || _fileType == Bf1942FileTypes.Archive) && !_fileName.EndsWith(".rfa"))
-            _fileName += ".rfa";
-        else if ((_fileType == Bf1942FileTypes.Movie || _fileType == Bf1942FileTypes.Music) && !_fileName.EndsWith(".bik"))
-            _fileName += ".bik";
-        else if (_fileType == Bf1942FileTypes.ModMiscFile)
+        if (_fileName != "*")
         {
-            switch(_fileName)
+            if ((_fileType == Bf1942FileTypes.Level || _fileType == Bf1942FileTypes.Archive) && !_fileName.EndsWith(".rfa"))
+                _fileName += ".rfa";
+            else if ((_fileType == Bf1942FileTypes.Movie || _fileType == Bf1942FileTypes.Music) && !_fileName.EndsWith(".bik"))
+                _fileName += ".bik";
+            else if (_fileType == Bf1942FileTypes.ModMiscFile)
             {
-                case "contentcrc32":
-                case "init":
-                    _fileName += ".con";
-                    break;
-                case "mod":
-                    _fileName += ".dll";
-                    break;
-                case "lexiconall":
-                    _fileName += ".dat";
-                    break;
-                case "serverinfo":
-                    _fileName += ".dds";
-                    break;
+                switch (_fileName)
+                {
+                    case "contentcrc32":
+                    case "init":
+                        _fileName += ".con";
+                        break;
+                    case "mod":
+                        _fileName += ".dll";
+                        break;
+                    case "lexiconall":
+                        _fileName += ".dat";
+                        break;
+                    case "serverinfo":
+                        _fileName += ".dds";
+                        break;
+                }
             }
         }
     }

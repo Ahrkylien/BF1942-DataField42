@@ -1,7 +1,7 @@
 ﻿public enum IgnoreSyncScenarios
 {
     /// <summary>
-    /// In this scenario the file(s) will always be synced.
+    /// In this scenario the file(s) will not be synced (ignored during sync).
     /// </summary>
     Always,
     /// <summary>
