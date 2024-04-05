@@ -21,7 +21,7 @@ public class BfServerManagerClient
     {
         _communication = new BfServerManagerClientCommunication(serverIp, serverPort, username, password);
         _communication.DataReceived += DataReceivedHandler;
-        Settings = new();
+        Settings = new(_communication);
     }
 
     public async Task Initialize(CancellationToken cancellationToken)
@@ -67,8 +67,6 @@ public class BfServerManagerClient
     public async Task GetServerSettings(CancellationToken cancellationToken)
     {
         var fileContentsRaw = await _communication.ReceiveFile(FileAndCommands.ServerManager, cancellationToken);
-        var fileContents = Encoding.UTF8.GetString(fileContentsRaw);
-        Console.WriteLine(fileContents);
         Settings.ParseSettingsFile(fileContentsRaw);
     }
 

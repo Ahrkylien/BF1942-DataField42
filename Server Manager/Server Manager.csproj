@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="lzo.net" Version="0.0.6" />
+    <PackageReference Include="MiniLZO" Version="1.0.1" />
   </ItemGroup>
 
 </Project>

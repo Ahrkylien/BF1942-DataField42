@@ -1,8 +1,13 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Net;
+using System.Text;
 
 public class Settings
 {
+    private BfServerManagerClientCommunication _communication;
+
     private Permissions? _permissions;
     public List<ISetting> List { get; set; } =
     [
@@ -18,8 +23,8 @@ public class Settings
         new NumberSetting("Maximum players", "game.serverMaxPlayers", 32, 2, 256),
         new WelcomeMessageSetting("Welcome Message", "game.setServerWelcomeMessage", ""),
         new BoolSetting("Is internet server", "game.serverInternet", false),
-        new NumberSetting("Server bandwidth limit", "game.serverBandwidthChokeLimit", 0, 0, 32), // BFSM_SETTING_TYPE_MAP
-        new StringSetting("Maximum client connection type", "game.serverMaxAllowedConnectionType", "CTLanT1", 0, 99), // BFSM_SETTING_TYPE_MAP
+        new MapSetting("Server bandwidth limit", "game.serverBandwidthChokeLimit", "0", new Dictionary<string, string>() { { "No Limit", "0" }, { "64 Kbps", "8" }, { "128 Kbps", "16" }, { "256 Kbps", "32" }, { "512 Kbps", "64" }, { "1024 Kbps", "128" }, { "2048 Kbps", "256" }, { "8192 Kbps", "1024" } }), // BFSM_SETTING_TYPE_MAP
+        new MapSetting("Maximum client connection type", "game.serverMaxAllowedConnectionType", "CTLanT1", new Dictionary<string, string>() { { "Modem 56 Kbps", "CTModem56Kbps" }, { "Cable 128 Kbps", "CTCable128Kbps" }, { "Cable 256 Kbps", "CTCable256Kbps" }, { "Lan T1", "CTLanT1" } }), // BFSM_SETTING_TYPE_MAP
         new PercentageSetting("AI CPU", "game.serverCoopCPU", 100, minimumValue: 1, maximumValue: 100),
         new NumberSetting("Content check mode", "game.serverContentCheck", 0, 0, 2),
         new StringSetting("Server Password", "game.serverPassword", "", 0, 31),
@@ -60,43 +65,43 @@ public class Settings
         new BoolSetting("Use smart team balance", "manager.smartBalance", false),
         new NumberSetting("Smart team balance value", "manager.smartBalanceValue", 3, 2, 10),
         new NumberSetting("Vote duration (seconds)", "admin.votingTime", 60, 0, 120),
-        new PercentageSetting("Game port", "admin.voteMapMajority", 60, minimumValue: 1, multiplierForToString: 0.01m),
-        new PercentageSetting("Game port", "admin.voteKickPlayerMajority", 60, minimumValue: 1, multiplierForToString: 0.01m),
-        new PercentageSetting("Game port", "admin.voteKickTeamPlayerMajority", 60, minimumValue: 1, multiplierForToString: 0.01m),
-        new BoolSetting("Game port", "game.serverExternalViews", true),
-        new BoolSetting("Game port", "game.serverAllowNoseCam", true),
-        new BoolSetting("Game port", "game.serverFreeCamera", false),
-        new BoolSetting("Game port", "game.serverHitIndication", true),
-        new BoolSetting("Game port", "game.serverDeathCameraType", false),
-        new BoolSetting("Game port", "game.serverCrosshairCenterpoint", true),
-        new NumberSetting("Game port", "game.serverNameTagDistance", 100, 0, 600),
-        new NumberSetting("Game port", "game.serverNameTagDistanceScope", 300, 0, 600),
-        new StringSetting("Game port", "manager.consoleUsername", "UserName", 0, 31),
-        new StringSetting("Game port", "manager.consolePassword", "Password", 0, 31),
-        new BoolSetting("Game port", "manager.enableRemoteConsole", true),
-        new BoolSetting("Game port", "manager.enableRemoteAdmin", false),
-        new NumberSetting("Game port", "game.serverNumReservedSlots", 0, 0, 256),
-        new StringSetting("Game port", "game.serverReservedPassword", "", 0, 31),
-        new NumberSetting("Game port", "manager.monitorTimerPeriod", 30, 10, 60),
-        new BoolSetting("Game port", "manager.autoKickPing", false),
-        new NumberSetting("Game port", "manager.autoKickPingValue", 500, 100, 500),
-        new BoolSetting("Game port", "manager.highPingWarnings", false),
-        new BoolSetting("Game port", "admin.toggleGamePause", false), // BFSM_SETTING_TYPE_PRESENT
-        new BoolSetting("Game port", "manager.autoKickWord", false),
-        new NumberSetting("Game port", "manager.autoKickWordWarnings", 3, 0, 5),
-        new BoolSetting("Game port", "manager.autoAnnounce", false),
-        new NumberSetting("Game port", "manager.autoAnnouncePeriod", 60, 10, 1800),
-        new BoolSetting("Game port", "game.serverEventLogging", false),
-        new BoolSetting("Game port", "game.serverEventLogCompression", false),
-        new BoolSetting("Game port", "manager.statCollection", false),
-        new StringSetting("Game port", "manager.statFilePath", "statistics.csv", 0, 324),
+        new PercentageSetting("Map vote threshold percentage", "admin.voteMapMajority", 60, minimumValue: 1, multiplierForToString: 0.01m),
+        new PercentageSetting("Kick player vote threshold percentage", "admin.voteKickPlayerMajority", 60, minimumValue: 1, multiplierForToString: 0.01m),
+        new PercentageSetting("Kick team player vote threshold percentage", "admin.voteKickTeamPlayerMajority", 60, minimumValue: 1, multiplierForToString: 0.01m),
+        new BoolSetting("Enable external camera views", "game.serverExternalViews", true),
+        new BoolSetting("Enable external nose camera view in airplane", "game.serverAllowNoseCam", true),
+        new BoolSetting("Enable free camera", "game.serverFreeCamera", false),
+        new BoolSetting("Enable hit indication", "game.serverHitIndication", true),
+        new BoolSetting("Enbale death camera to show killer", "game.serverDeathCameraType", false),
+        new BoolSetting("Enable crosshair centerpoint", "game.serverCrosshairCenterpoint", true),
+        new NumberSetting("Name tag distance (normal) [meters]", "game.serverNameTagDistance", 100, 0, 600),
+        new NumberSetting("Name tag distance (aiming) [meters]", "game.serverNameTagDistanceScope", 300, 0, 600),
+        new StringSetting("Remote console username", "manager.consoleUsername", "UserName", 0, 31),
+        new StringSetting("Remote console password", "manager.consolePassword", "Password", 0, 31),
+        new BoolSetting("Enable remote console", "manager.enableRemoteConsole", true),
+        new BoolSetting("Enable remote admin", "manager.enableRemoteAdmin", false),
+        new NumberSetting("Number of reserverd player slots", "game.serverNumReservedSlots", 0, 0, 256),
+        new StringSetting("Reserverd slot password", "game.serverReservedPassword", "", 0, 31),
+        new NumberSetting("Server monitor timer periond (seconds)", "manager.monitorTimerPeriod", 30, 10, 60),
+        new BoolSetting("Enable auto-kick ping", "manager.autoKickPing", false),
+        new NumberSetting("Auto kick ping theresthold value [ms]", "manager.autoKickPingValue", 500, 100, 500),
+        new BoolSetting("Enable high ping warnings", "manager.highPingWarnings", false),
+        new BoolSetting("admin.toggleGamePause??", "admin.toggleGamePause", false, alwaysIncludeInSerialization: true), // BFSM_SETTING_TYPE_PRESENT
+        new BoolSetting("Enable auto kick on banned word", "manager.autoKickWord", false),
+        new NumberSetting("Auto kick on banned word thresthold ", "manager.autoKickWordWarnings", 3, 0, 5),
+        new BoolSetting("Enable announcements", "manager.autoAnnounce", false),
+        new NumberSetting("Announcements period (seconds)", "manager.autoAnnouncePeriod", 60, 10, 1800),
+        new BoolSetting("Enable server event logging", "game.serverEventLogging", false),
+        new BoolSetting("Enable server event log compression", "game.serverEventLogCompression", false),
+        new BoolSetting("Enable statistics gathering (csv)", "manager.statCollection", false),
+        new StringSetting("Statistics filename", "manager.statFilePath", "statistics.csv", 0, 324),
     ];
 
     public event EventHandler? ServerPushedNewChanges;
 
-    public Settings()
+    public Settings(BfServerManagerClientCommunication communication)
     {
-
+        _communication = communication;
     }
 
     public void Initialize(Permissions permissions)
@@ -128,6 +133,21 @@ public class Settings
             }
         }
     }
+
+    public async Task Save(CancellationToken cancellationToken)
+    {
+        var settingsToSend = "";
+        foreach (var setting in List)
+        {
+            if (setting.State == SettingState.Changed || setting.AlwaysIncludeInSerialization)
+            {
+                settingsToSend += setting.ToString() + "\n";
+                setting.State = SettingState.Saved;
+            }
+        }
+        Console.WriteLine(settingsToSend);
+        await _communication.SendFile(FileAndCommands.ServerManager, Encoding.UTF8.GetBytes(settingsToSend), cancellationToken);
+    }
 }
 
 public interface ISetting
@@ -137,6 +157,8 @@ public interface ISetting
     public string BfServerManagerCommand { get; set; }
 
     public SettingState State { get; set; }
+
+    public bool AlwaysIncludeInSerialization { get; set; }
 
     public void ParseValueFromServer(string value);
 
@@ -149,19 +171,32 @@ public abstract class Setting<T> : ISetting
 
     public string BfServerManagerCommand { get; set; }
 
-    public T Value { get; set; }
+    protected T _value;
+    public T Value
+    {
+        get { return _value; }
+        set
+        {
+            if (!EqualityComparer<T>.Default.Equals(_value, value))
+            {
+                State = SettingState.Changed;
+                _value = value;
+            }
+        }
+    }
 
     public T OldValue { get; set; }
 
-    public SettingState State { get; set; }
+    public SettingState State { get; set; } = SettingState.Unchanged;
+
+    public bool AlwaysIncludeInSerialization { get; set; } = false;
 
     public Setting(string name, string bfServerManagerCommand, T value)
     {
         Name = name;
         BfServerManagerCommand = bfServerManagerCommand;
-        Value = value;
+        _value = value;
         OldValue = value;
-        State = SettingState.Unchanged;
     }
 
     public abstract void ParseValueFromServer(string value);
@@ -183,22 +218,6 @@ public class NumberSetting : Setting<decimal>
         MultiplierForToString = multiplierForToString;
     }
 
-    public void ChangeValue(decimal value)
-    {
-        if (value != Value)
-        {
-            Validate(value);
-            Value = value;
-            State = SettingState.Changed;
-        }
-    }
-
-    public void Save()
-    {
-        if (State == SettingState.Changed)
-            State = SettingState.Saved;
-    }
-
     public void Validate(decimal value)
     {
         if (value < MinimumValue || value > MaximumValue)
@@ -207,19 +226,22 @@ public class NumberSetting : Setting<decimal>
 
     public override void ParseValueFromServer(string value)
     {
-        if (!decimal.TryParse(value, out var parsedValue))
+        if (!decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var parsedValue))
             throw new ArgumentException($"{value} is not a valid number.");
-
+        parsedValue /= MultiplierForToString;
+        
         Validate(parsedValue);
 
         Value = parsedValue;
         OldValue = parsedValue;
+
+        State = SettingState.Unchanged;
     }
 
     public override string ToString()
     {
         var numberOfDecimals = (int)MaxDecimals + (int)Math.Abs(Math.Log10((double)MultiplierForToString));
-        var numberString = Value.ToString("0." + new string('0', numberOfDecimals), CultureInfo.InvariantCulture);
+        var numberString = (Value * MultiplierForToString).ToString("0." + new string('0', numberOfDecimals), CultureInfo.InvariantCulture);
         return $"{BfServerManagerCommand} {numberString}";
     }
 }
@@ -233,8 +255,9 @@ public class PercentageSetting : NumberSetting
 
 public class BoolSetting : Setting<bool>
 {
-    public BoolSetting(string name, string bfServerManagerCommand, bool value) : base(name, bfServerManagerCommand, value)
+    public BoolSetting(string name, string bfServerManagerCommand, bool value, bool alwaysIncludeInSerialization = false) : base(name, bfServerManagerCommand, value)
     {
+        AlwaysIncludeInSerialization = alwaysIncludeInSerialization;
     }
 
     public override void ParseValueFromServer(string value)
@@ -247,6 +270,8 @@ public class BoolSetting : Setting<bool>
 
         Value = parsedValue == 1;
         OldValue = parsedValue == 1;
+
+        State = SettingState.Unchanged;
     }
 
     public override string ToString() => $"{BfServerManagerCommand} {(Value ? 1 : 0)}";
@@ -269,15 +294,40 @@ public class StringSetting : Setting<string>
 
         Value = value;
         OldValue = value;
+
+        State = SettingState.Unchanged;
     }
 
     public override string ToString() => $"{BfServerManagerCommand} \"{Value}\"";
+}
+
+public class MapSetting : Setting<string>
+{
+    public Dictionary<string, string> Mapping { get; set; }
+    public MapSetting(string name, string bfServerManagerCommand, string value, Dictionary<string, string> mapping) : base(name, bfServerManagerCommand, value)
+    {
+        Mapping = mapping;
+    }
+
+    public override void ParseValueFromServer(string value)
+    {
+        if (!Mapping.ContainsValue(value))
+            throw new ArgumentException($"The string \"{value}\" is not a valid value for the mapped setting.");
+
+        Value = Mapping.FirstOrDefault(x => x.Value == value).Key;
+        OldValue = Value;
+
+        State = SettingState.Unchanged;
+    }
+
+    public override string ToString() => $"{BfServerManagerCommand} {Mapping[Value]}";
 }
 
 public class WelcomeMessageSetting : Setting<string>
 {
     public WelcomeMessageSetting(string name, string bfServerManagerCommand, string value) : base(name, bfServerManagerCommand, value)
     {
+        AlwaysIncludeInSerialization = true;
     }
 
     public override void ParseValueFromServer(string value)
@@ -292,6 +342,8 @@ public class WelcomeMessageSetting : Setting<string>
             Value += "\n" + value;
         
         OldValue = Value;
+
+        State = SettingState.Unchanged;
     }
 
     public override string ToString()
@@ -320,6 +372,8 @@ public class IpSetting : Setting<IPAddress>
 
         Value = parsedValue;
         OldValue = parsedValue;
+
+        State = SettingState.Unchanged;
     }
 
     public override string ToString() => $"{BfServerManagerCommand} {Value}";

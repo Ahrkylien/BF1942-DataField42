@@ -1,8 +1,4 @@
-﻿using lzo.net;
-using System.IO.Compression;
-using System.Threading;
-
-public class BfServerManagerClientCommunication(string serverIp, int serverPort, string username, string password) : TcpClientBase(serverIp, serverPort)
+﻿public class BfServerManagerClientCommunication(string serverIp, int serverPort, string username, string password) : TcpClientBase(serverIp, serverPort)
 {
     private readonly string _username = username;
 
@@ -46,24 +42,41 @@ public class BfServerManagerClientCommunication(string serverIp, int serverPort,
 
             var compressedLength = await ReceiveUInt32(cancellationToken: cancellationToken);
             var checksum = await ReceiveUInt32(cancellationToken: cancellationToken);
-            var compressedDataBuffer = await ReceiveBytes((int)compressedLength, cancellationToken: cancellationToken);
+            var compressedData = await ReceiveBytes((int)compressedLength, cancellationToken: cancellationToken);
             _receiveSemaphore.Release();
             semaphoreReleased = true;
+            File.WriteAllBytes("compressed log", compressedData);
+            var decompressedData = MiniLZO.MiniLZO.Decompress(compressedData, (int)size);
 
-            using var compressed = new MemoryStream(compressedDataBuffer);
-            using var decompressed = new LzoStream(compressed, CompressionMode.Decompress);
-            var buffer = new byte[size];
-            decompressed.Read(buffer, 0, (int)size);
+            var calcualtedAdler32 = CheckSumHelper.Adler32(compressedData);
 
-            // TODO: check checksum
+            if (calcualtedAdler32 != checksum)
+                throw new Exception($"{calcualtedAdler32:X} is not the same as {checksum:X}");
 
-            return buffer;
+            return decompressedData;
         }
         finally
         {
             if (!semaphoreReleased)
                 _receiveSemaphore.Release();
         }
+    }
+
+    public async Task SendFile(IBfServerManagerFileSendable serverManagerFile, byte[] data, CancellationToken cancellationToken)
+    {
+        //var compressedData = LzoMocker.Compress(data);
+        var compressedData = MiniLZO.MiniLZO.Compress(data);
+
+        SendClientCommand(serverManagerFile.SendCommand);
+        // send size
+        SendUInt32((UInt32)data.Length);
+        // send comp size
+        SendUInt32((UInt32)compressedData.Length);
+        // send crc
+        SendUInt32(CheckSumHelper.Adler32(compressedData));
+
+        // send comp data
+        SendBytes(compressedData);
     }
 
     public void SendClientCommand(ClientCommand command, string? data = null)

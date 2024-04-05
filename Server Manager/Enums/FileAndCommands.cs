@@ -23,7 +23,7 @@ public interface IBfServerManagerFileReceivable
 
 public interface IBfServerManagerFileSendable
 {
-    public ClientCommand ReceiveCommand { get; }
+    public ClientCommand SendCommand { get; }
 }
 public class BfServerManagerFileReceivable(ClientCommand receiveCommand) : IBfServerManagerFileReceivable
 {
