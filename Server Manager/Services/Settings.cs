@@ -145,7 +145,6 @@ public class Settings
                 setting.State = SettingState.Saved;
             }
         }
-        Console.WriteLine(settingsToSend);
         await _communication.SendFile(FileAndCommands.ServerManager, Encoding.UTF8.GetBytes(settingsToSend), cancellationToken);
     }
 }
