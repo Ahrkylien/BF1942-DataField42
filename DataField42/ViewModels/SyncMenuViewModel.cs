@@ -124,7 +124,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
         var connectedToMaster = false;
         try
         {
-            communicationWithMaster = communicationWithMaster = new DataField42Communication();
+            communicationWithMaster = new DataField42Communication();
             updateManager = new UpdateManager(communicationWithMaster);
             masterVersion = await updateManager.RequestVersion();
             connectedToMaster = true;
