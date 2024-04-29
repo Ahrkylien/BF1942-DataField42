@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DataField42.Interfaces;
+using System.Text.RegularExpressions;
 
 namespace DataField42.ViewModels;
 public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
@@ -96,7 +97,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
                 var queryResult = await serverQuery.Query(2000);
                 var map = queryResult.MapName.Replace(' ', '_');
 
-                if (!(map.All(c => char.IsLetterOrDigit(c) || c.Equals('_')) && map.Length >= 1)) // only letters digits and underscores and at least 1 char
+                if (!(Regex.IsMatch(map, $"^[{FileInfo.AllowableChars}]*$") && map.Length >= 1)) // only letters digits and underscores and hyphens and at least 1 char
                     throw new ArgumentException($"Server has send an illegal map name: {map}");
 
                 _syncParameters.Map = map;
@@ -123,7 +124,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
         var connectedToMaster = false;
         try
         {
-            communicationWithMaster = communicationWithMaster = new DataField42Communication();
+            communicationWithMaster = new DataField42Communication();
             updateManager = new UpdateManager(communicationWithMaster);
             masterVersion = await updateManager.RequestVersion();
             connectedToMaster = true;
@@ -147,7 +148,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
                 {
                     PostMessage($"Starting to update to version: {masterVersion}");
                     var backgroundWorker = new DownloadBackgroundWorker();
-                    await updateManager.Update(backgroundWorker, _cancelationTokenSource.Token);
+                    await updateManager.Update(backgroundWorker, _cancelationTokenSource.Token, _syncParameters.ToString());
                 }
             }
         }

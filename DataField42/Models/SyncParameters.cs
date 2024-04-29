@@ -18,4 +18,6 @@ public class SyncParameters
         KeyHash = keyHash;
         Password = password;
     }
+
+    public override string ToString() => $"SyncAndJoinServer \"{Mod}\" \"{Map}\" {Ip} {Port} {KeyHash} \"{Password}\"";
 }

@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Windows.Shapes;
 
 public class SyncRuleManager : ISyncRuleManager
 {

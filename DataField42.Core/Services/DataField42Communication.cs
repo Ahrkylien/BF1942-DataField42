@@ -40,8 +40,11 @@ public class DataField42Communication : TcpCommunicationBase
         FileStream fileStream,
         IEnumerable<DownloadBackgroundWorker> backgroundWorkers,
         CancellationToken cancellationToken,
-        int millisecondsWithoutReceivingBeforeTimeout = 1000)
+        TimeSpan? timeoutDuration = null)
     {
+        if (timeoutDuration == null)
+            timeoutDuration = TimeSpan.FromSeconds(4);
+
         ulong totalReceivedLength = 0;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
@@ -60,8 +63,8 @@ public class DataField42Communication : TcpCommunicationBase
             if (receivedLength != 0)
                 stopWatch.Restart();
 
-            if (stopWatch.ElapsedMilliseconds > millisecondsWithoutReceivingBeforeTimeout)
-                throw new TimeoutException($"Can't receive data in time ({millisecondsWithoutReceivingBeforeTimeout} ms)");
+            if (stopWatch.Elapsed > timeoutDuration)
+                throw new TimeoutException($"Can't receive data in time ({timeoutDuration} ms)");
         }
     }
 
@@ -87,7 +90,7 @@ public class DataField42Communication : TcpCommunicationBase
     public async Task<List<FileInfo>> ReceiveFileInfos(CancellationToken cancellationToken = default)
     {
         var fileInfos = new List<FileInfo>();
-        var lengthToReceive = await receiveDataLength(cancellationToken);
+        var lengthToReceive = await receiveDataLength(TimeSpan.FromMinutes(2), cancellationToken);
         if (lengthToReceive == 0)
             return fileInfos;
         
@@ -133,7 +136,7 @@ public class TcpCommunicationBase : IDisposable
 
     [MemberNotNull(nameof(_client))]
     [MemberNotNull(nameof(_stream))]
-    private void _connect(int millisecondsWithoutReceivingBeforeTimout = 1000)
+    private void _connect()
     {
         _client = new TcpClient();
         if (!_client.ConnectAsync(_domainNameOrIp, _port).Wait(_timeOutInitialConnect))
@@ -155,8 +158,11 @@ public class TcpCommunicationBase : IDisposable
         return (numberOfBytes, buffer);
     }
 
-    protected async Task<byte[]> receiveBytes(int length, CancellationToken cancellationToken = default, int millisecondsWithoutReceivingBeforeTimout = 1000)
+    protected async Task<byte[]> receiveBytes(int length, TimeSpan? timeoutTime = null, CancellationToken cancellationToken = default)
     {
+        if (timeoutTime == null)
+            timeoutTime = TimeSpan.FromSeconds(10);
+
         // TODO: remove double timout (custom and buildin)
         int bytesRead = 0;
         var buffer = new byte[length];
@@ -173,21 +179,23 @@ public class TcpCommunicationBase : IDisposable
             if (bytesReadThisIteration != 0)
                 stopWatch.Restart();
 
-            if (stopWatch.ElapsedMilliseconds > millisecondsWithoutReceivingBeforeTimout)
-                throw new TimeoutException($"Can't receive data in time ({millisecondsWithoutReceivingBeforeTimout} ms)");
+            if (stopWatch.Elapsed > timeoutTime)
+                throw new TimeoutException($"Can't receive data in time ({timeoutTime?.TotalSeconds} seconds)");
         }
         return buffer;
     }
 
-    protected async Task<int> receiveDataLength(CancellationToken cancellationToken = default)
+    protected async Task<int> receiveDataLength(TimeSpan? timeoutTime = null, CancellationToken cancellationToken = default)
     {
-        var data = await receiveBytes(4, cancellationToken);
+        if (timeoutTime == null)
+            timeoutTime = TimeSpan.FromSeconds(10);
+        var data = await receiveBytes(4, timeoutTime, cancellationToken);
         return BitConverter.ToInt32(data);
     }
 
     protected async Task<string> receiveString(int length, CancellationToken cancellationToken = default)
     {
-        var data = await receiveBytes(length, cancellationToken);
+        var data = await receiveBytes(length, cancellationToken: cancellationToken);
         return System.Text.Encoding.ASCII.GetString(data, 0, length);
     }
 

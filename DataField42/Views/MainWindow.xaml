@@ -75,8 +75,8 @@
                                 <TextBlock Foreground="#ab0909" Padding="0" Visibility="{Binding HasErrorMessages, Converter={StaticResource BooleanToVisibilityConverter}}" Text="{Binding ErrorMessages}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
-                        <ScrollViewer Grid.Row="1" x:Name="centralControl" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Hidden">
-                            <Grid Background="#0a1225" MaxWidth="{Binding ElementName=centralControl, Path=ActualWidth}">
+                        <ScrollViewer Grid.Row="1" x:Name="centralControl" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <Grid Background="#0a1225">
                                 <Border Grid.Row="0" Background="#090b12" BorderBrush="#233050" BorderThickness="2" Padding="10" Margin="10">
                                     <ContentControl Content="{Binding CurrentPageViewModel}" />
                                 </Border>

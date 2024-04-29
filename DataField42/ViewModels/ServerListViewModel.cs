@@ -80,10 +80,30 @@ public partial class ServerViewModel : ObservableObject
     [RelayCommand]
     private void Click()
     {
-        if (_bf1942Server.QueryResult != null)
-            _mainWindowViewModel.GoToSyncMenu(new SyncParameters(_bf1942Server.QueryResult.Mod, _bf1942Server.QueryResult.MapName.Replace(' ', '_'), _bf1942Server.Ip, (int)_bf1942Server.QueryResult.HostPort, "-", ""));
-        else
+        if (_bf1942Server.QueryResult == null)
+        {
             _mainWindowViewModel.DisplayError("Can't sync with server because its not queried.");
+            return;
+        }
+
+        
+        try
+        {
+            var keyHash = "-";
+            try
+            {
+                keyHash = Md5.Hash(Registry.ReadKey(Bf1942Client.GetKeyRegistryPath()));
+            }
+            catch
+            {
+                // do nothing
+            }
+            _mainWindowViewModel.GoToSyncMenu(new SyncParameters(_bf1942Server.QueryResult.Mod, _bf1942Server.QueryResult.MapName.Replace(' ', '_'), _bf1942Server.Ip, (int)_bf1942Server.QueryResult.HostPort, keyHash, ""));
+        }
+        catch (Exception ex)
+        {
+            _mainWindowViewModel.DisplayError(ex.Message);
+        }
     }
 
     private void RefreshData()

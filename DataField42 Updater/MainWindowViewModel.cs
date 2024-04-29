@@ -1,11 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 
 namespace DataField42_Updater;
 public partial class MainWindowViewModel : ObservableObject
 {
+    private const string temporaryClientExeName = "DataField42_tmp.exe";
     private const string clientExeName = "DataField42.exe";
 
     [ObservableProperty]
@@ -52,13 +54,29 @@ public partial class MainWindowViewModel : ObservableObject
             // TODO: check file size
             communication.SendAcknowledgement();
 
-            using (var fileStream = new FileStream(clientExeName, FileMode.Create, FileAccess.Write))
+            using (var fileStream = new FileStream(temporaryClientExeName, FileMode.Create, FileAccess.Write))
             {
                 await communication.ReceiveFile(fileSize, fileStream, backgroundWorker, CancellationToken.None);
             }
             communication.SendAcknowledgement();
 
-            ExternalProcess.SwitchTo(clientExeName, arguments: string.Join(" ", Environment.GetCommandLineArgs()[1..]));
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            while (true)
+            {
+                try
+                {
+                    File.Move(temporaryClientExeName, clientExeName, overwrite: true);
+                    break;
+                }
+                catch (IOException) when (stopwatch.Elapsed < TimeSpan.FromSeconds(4))
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(10));
+                }
+            }
+
+            ExternalProcess.SwitchTo(clientExeName, arguments: CommandLineArguments.RawString);
         }
         catch (Exception ex)
         {

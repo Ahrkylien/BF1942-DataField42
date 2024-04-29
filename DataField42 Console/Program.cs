@@ -20,7 +20,7 @@ catch (Exception e)
 
 
 
-if (CommandLineArguments.Identifier == CommandLineArgumentIdentifier.DownloadAndJoinServer)
+if (CommandLineArguments.Identifier == CommandLineArgumentIdentifier.SyncAndJoinServer)
 {
     // Try to connect to master:
     DataField42Communication? communicationWithMaster = null;

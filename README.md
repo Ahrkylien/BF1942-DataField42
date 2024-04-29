@@ -20,6 +20,7 @@ Some Folder/
   - OtherMod/
     - ...
 
-The only dependency that you need to manually download is google_crc32c:\
+For the clients to be able to reach the server you will need to open port 28901 (TCP) in your firewall/router.\
+The minimal version of python is 3.10. The only dependency that you need to manually download is google_crc32c:\
 pip3 install google-crc32c\
 https://pypi.org/project/google-crc32c/

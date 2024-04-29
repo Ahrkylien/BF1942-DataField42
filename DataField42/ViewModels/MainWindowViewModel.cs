@@ -58,7 +58,7 @@ public partial class MainWindowViewModel : ObservableObject
         {
             // Error is already displayed. This check is needed to avoid going into a statement below
         }
-        else if (CommandLineArguments.Identifier == CommandLineArgumentIdentifier.DownloadAndJoinServer)
+        else if (CommandLineArguments.Identifier == CommandLineArgumentIdentifier.SyncAndJoinServer)
         {
             GoToSyncMenu(new SyncParameters(CommandLineArguments.Mod, CommandLineArguments.Map, CommandLineArguments.Ip, CommandLineArguments.Port, CommandLineArguments.KeyHash, CommandLineArguments.Password));
         }
