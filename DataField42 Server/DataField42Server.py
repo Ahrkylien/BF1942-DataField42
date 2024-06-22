@@ -25,8 +25,10 @@ class Version:
         return ".".join(map(str, self.version_numbers))
 
 
+log_lock = threading.Lock()
 def log(level, message):
-    print(f"{datetime.now().isoformat()} [{level}] {message}")
+    with log_lock:
+        print(f"{datetime.now().isoformat()} [{level}] {message}")
 
 
 def log_error(message):
@@ -154,8 +156,9 @@ class ChecksumRepository:
         return []
 
     def save_records(self):
-        with open(self.filename, 'w') as file:
-            json.dump(self.records, file)
+        with self.lock:
+            with open(self.filename, 'w') as file:
+                json.dump(self.records, file)
 
     def add_record(self, checksum, size, last_time_modified):
         record = {
@@ -169,10 +172,45 @@ class ChecksumRepository:
             self.save_records()
 
     def find_checksum(self, size, last_time_modified) -> str | None:
-        for record in self.records:
-            if record['size'] == int(size) and record['lastTimeModified'] == int(last_time_modified):
-                return record['checksum']
+        with self.lock:
+            for record in self.records:
+                if record['size'] == int(size) and record['lastTimeModified'] == int(last_time_modified):
+                    return record['checksum']
         return None
+
+
+class ChecksumRepositoryManager:
+    def __init__(self, filename: str):
+        self.repository = ChecksumRepository(filename)
+        self.lock = threading.Lock()  # Lock for thread safety
+        self.start_new_files_watchdog()
+
+    def get_checksum(self, path: str) -> str:
+        with self.lock:
+            checksum_from_repository = self.repository.find_checksum(os.path.getsize(path), os.path.getmtime(path))
+            if checksum_from_repository is not None:
+                return checksum_from_repository
+
+            with open(path, "rb") as file:
+                checksum = google_crc32c.value(file.read())
+                checksum = f"{(checksum & 0xFFFFFFFF):08X}"
+                self.repository.add_record(checksum, os.path.getsize(path), os.path.getmtime(path))
+        return checksum
+
+    def start_new_files_watchdog(self):
+        threading.Thread(target=self.new_files_watchdog).start()
+
+    def new_files_watchdog(self):
+        while True:
+            all_files = [os.path.join(dp, f)
+                         for dp, dn, filenames in os.walk(dataField42_server.game_directory) for f in filenames
+                         if os.path.splitext(f)[1].lower() in ['.rfa', '.bik', '.dat', '.con', '.dll', '.dds']]
+            for file in all_files:
+                try:
+                    self.get_checksum(file)
+                except Exception as e:
+                    log_error(f"Failed adding file with new_files_watchdog {file}: {e}")
+            time.sleep(1)
 
 
 class DataField42Communication:
@@ -284,18 +322,6 @@ def smart_path_join(base_dir: str, rel_path: str, is_dir=False) -> str | None:
             return None
         current_dir = os.path.join(current_dir, entry_to_join)
     return current_dir
-
-
-def get_checksum(path: str) -> str:
-    checksum_from_repository = checksum_repository.find_checksum(os.path.getsize(path), os.path.getmtime(path))
-    if checksum_from_repository is not None:
-        return checksum_from_repository
-    checksum = "00000000"
-    with open(path, "rb") as file:
-        checksum = google_crc32c.value(file.read())
-        checksum = f"{(checksum & 0xFFFFFFFF):08X}"
-        checksum_repository.add_record(checksum, os.path.getsize(path), os.path.getmtime(path))
-    return checksum
 
 
 class DataField42TCPHandler(socketserver.BaseRequestHandler):
@@ -507,7 +533,7 @@ def download_files(communication: DataField42Communication, map_name: str, mod_n
         size = os.path.getsize(file[2])
         total_size += size
         file.append(str(size))
-        file.append(get_checksum(file[2]))
+        file.append(checksum_repository_manager.get_checksum(file[2]))
 
     files_to_send = []
 
@@ -540,7 +566,7 @@ def download_files(communication: DataField42Communication, map_name: str, mod_n
 
 
 dataField42_server_version = Version("2.0.1.0")
-checksum_repository = ChecksumRepository("ChecksumRepository.json")
+checksum_repository_manager = ChecksumRepositoryManager("ChecksumRepository.json")
 sync_rule_manager = SyncRuleManager("Synchronization rules.txt")
 
 dataField42_server = DataField42Server("")
