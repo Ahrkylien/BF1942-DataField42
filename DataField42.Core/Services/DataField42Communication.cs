@@ -2,7 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net.Sockets;
-using System;
+using System.Net;
 
 /// <summary>
 /// Communication tcp protocol layer between client and server.
@@ -21,13 +21,24 @@ public class DataField42Communication : TcpCommunicationBase
 
     public DataField42Communication(string domainName) : base(domainName, DefaultPort) { }
 
-    public DataField42Communication(string domainName, int port) : base(domainName, port) { }
+    public DataField42Communication(IPAddress ipAddress) : base(ipAddress.ToString(), DefaultPort) { }
 
     public void StartSession()
     {
         if(_sessionIsUsed)
             RenewConnection();
         _sessionIsUsed = false;
+    }
+
+    public async Task<(IPAddress?, Version)> HandShake(Version version)
+    {
+        SendString($"handshake {version}");
+        var responseData = await ReceiveSpaceSeperatedString(2);
+        if (responseData.Count() != 2)
+            throw new Exception($"During Hanshake the server ({_domainNameOrIp}) responded with an unexpected count ({responseData.Count()}): {responseData}");
+        var redirectServerIp = responseData.ElementAt(0) == "null" ? null : IPAddress.Parse(responseData.ElementAt(0));
+        var versionReceived = new Version(responseData.ElementAt(1));
+        return (redirectServerIp, versionReceived);
     }
 
     public async Task ReceiveFile(ulong length, FileStream fileStream, DownloadBackgroundWorker backgroundWorker, CancellationToken cancellationToken)
@@ -67,7 +78,6 @@ public class DataField42Communication : TcpCommunicationBase
                 throw new TimeoutException($"Can't receive data in time ({timeoutDuration} ms)");
         }
     }
-
 
     public async Task<string> ReceiveString() => await receiveString(await receiveDataLength());
 

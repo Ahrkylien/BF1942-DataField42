@@ -32,12 +32,8 @@ public class UpdateManager
         ExternalProcess.SwitchTo(UpdaterFileName, arguments: restartArguments);
     }
 
-    public async Task<Version> RequestVersion() => await RequestVersion(_communication);
-
-    public static async Task<Version> RequestVersion(DataField42Communication communication)
-    {
-        communication.StartSession();
-        communication.SendString($"handshake {Version}");
-        return new Version(await communication.ReceiveString());
+    public async Task<Version> RequestVersion() {
+        (_, var version) = await _communication.HandShake(Version);
+        return version;
     }
 }

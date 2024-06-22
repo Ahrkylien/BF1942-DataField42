@@ -58,7 +58,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
     {
         _mainWindowViewModel = mainWindowViewModel;
         _syncParameters = syncParameters;
-        Task.Run(async () => PrepareDownload());
+        Task.Run(async () => await PrepareDownload());
     }
 
     private async Task PrepareDownload()
@@ -102,7 +102,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
 
                 _syncParameters.Map = map;
             }
-            catch (TimeoutException ex)
+            catch (TimeoutException)
             {
                 PostError($"Server did not respond in time");
                 return;
@@ -165,7 +165,15 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
             try
             {
                 _communicationWithServer = new DataField42Communication(_syncParameters.Ip);
-                var serverVersion = await UpdateManager.RequestVersion(_communicationWithServer);
+                (var redirectServerIp, var serverVersion) = await _communicationWithServer.HandShake(UpdateManager.Version);
+                if (redirectServerIp != null)
+                {
+                    PostMessage($"Server redirected to {redirectServerIp}");
+                    _communicationWithServer = new DataField42Communication(redirectServerIp);
+                    (redirectServerIp, serverVersion) = await _communicationWithServer.HandShake(UpdateManager.Version);
+                    if (redirectServerIp != null)
+                        throw new InvalidOperationException($"Server tries to redirect leading to a second redirect which is not allowed.");
+                }
                 if (serverVersion.Major != UpdateManager.Version.Major || serverVersion.Minor != UpdateManager.Version.Minor)
                     throw new Exception($"Server has wrong version running: {serverVersion}");
                 connectedToServer = true;

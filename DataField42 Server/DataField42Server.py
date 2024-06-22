@@ -320,7 +320,8 @@ class DataField42TCPHandler(socketserver.BaseRequestHandler):
 
 
 def handshake(communication: DataField42Communication, version: str):
-    communication.send(dataField42_server_version, await_acknowledgement=False)
+    redirect_server_ip = "null" if dataField42_server.redirect_server_ip == "" else dataField42_server.redirect_server_ip
+    communication.send(f"{redirect_server_ip} {dataField42_server_version}", await_acknowledgement=False)
 
 
 ARCHIVES = [
@@ -379,8 +380,9 @@ def get_name_parts(path: str) -> dict[str, str]:
 
 
 class DataField42Server:
-    def __init__(self, game_directory=""):
+    def __init__(self, game_directory="", redirect_server_ip=""):
         self.game_directory = game_directory
+        self.redirect_server_ip = redirect_server_ip
 
     def start(self):
         log_info("Starting DataField42 server")
