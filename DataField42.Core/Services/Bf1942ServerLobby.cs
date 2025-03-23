@@ -1,10 +1,11 @@
-﻿using System.Net.Http;
+﻿using System.Net;
+using System.Net.Http;
 using System.Text.Json;
 
 public class Bf1942ServerLobby
 {
     public List<Bf1942Server> Servers { get; private set; } = new();
-    private string MasterApiEntryPoint = "http://master.bf1942.org/json";
+    private readonly string _masterApiEntryPoint = "http://master.bf1942.org/json";
 
     public async Task QueryAllServers()
     {
@@ -15,7 +16,7 @@ public class Bf1942ServerLobby
         {
             await Task.WhenAll(queryTasks);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // swallow exceptions from queries
         }
@@ -28,7 +29,7 @@ public class Bf1942ServerLobby
         try
         {
             using HttpClient client = new();
-            HttpResponseMessage response = await client.GetAsync(MasterApiEntryPoint);
+            HttpResponseMessage response = await client.GetAsync(_masterApiEntryPoint);
 
             if (response.IsSuccessStatusCode)
             {
@@ -43,7 +44,16 @@ public class Bf1942ServerLobby
 
                 // Process the retrieved data
                 foreach (var item in jsonData)
-                    servers.Add(new Bf1942Server(item[0].ToString() ?? "", int.Parse(item[1].ToString() ?? "")));
+                {
+                    try
+                    {
+                        servers.Add(new Bf1942Server(IPAddress.Parse(item[0].ToString() ?? ""), int.Parse(item[1].ToString() ?? "")));
+                    }
+                    catch
+                    {
+                        // ignore for now
+                    }
+                }
             }
             else
             {

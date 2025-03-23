@@ -1,5 +1,4 @@
 ﻿using System.IO;
-
 public class SyncRuleManager : ISyncRuleManager
 {
     private readonly string _ruleFilePath;
@@ -10,13 +9,13 @@ public class SyncRuleManager : ISyncRuleManager
     public SyncRuleManager(string ruleFilePath)
     {
         _ruleFilePath = ruleFilePath;
-        _parseRuleFile();
+        ParseRuleFile();
     }
 
     /// <summary>
     /// Parses the rule file while swallowing parsing errors
     /// </summary>
-    private void _parseRuleFile() {
+    private void ParseRuleFile() {
         if (!File.Exists(_ruleFilePath))
             FileHelper.WriteText(_ruleFilePath, "ignore Always ModMiscFile * mod.dll");
         

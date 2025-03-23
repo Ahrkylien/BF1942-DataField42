@@ -5,5 +5,5 @@ using DataField42.Interfaces;
 namespace DataField42.ViewModels;
 public partial class SettingsViewModel : ObservableObject, IPageViewModel
 {
-
+    public string Title => "Settings";
 }

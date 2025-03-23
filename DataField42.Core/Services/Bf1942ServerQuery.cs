@@ -4,26 +4,26 @@ using System.Text;
 
 public class Bf1942ServerQuery
 {
-    private readonly string _ip;
+    private readonly IPAddress _ip;
     private readonly int _port;
 
-    public Bf1942ServerQuery(string ip, int port)
+    public Bf1942ServerQuery(IPAddress ip, int port)
     {
         _ip = ip;
         _port = port;
     }
 
-    public async Task<Bf1942QueryResult> Query(int timeoutInMs)
+    public async Task<Bf1942QueryResult> Query(TimeSpan timeoutDuration)
     {
         var cancellationTokenSource = new CancellationTokenSource();
-        cancellationTokenSource.CancelAfter(timeoutInMs);
+        cancellationTokenSource.CancelAfter(timeoutDuration);
 
         Dictionary<string, string> properties = new();
         UdpClient udpClient = new();
 
         try
         {
-            udpClient.Connect(IPAddress.Parse(_ip), _port);
+            udpClient.Connect(_ip, _port);
             await udpClient.SendAsync(Encoding.UTF8.GetBytes("\\status\\"), cancellationTokenSource.Token);
 
             IPEndPoint RemoteIpEndPoint = new(IPAddress.Any, 0);

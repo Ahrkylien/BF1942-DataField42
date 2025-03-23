@@ -91,6 +91,9 @@ public class LocalFileCacheManager : ILocalFileCacheManager
     {
         foreach (var fileInfoGroup in fileInfoGroups)
         {
+            if (fileInfoGroup.IgnoreDuringSync)
+                continue;
+
             // if rfa move all files that match the name and patch criteria also if RepresentsAbsenceOfFile
             if (fileInfoGroup.FileType == Bf1942FileTypes.Level || fileInfoGroup.FileType == Bf1942FileTypes.Archive)
             {

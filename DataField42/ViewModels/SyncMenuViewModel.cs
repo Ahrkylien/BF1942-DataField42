@@ -1,11 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DataField42.Interfaces;
+using System.Net;
 using System.Text.RegularExpressions;
 
 namespace DataField42.ViewModels;
 public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
 {
+    public string Title => "File Synchronization";
+
     [ObservableProperty]
     private int _percentage;
 
@@ -83,7 +86,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
             int port = 23000;
             foreach (var server in serverLobby.Servers)
             {
-                if(server.QueryResult != null && server.Ip == _syncParameters.Ip && server.QueryResult.HostPort == _syncParameters.Port)
+                if(server.QueryResult != null && server.Ip.ToString() == _syncParameters.Ip && server.QueryResult.HostPort == _syncParameters.Port)
                 {
                     port = server.QueryPort;
                     break;
@@ -91,10 +94,10 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
             }
 
             PostMessage($"Querying server to get current map: {_syncParameters.Ip}:{port}");
-            var serverQuery = new Bf1942ServerQuery(_syncParameters.Ip, port);
+            var serverQuery = new Bf1942ServerQuery(IPAddress.Parse(_syncParameters.Ip), port);
             try
             {
-                var queryResult = await serverQuery.Query(2000);
+                var queryResult = await serverQuery.Query(TimeSpan.FromMilliseconds(2000));
                 var map = queryResult.MapName.Replace(' ', '_');
 
                 if (!(Regex.IsMatch(map, $"^[{FileInfo.AllowableChars}]*$") && map.Length >= 1)) // only letters digits and underscores and hyphens and at least 1 char
@@ -224,6 +227,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
                         PostError($"Server doesn't have the map: {_syncParameters.Map}");
                     else if (numberOfFilesExpected == 0)
                     {
+                        _downloadManager.DownloadFilesWrapUp();
                         PostMessage("All files are already synchronized");
                         stageSuccessful = true;
                         EnterReturnToGameStage(joinServer: true, _syncRuleManager.IsAutoJoinEnabled());

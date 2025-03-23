@@ -12,7 +12,9 @@ public class FileInfoGroup
 
     public string FileNameWithoutPatchNumber => FileInfos.Count > 0 ? FileInfos[0].FileNameWithoutPatchNumber : "" ;
 
-    public string Directory => FileInfos.Count > 0 ? FileInfos[0].Directory : "" ;
+    public string Directory => FileInfos.Count > 0 ? FileInfos[0].Directory : "";
+
+    public bool IgnoreDuringSync => FileInfos.Any(x => x.SyncType == SyncType.None);
 
     public FileInfoGroup(FileInfo fileInfo)
     {

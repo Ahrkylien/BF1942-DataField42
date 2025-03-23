@@ -9,10 +9,10 @@ namespace DataField42.ViewModels;
 public partial class MainWindowViewModel : ObservableObject
 {
     [ObservableProperty]
-    private IPageViewModel _currentPageViewModel;
+    private IPageViewModel? _currentPageViewModel;
 
     [ObservableProperty]
-    private IPageViewModel _currentPopUpViewModel;
+    private IPageViewModel? _currentPopUpViewModel;
 
     [ObservableProperty]
     private bool _showPopup;
@@ -27,7 +27,7 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasErrorMessages))]
     [NotifyPropertyChangedFor(nameof(HasMessagesOrErrors))]
-    private string _errorMessages;
+    private string _errorMessages = string.Empty;
 
     public bool HasErrorMessages => !string.IsNullOrEmpty(ErrorMessages);
 
@@ -74,7 +74,7 @@ public partial class MainWindowViewModel : ObservableObject
                 DisplayError(ex.Message);
             }
         }
-        GoToPage(Page.Info);
+        _ = Task.Run(() => GoToPage(Page.Dashboard));
     }
 
     public void DisplayMessage(string message)
@@ -96,36 +96,77 @@ public partial class MainWindowViewModel : ObservableObject
     public void GoToSyncMenu(SyncParameters syncParameters)
     {
         _pages[Page.SyncMenu] = new SyncMenuViewModel(this, syncParameters);
-        DisplayPopup();
+        DisplayPopup(_pages[Page.SyncMenu]);
     }
 
-    public void DisplayPopup()
+    public void GoToSyncMenu(ServerViewModel serverViewModel)
     {
-        CurrentPopUpViewModel = _pages[Page.SyncMenu];
+        if (serverViewModel.QueryResult == null)
+        {
+            DisplayError("Can't sync with server because its not queried.");
+            return;
+        }
+
+        try
+        {
+            var keyHash = "-";
+            try
+            {
+                keyHash = Md5.Hash(Registry.ReadKey(Bf1942Client.GetKeyRegistryPath()));
+            }
+            catch
+            {
+                // do nothing
+            }
+            GoToSyncMenu(new SyncParameters(serverViewModel.QueryResult.Mod, serverViewModel.QueryResult.MapName.Replace(' ', '_'), serverViewModel.Ip, (int)serverViewModel.QueryResult.HostPort, keyHash, ""));
+        }
+        catch (Exception ex)
+        {
+            DisplayError(ex.Message);
+        }
+    }
+
+    public void DisplayPopup(IPageViewModel viewModel)
+    {
+        CurrentPopUpViewModel = viewModel;
         ShowPopup = true;
+        _ = Task.Run(() => CurrentPopUpViewModel.EnterPage());
     }
 
     [RelayCommand]
-    public async Task ClosePopUp()
+    private async Task ClosePopUp()
     {
-        CurrentPopUpViewModel.LeavePage();
+        _ = Task.Run(() => CurrentPopUpViewModel?.LeavePage());
         ShowPopup = false;
     }
 
     [RelayCommand]
     [MemberNotNull(nameof(CurrentPageViewModel))]
-    public async Task GoToPage(Page page)
+    private async Task GoToPage(Page page)
     {
         if (CurrentPageViewModel != null)
             await CurrentPageViewModel.LeavePage();
-        
+
+        CurrentPageViewModel = GetPageViewModel(page);
+
+        _ = Task.Run(() => CurrentPageViewModel.EnterPage());
+    }
+
+    private IPageViewModel GetPageViewModel(Page page)
+    {
         if (!_pages.ContainsKey(page))
             _pages[page] = page switch
             {
+                Page.Dashboard => new DashboardViewModel(this, new SettingsService("DataField42/Settings.txt")),
                 Page.ServerList => new ServerListViewModel(this),
                 Page.Info => new InfoViewModel(),
                 _ => throw new Exception($"There is no linked ViewModel for Page: {page} in {nameof(GoToPage)}"),
             };
-        CurrentPageViewModel = _pages[page];
+        return _pages[page];
+    }
+
+    private void Sync(ServerViewModel serverViewModel)
+    {
+
     }
 }

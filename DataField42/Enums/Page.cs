@@ -2,6 +2,7 @@
 
 public enum Page
 {
+    Dashboard,
     ServerList,
     SyncMenu,
     Info,

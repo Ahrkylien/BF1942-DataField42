@@ -6,6 +6,8 @@
         xmlns:DataField42="clr-namespace:DataField42"
         xmlns:ViewModels="clr-namespace:DataField42.ViewModels"
         xmlns:Views="clr-namespace:DataField42.Views"
+        xmlns:svg="https://github.com/dotnetprojects/SVGImage"
+        xmlns:Controls="clr-namespace:DataField42.Controls"
         mc:Ignorable="d"
         Title="DataField42"
         Height="450" Width="800"
@@ -27,6 +29,9 @@
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
+        <DataTemplate DataType="{x:Type ViewModels:DashboardViewModel}">
+            <Views:Dashboard />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type ViewModels:ServerListViewModel}">
             <Views:ServerList />
         </DataTemplate>
@@ -35,6 +40,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type ViewModels:SyncMenuViewModel}">
             <Views:SyncMenu />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type ViewModels:ServerSelectionViewModel}">
+            <Views:ServerList />
         </DataTemplate>
     </Window.Resources>
 
@@ -47,9 +55,24 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <DockPanel Grid.Row="0" Height="50" MouseLeftButtonDown="ControlBar_MouseLeftButtonDown" MouseEnter="ControlBar_MouseEnter">
-                <Button Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Background="#c33c3c" BorderThickness="2" BorderBrush="#c33c3c" Foreground="#d4d4d4" Click="CloseButton_Click">X</Button>
-                <Button Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Click="MaximizeButton_Click">[ ]</Button>
-                <Button Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Click="MinimizeButton_Click">-</Button>
+                <Controls:SimpleButton Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Click="CloseButton_Click" >
+                    <svg:SVGImage
+                        UriSource="/Resources/Images/x.svg"
+                        SizeType="ViewBoxToSizeNoStretch"
+                        OverrideStrokeColor="#c33c3c" />
+                </Controls:SimpleButton>
+                <Controls:SimpleButton Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Click="MaximizeButton_Click">
+                    <svg:SVGImage
+                        UriSource="/Resources/Images/maximize.svg"
+                        SizeType="ViewBoxToSizeNoStretch"
+                        OverrideStrokeColor="#d4d4d4" />
+                </Controls:SimpleButton>
+                <Controls:SimpleButton Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Click="MinimizeButton_Click">
+                    <svg:SVGImage
+                        UriSource="/Resources/Images/minus.svg"
+                        SizeType="ViewBoxToSizeNoStretch"
+                        OverrideStrokeColor="#d4d4d4" />
+                </Controls:SimpleButton>
                 <Label Margin="120,0,0,0" Height="30" Foreground="#d4d4d4" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="15">DataField42</Label>
             </DockPanel>
             <Grid Grid.Row="1">
@@ -59,8 +82,15 @@
                 </Grid.ColumnDefinitions>
                 <Border Grid.Column="0" Visibility="Visible" CornerRadius="0" BorderBrush="#233050" BorderThickness="0,0,2,0" Padding="0" Background="#090b12">
                     <StackPanel Width="115" Margin="0,2,0,0">
-                        <Button Margin="0,10,0,0" Width="90" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Command="{Binding GoToPageCommand}" CommandParameter="{x:Static DataField42:Page.ServerList}">Servers</Button>
-                        <Button Margin="0,10,0,0" Width="90" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Command="{Binding GoToPageCommand}" CommandParameter="{x:Static DataField42:Page.Info}">Info</Button>
+                        <Controls:SimpleButton Margin="0,10,0,0" Width="90" Height="30" CornerRadius="0" Command="{Binding GoToPageCommand}" CommandParameter="{x:Static DataField42:Page.Dashboard}">
+                            <Label Foreground="#d4d4d4" HorizontalAlignment="Center">Dashboard</Label>
+                        </Controls:SimpleButton>
+                        <Controls:SimpleButton Margin="0,10,0,0" Width="90" Height="30" CornerRadius="0" Command="{Binding GoToPageCommand}" CommandParameter="{x:Static DataField42:Page.ServerList}">
+                            <Label Foreground="#d4d4d4" HorizontalAlignment="Center">Servers</Label>
+                        </Controls:SimpleButton>
+                        <Controls:SimpleButton Margin="0,10,0,0" Width="90" Height="30" CornerRadius="0" Command="{Binding GoToPageCommand}" CommandParameter="{x:Static DataField42:Page.Info}">
+                            <Label Foreground="#d4d4d4" HorizontalAlignment="Center">Info</Label>
+                        </Controls:SimpleButton>
                     </StackPanel>
                 </Border>
                 <Border Grid.Column="1" Background="#0a1225" BorderBrush="#233050" BorderThickness="0,2,0,0">
@@ -98,8 +128,18 @@
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
                                 <DockPanel Grid.Row="0" Height="32" Background="#233050">
-                                    <Button Margin="0,0,0,2" DockPanel.Dock="Right" Width="30" Height="30" Background="#c33c3c" BorderThickness="2" BorderBrush="#c33c3c" Foreground="#d4d4d4" Command="{Binding ClosePopUpCommand}">X</Button>
-                                    <Label Margin="30,0,0,0" Height="30" Foreground="#d4d4d4" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="15">File Synchronization</Label>
+                                    <Controls:SimpleButton
+                                        Margin="0,0,0,2"
+                                        DockPanel.Dock="Right"
+                                        Width="30"
+                                        Height="30"
+                                        Command="{Binding ClosePopUpCommand}" >
+                                        <svg:SVGImage
+                                            UriSource="/Resources/Images/x.svg"
+                                            SizeType="ViewBoxToSizeNoStretch"
+                                            OverrideStrokeColor="#c33c3c" />
+                                    </Controls:SimpleButton>
+                                    <Label Margin="30,0,0,0" Height="30" Foreground="#d4d4d4" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="15" Content="{Binding CurrentPopUpViewModel.Title}" />
                                 </DockPanel>
                                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                                     <ContentControl Content="{Binding CurrentPopUpViewModel}" Margin="10" />

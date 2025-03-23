@@ -163,7 +163,7 @@ public class DownloadManager
         _localFileCacheManager.MoveFilesFromCacheToWorkingDirectory(fileInfosOfFilesInCache);
 
         // move files from game to cache:
-        List<FileInfoGroup> fileInfoGroups = FileInfoGroup.GetFileInfoGroups(_fileInfos);
+        var fileInfoGroups = FileInfoGroup.GetFileInfoGroups(_fileInfos);
         _localFileCacheManager.MoveFilesFromGameToCacheDirectory(fileInfoGroups);
 
         // move files from working dir to game:
