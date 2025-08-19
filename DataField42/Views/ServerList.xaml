@@ -6,36 +6,63 @@
              xmlns:local="clr-namespace:DataField42.Views"
              xmlns:ViewModels="clr-namespace:DataField42.ViewModels"
              xmlns:Controls="clr-namespace:DataField42.Controls"
+             xmlns:svg="https://github.com/dotnetprojects/SVGImage"
+             xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
              d:DataContext="{d:DesignInstance ViewModels:ServerListViewModel, IsDesignTimeCreatable=True}"
              mc:Ignorable="d">
 
     <Grid>
-        <ItemsControl ItemsSource="{Binding Servers}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Controls:SimpleButton
-                        Margin="2"
-                        Padding="7,3,7,1"
-                        BorderThickness="0"
-                        CornerRadius="3"
-                        Command="{Binding ClickCommand}" >
-                        <Grid Margin="0,0,0,5">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*" />
-                                <ColumnDefinition Width="140" />
-                                <ColumnDefinition Width="50" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Foreground="#d4d4d4" TextWrapping="Wrap" Text="{Binding Name}" />
-                            <TextBlock Grid.Column="1" Foreground="#d4d4d4" Text="{Binding IpAndGamePort}" />
-                            <TextBlock Grid.Column="2" Foreground="#d4d4d4" Text="{Binding Players}" />
-                            <TextBlock Grid.Column="3" Foreground="#d4d4d4" TextAlignment="Right" Text="{Binding Map}" />
-                            <TextBlock Grid.Column="4" Foreground="#d4d4d4" TextAlignment="Right" Text="{Binding Mod}" />
-                        </Grid>
-                    </Controls:SimpleButton>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+        <Grid.Resources>
+            <CollectionViewSource x:Key="ServersSorted" Source="{Binding Servers}">
+                <CollectionViewSource.SortDescriptions>
+                    <scm:SortDescription PropertyName="SortKey" Direction="Ascending" />
+                </CollectionViewSource.SortDescriptions>
+            </CollectionViewSource>
+        </Grid.Resources>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="auto" />
+            </Grid.ColumnDefinitions>
+            <Controls:SimpleButton
+                Grid.Column="1"
+                Margin="5,0,0,0"
+                VerticalAlignment="Top"
+                Width="30"
+                Height="30"
+                Command="{Binding RefreshCommand}" >
+                <svg:SVGImage
+                    UriSource="/Resources/Images/refresh.svg"
+                    SizeType="ViewBoxToSizeNoStretch"
+                    OverrideStrokeColor="#d4d4d4" />
+            </Controls:SimpleButton>
+            <ItemsControl Grid.Column="0" ItemsSource="{Binding ServersCollectionView}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Controls:SimpleButton
+                            Margin="2"
+                            Padding="7,3,7,1"
+                            BorderThickness="0"
+                            CornerRadius="3"
+                            Command="{Binding ClickCommand}" >
+                            <Grid Margin="0,0,0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*" />
+                                    <ColumnDefinition Width="140" />
+                                    <ColumnDefinition Width="50" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Foreground="#d4d4d4" TextWrapping="Wrap" Text="{Binding Name}" />
+                                <TextBlock Grid.Column="1" Foreground="#d4d4d4" Text="{Binding IpAndGamePort}" />
+                                <TextBlock Grid.Column="2" Foreground="#d4d4d4" Text="{Binding Players}" />
+                                <TextBlock Grid.Column="3" Foreground="#d4d4d4" TextAlignment="Right" Text="{Binding Map}" />
+                                <TextBlock Grid.Column="4" Foreground="#d4d4d4" TextAlignment="Right" Text="{Binding Mod}" />
+                            </Grid>
+                        </Controls:SimpleButton>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
     </Grid>
 </UserControl>

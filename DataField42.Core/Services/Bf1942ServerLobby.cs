@@ -25,7 +25,6 @@ public class Bf1942ServerLobby
 
     public async Task GetServerListFromHttpApi()
     {
-        List<Bf1942Server> servers = new();
         try
         {
             using HttpClient client = new();
@@ -47,7 +46,9 @@ public class Bf1942ServerLobby
                 {
                     try
                     {
-                        servers.Add(new Bf1942Server(IPAddress.Parse(item[0].ToString() ?? ""), int.Parse(item[1].ToString() ?? "")));
+                        var server = new Bf1942Server(IPAddress.Parse(item[0].ToString() ?? ""), int.Parse(item[1].ToString() ?? ""));
+                        if (!Servers.Contains(server))
+                            Servers.Add(server);
                     }
                     catch
                     {
@@ -64,6 +65,5 @@ public class Bf1942ServerLobby
         {
             throw new Exception($"Failed to retrieve data from Master Api. An error occurred: {ex.Message}");
         }
-        Servers = servers;
     }
 }

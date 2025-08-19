@@ -9,7 +9,6 @@ public partial class ServerViewModel : ObservableObject
     private readonly Action<ServerViewModel> _onSelectionHandler;
     private readonly string? _storedServerName;
 
-
     public string Name => QueryResult?.HostName ?? _storedServerName ?? string.Empty;
 
     public string IpAndGamePort => $"{_bf1942Server.Ip}:{QueryResult?.HostPort.ToString() ?? "xxxxx"}";
@@ -18,9 +17,12 @@ public partial class ServerViewModel : ObservableObject
 
     public int QueryPort => _bf1942Server.QueryPort;
 
+    public int SortKey => QueryResult is null ? -1 : (int)QueryResult.NumberOfPlayers;
+
     public string Players
     {
-        get {
+        get
+        {
             if (QueryResult != null)
             {
                 return $"{QueryResult.NumberOfPlayers}/{QueryResult.MaximumNumberOfPlayers}";
@@ -28,7 +30,9 @@ public partial class ServerViewModel : ObservableObject
             return ""; 
         }
     }
+
     public string Map => QueryResult?.MapName ?? string.Empty;
+
     public string Mod => QueryResult?.Mod ?? string.Empty;
 
     public Bf1942QueryResult? QueryResult => _bf1942Server.QueryResult;
@@ -43,6 +47,8 @@ public partial class ServerViewModel : ObservableObject
     public string? _errorMessage;
 
     public bool GeneratedItem { get; init; } = false;
+
+    public event Action NewQuery;
 
     public ServerViewModel(Bf1942Server bf1942Server,
                            Action<ServerViewModel> onSelectionHandler,
@@ -93,6 +99,10 @@ public partial class ServerViewModel : ObservableObject
         OnPropertyChanged(nameof(Players));
         OnPropertyChanged(nameof(Map));
         OnPropertyChanged(nameof(Mod));
+        OnPropertyChanged(nameof(SortKey));
         Loading = false;
+        NewQuery?.Invoke();
     }
+
+    public bool Equals(Bf1942Server server) => _bf1942Server == server;
 }

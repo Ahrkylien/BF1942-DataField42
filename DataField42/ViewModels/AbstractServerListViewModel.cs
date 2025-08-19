@@ -1,7 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using DataField42.Interfaces;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.DirectoryServices;
 using System.Windows;
+using System.Windows.Data;
 
 namespace DataField42.ViewModels;
 
@@ -11,15 +15,25 @@ public abstract partial class AbstractServerListViewModel : ObservableObject, IP
 
     public ObservableCollection<ServerViewModel> Servers { get; set; } = new();
 
+    [ObservableProperty]
+    private ICollectionView _serversCollectionView;
+
     protected readonly MainWindowViewModel _mainWindowViewModel;
 
+    protected readonly Bf1942ServerLobby _serverLobby = new();
+
     private readonly SemaphoreSlim _semaphore = new(1);
+
+    private readonly SemaphoreSlim _refreshSemaphore = new(1);
 
     private bool _isInitialized = false;
 
     public AbstractServerListViewModel(MainWindowViewModel mainWindowViewModel)
     {
         _mainWindowViewModel = mainWindowViewModel;
+
+        _serversCollectionView = CollectionViewSource.GetDefaultView(Servers);
+        _serversCollectionView.SortDescriptions.Add(new SortDescription(nameof(ServerViewModel.SortKey), ListSortDirection.Descending));
     }
 
     public async Task EnterPage()
@@ -29,7 +43,7 @@ public abstract partial class AbstractServerListViewModel : ObservableObject, IP
         {
             if (_isInitialized)
                 return;
-            await Initialize();
+            await Refresh();
             _isInitialized = true;
         }
         finally
@@ -38,33 +52,53 @@ public abstract partial class AbstractServerListViewModel : ObservableObject, IP
         }
     }
 
-    public async Task Initialize()
+    [RelayCommand]
+    public async Task Refresh()
     {
-        var serverLobby = new Bf1942ServerLobby();
+        await _refreshSemaphore.WaitAsync();
         try
         {
-            await serverLobby.GetServerListFromHttpApi();
-        }
-        catch (Exception ex)
-        {
-            _mainWindowViewModel.DisplayError($"Can't get server list: {ex.Message}");
-        }
-        foreach (var server in serverLobby.Servers)
-        {
+            try
+            {
+                await _serverLobby.GetServerListFromHttpApi();
+            }
+            catch (Exception ex)
+            {
+                _mainWindowViewModel.DisplayError($"Can't get server list: {ex.Message}");
+            }
+
             Application.Current.Dispatcher.Invoke(() =>
             {
-                Servers.Add(new ServerViewModel(server, ServerSelectedHandler));
+                foreach (var server in _serverLobby.Servers)
+                {
+                    if (!Servers.Any(x => x.Equals(server)))
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            var vm = new ServerViewModel(server, ServerSelectedHandler);
+                            vm.NewQuery += RefreshList;
+                            Servers.Add(vm);
+                        });
+                    }
+                }
             });
+
+            await Application.Current.Dispatcher.Invoke(async () =>
+            {
+                await _serverLobby.QueryAllServers();
+            });
+
+            OnPropertyChanged(nameof(Servers));
         }
-
-
-        await Application.Current.Dispatcher.Invoke(async () =>
+        finally
         {
-            await serverLobby.QueryAllServers();
-        });
+            _refreshSemaphore.Release();
+        }
+    }
 
-
-        OnPropertyChanged(nameof(Servers));
+    private void RefreshList()
+    {
+        ServersCollectionView.Refresh();
     }
 
     public virtual Task LeavePage() => Task.CompletedTask;

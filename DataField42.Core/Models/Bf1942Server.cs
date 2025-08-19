@@ -1,19 +1,11 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
-public class Bf1942Server
+public record Bf1942Server(IPAddress Ip, int QueryPort)
 {
-    public IPAddress Ip { get; init; }
-    public int QueryPort { get; init; }
     public Bf1942QueryResult? QueryResult { get; private set; }
 
     public event VoidEventHandler? NewQuery;
-
-    public Bf1942Server(IPAddress ip, int port)
-    {
-        Ip = ip;
-        QueryPort = port;
-    }
 
     [MemberNotNull(nameof(QueryResult))]
     public async Task QueryServer(TimeSpan? timeoutDuration = null)
@@ -26,4 +18,14 @@ public class Bf1942Server
 
         NewQuery?.Invoke();
     }
+
+    public virtual bool Equals(Bf1942Server? other)
+    {
+        if (other is null)
+            return false;
+
+        return other.Ip.Equals(Ip) && other.QueryPort == QueryPort;
+    }
+
+    public override int GetHashCode() => HashCode.Combine(Ip, QueryPort);
 }

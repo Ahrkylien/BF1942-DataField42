@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataField42", "DataField42\
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "DataField42.Core", "DataField42.Core\DataField42.Core.shproj", "{D4916D93-F51D-4671-B111-8893AE49C8FC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerQueryTest", "ServerQueryTest\ServerQueryTest.csproj", "{9193209B-0656-42B5-9EC0-FD3FA5F8C459}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataField42 Updater", "DataField42 Updater\DataField42 Updater.csproj", "{B0A49413-4E69-4C14-BB79-7B4787398A01}"
 EndProject
 Global
@@ -21,10 +19,6 @@ Global
 		{5AEA35FC-2FD1-4EE9-B8C2-F702A47F89D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5AEA35FC-2FD1-4EE9-B8C2-F702A47F89D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5AEA35FC-2FD1-4EE9-B8C2-F702A47F89D6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9193209B-0656-42B5-9EC0-FD3FA5F8C459}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9193209B-0656-42B5-9EC0-FD3FA5F8C459}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9193209B-0656-42B5-9EC0-FD3FA5F8C459}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9193209B-0656-42B5-9EC0-FD3FA5F8C459}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B0A49413-4E69-4C14-BB79-7B4787398A01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B0A49413-4E69-4C14-BB79-7B4787398A01}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B0A49413-4E69-4C14-BB79-7B4787398A01}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -38,7 +32,6 @@ Global
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		DataField42.Core\DataField42.Core.projitems*{5aea35fc-2fd1-4ee9-b8c2-f702a47f89d6}*SharedItemsImports = 5
-		DataField42.Core\DataField42.Core.projitems*{9193209b-0656-42b5-9ec0-fd3fa5f8c459}*SharedItemsImports = 5
 		DataField42.Core\DataField42.Core.projitems*{b0a49413-4e69-4c14-bb79-7b4787398a01}*SharedItemsImports = 5
 		DataField42.Core\DataField42.Core.projitems*{d4916d93-f51d-4671-b111-8893ae49c8fc}*SharedItemsImports = 13
 	EndGlobalSection
