@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DataField42.Interfaces;
+using ExhaustiveMatching;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Windows.Controls;
@@ -8,6 +9,9 @@ using System.Windows.Controls;
 namespace DataField42.ViewModels;
 public partial class MainWindowViewModel : ObservableObject
 {
+    [ObservableProperty]
+    private Page? _currentPage;
+
     [ObservableProperty]
     private IPageViewModel? _currentPageViewModel;
 
@@ -149,19 +153,26 @@ public partial class MainWindowViewModel : ObservableObject
 
         CurrentPageViewModel = GetPageViewModel(page);
 
+        CurrentPage = page;
+
         _ = Task.Run(() => CurrentPageViewModel.EnterPage());
     }
 
     private IPageViewModel GetPageViewModel(Page page)
     {
         if (!_pages.ContainsKey(page))
+        {
             _pages[page] = page switch
             {
                 Page.Dashboard => new DashboardViewModel(this, new SettingsService("DataField42/Settings.txt")),
                 Page.ServerList => new ServerListViewModel(this),
                 Page.Info => new InfoViewModel(),
-                _ => throw new Exception($"There is no linked ViewModel for Page: {page} in {nameof(GoToPage)}"),
+                Page.Settings => new SettingsViewModel(),
+                Page.SyncMenu => throw new ArgumentException($"The {nameof(IPageViewModel)} for {Page.SyncMenu} should be created before calling {nameof(GetPageViewModel)}."),
+                _ => throw ExhaustiveMatch.Failed(page)
             };
+        }
+            
         return _pages[page];
     }
 

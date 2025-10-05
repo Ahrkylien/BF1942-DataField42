@@ -35,6 +35,15 @@ namespace DataField42.Controls
             remove => RemoveHandler(ClickEvent, value);
         }
 
+        public static readonly DependencyProperty IsSelectedProperty =
+            DependencyProperty.Register(nameof(IsSelected), typeof(bool), typeof(SimpleButton), new PropertyMetadata(false));
+
+        public bool IsSelected
+        {
+            get => (bool)GetValue(IsSelectedProperty);
+            set => SetValue(IsSelectedProperty, value);
+        }
+
         public SimpleButton()
         {
             MouseLeftButtonDown += OnMouseLeftButtonDown;

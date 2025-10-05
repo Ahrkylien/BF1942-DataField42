@@ -6,6 +6,7 @@
              xmlns:local="clr-namespace:DataField42.Views"
              xmlns:ViewModels="clr-namespace:DataField42.ViewModels"
              xmlns:Controls="clr-namespace:DataField42.Controls"
+             xmlns:Converters="clr-namespace:DataField42.Converters"
              xmlns:svg="https://github.com/dotnetprojects/SVGImage"
              xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
              d:DataContext="{d:DesignInstance ViewModels:ServerListViewModel, IsDesignTimeCreatable=True}"

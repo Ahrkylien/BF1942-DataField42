@@ -6,4 +6,5 @@ public enum Page
     ServerList,
     SyncMenu,
     Info,
+    Settings,
 }
