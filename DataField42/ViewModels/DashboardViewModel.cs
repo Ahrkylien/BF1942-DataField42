@@ -1,15 +1,20 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DataField42.Enums;
 using DataField42.Interfaces;
+using DF.Watchable;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Net;
 using System.Windows;
+using System.Xml.Linq;
 
 namespace DataField42.ViewModels;
 public partial class DashboardViewModel : ObservableObject, IPageViewModel
 {
     public string Title => "Dashboard";
+
+
 
     private readonly MainWindowViewModel _mainWindowViewModel;
 
@@ -18,6 +23,8 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
     private readonly SemaphoreSlim _semaphore = new(1);
 
     private bool _isInitialized = false;
+
+    public IReadOnlyWatchable<DashboardMode> Mode { get; }
 
     public ObservableCollection<ServerViewModel> FavoriteServers { get; set; } = new ();
 
@@ -33,10 +40,11 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
         EditModeEnabled = false;
     }
 
-    public DashboardViewModel(MainWindowViewModel mainWindowViewModel, SettingsService settingsService)
+    public DashboardViewModel(MainWindowViewModel mainWindowViewModel, SettingsService settingsService, IReadOnlyWatchable<DashboardMode> mode)
     {
         _mainWindowViewModel = mainWindowViewModel;
         _settingsService = settingsService;
+        Mode = mode;
         foreach ((var ip, var port, var name) in _settingsService.FavoriteServers)
             FavoriteServers.Add(new ServerViewModel(new Bf1942Server(ip, port), ServerSelectedHandler, name, queryServer: true));
         EditModeEnabled = false;

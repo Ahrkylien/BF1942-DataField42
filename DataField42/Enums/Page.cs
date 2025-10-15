@@ -1,4 +1,4 @@
-﻿namespace DataField42;
+﻿namespace DataField42.Enums;
 
 public enum Page
 {

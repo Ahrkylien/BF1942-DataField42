@@ -7,7 +7,17 @@
              xmlns:Converters="clr-namespace:DataField42.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-        <Label Foreground="red">settings</Label>
+    <Grid VerticalAlignment="Top">
+        <StackPanel Orientation="Horizontal" Height="22">
+            <TextBlock
+                Text="Dashboard Mode"
+                Margin="0,0,10,0"
+                Foreground="#d4d4d4"
+                VerticalAlignment="Center"/>
+            <ComboBox
+                ItemsSource="{Binding DashboardModes}"
+                SelectedItem="{Binding SelectedDashboardMode, Mode=TwoWay}"
+                Width="200"/>
+        </StackPanel>
     </Grid>
 </UserControl>

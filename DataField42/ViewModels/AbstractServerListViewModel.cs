@@ -67,24 +67,23 @@ public abstract partial class AbstractServerListViewModel : ObservableObject, IP
                 _mainWindowViewModel.DisplayError($"Can't get server list: {ex.Message}");
             }
 
-            Application.Current.Dispatcher.Invoke(() =>
+            var newServers = new List<ServerViewModel>();
+
+            foreach (var server in _serverLobby.Servers)
             {
-                foreach (var server in _serverLobby.Servers)
+                if (!Servers.Any(x => x.Equals(server)))
                 {
-                    if (!Servers.Any(x => x.Equals(server)))
-                    {
-                        Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            var vm = new ServerViewModel(server, ServerSelectedHandler);
-                            vm.NewQuery += RefreshList;
-                            Servers.Add(vm);
-                        });
-                    }
+                    var vm = new ServerViewModel(server, ServerSelectedHandler);
+                    vm.NewQuery += RefreshList;
+                    newServers.Add(vm);
                 }
-            });
+            }
 
             await Application.Current.Dispatcher.Invoke(async () =>
             {
+                foreach (var serverVm in newServers)
+                    Servers.Add(serverVm);
+
                 await _serverLobby.QueryAllServers();
             });
 

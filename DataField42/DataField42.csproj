@@ -35,4 +35,8 @@
     <Resource Include="Resources\Images\**\*.*" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\DF.Watchable\DF.Watchable.csproj" />
+  </ItemGroup>
+
 </Project>
