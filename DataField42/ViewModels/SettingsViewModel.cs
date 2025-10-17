@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using DataField42.Enums;
 using DataField42.Interfaces;
+using DataField42.Settings;
 using System.Collections.ObjectModel;
 
 namespace DataField42.ViewModels;
@@ -8,11 +9,11 @@ public partial class SettingsViewModel : ObservableObject, IPageViewModel
 {
     public string Title => "Settings";
 
-    private readonly Settings _settings;
+    private readonly SettingsService _settingsService;
 
-    public SettingsViewModel(Settings settings)
+    public SettingsViewModel(SettingsService settingsService)
     {
-        _settings = settings;
+        _settingsService = settingsService;
 
         // Populate enum values for binding
         DashboardModes = new ObservableCollection<DashboardMode>(
@@ -20,7 +21,7 @@ public partial class SettingsViewModel : ObservableObject, IPageViewModel
         );
 
         // Subscribe to changes in Watchable
-        _settings.DashboardMode.Changed += value => OnPropertyChanged(nameof(SelectedDashboardMode));
+        _settingsService.Settings.DashboardMode.Changed += value => OnPropertyChanged(nameof(SelectedDashboardMode));
     }
 
     // Expose the list of enum values for a ComboBox
@@ -29,7 +30,7 @@ public partial class SettingsViewModel : ObservableObject, IPageViewModel
     // Expose the current value for binding
     public DashboardMode SelectedDashboardMode
     {
-        get => _settings.DashboardMode.Value;
-        set => _settings.DashboardMode.Value = value;
+        get => _settingsService.Settings.DashboardMode.Value;
+        set => _settingsService.Settings.DashboardMode.Value = value;
     }
 }

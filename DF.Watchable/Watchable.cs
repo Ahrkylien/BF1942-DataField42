@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,11 +20,14 @@ namespace DF.Watchable
                 {
                     _value = value;
                     Changed?.Invoke(value);
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Value)));
                 }
             }
         }
 
         public event Action<T> Changed;
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public Task WaitFor(T value, CancellationToken cancellationToken) => WaitForInternal((x) => Equals(x, value), cancellationToken);
 

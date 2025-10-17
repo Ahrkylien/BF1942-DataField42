@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DataField42.Interfaces;
+using DataField42.Settings;
 using System.Net;
 using System.Text.RegularExpressions;
 
@@ -30,8 +31,6 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
     [ObservableProperty]
     private bool _autoJoinServerCheckboxVisible;
 
-
-
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasMessages))]
     [NotifyPropertyChangedFor(nameof(HasMessagesOrErrors))]
@@ -49,6 +48,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
     public bool HasMessagesOrErrors => HasMessages || HasErrorMessages;
 
     private MainWindowViewModel _mainWindowViewModel;
+    private SettingsService _settingsService;
     private DataField42Communication? _communicationWithServer;
     private ISyncRuleManager? _syncRuleManager;
     private DownloadManager? _downloadManager;
@@ -57,9 +57,10 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
     private readonly SyncParameters _syncParameters;
     private readonly CancellationTokenSource _cancelationTokenSource = new();
 
-    public SyncMenuViewModel(MainWindowViewModel mainWindowViewModel, SyncParameters syncParameters)
+    public SyncMenuViewModel(MainWindowViewModel mainWindowViewModel, SettingsService settingsService, SyncParameters syncParameters)
     {
         _mainWindowViewModel = mainWindowViewModel;
+        _settingsService = settingsService;
         _syncParameters = syncParameters;
         Task.Run(async () => await PrepareDownload());
     }
@@ -210,7 +211,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
             {
                 try
                 {
-                    _syncRuleManager = new SyncRuleManager("DataField42/Synchronization rules.txt");
+                    _syncRuleManager = new SyncRuleManager(_settingsService);
                     ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("DataField42/cache", "DataField42/tmp", "");
                     var downloadDecisionMaker = new DownloadDecisionMaker(_syncRuleManager, localFileCacheManager);
                     _downloadManager = new DownloadManager(_communicationWithServer, downloadDecisionMaker, localFileCacheManager);

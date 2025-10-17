@@ -1,10 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
 
 namespace DataField42_Updater;
+
 public partial class MainWindowViewModel : ObservableObject
 {
     private const string temporaryClientExeName = "DataField42_tmp.exe";

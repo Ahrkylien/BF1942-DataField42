@@ -5,11 +5,12 @@ using ExhaustiveMatching;
 using System.Diagnostics.CodeAnalysis;
 using DataField42.Enums;
 using System.Windows;
+using DataField42.Settings;
 
 namespace DataField42.ViewModels;
 public partial class MainWindowViewModel : ObservableObject
 {
-    private readonly Settings _settings;
+    private readonly SettingsService _settingsService = new("DataField42/Settings.ini");
 
     [ObservableProperty]
     private Page? _currentPage;
@@ -47,8 +48,6 @@ public partial class MainWindowViewModel : ObservableObject
 
     public MainWindowViewModel()
     {
-        _settings = new Settings();
-
         var successfulCommandLineArguments = true;
         try
         {
@@ -86,12 +85,13 @@ public partial class MainWindowViewModel : ObservableObject
             }
         }
 
-        _settings.DashboardMode.Changed += DashboardMode_Changed;
+        _settingsService.Settings.DashboardMode.Changed += DashboardModeChanged;
+        DashboardModeChanged(_settingsService.Settings.DashboardMode.Value);
 
-        _ = Task.Run(() => GoToPage(_settings.DashboardMode.Value == DashboardMode.Hidden ? Page.ServerList : Page.Dashboard));
+        _ = Task.Run(() => GoToPage(_settingsService.Settings.DashboardMode.Value == DashboardMode.Hidden ? Page.ServerList : Page.Dashboard));
     }
 
-    private void DashboardMode_Changed(DashboardMode mode)
+    private void DashboardModeChanged(DashboardMode mode)
     {
         DisplayDashboard = mode != DashboardMode.Hidden;
     }
@@ -114,7 +114,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     public void GoToSyncMenu(SyncParameters syncParameters)
     {
-        _pages[Page.SyncMenu] = new SyncMenuViewModel(this, syncParameters);
+        _pages[Page.SyncMenu] = new SyncMenuViewModel(this, _settingsService, syncParameters);
         DisplayPopup(_pages[Page.SyncMenu]);
     }
 
@@ -182,10 +182,10 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 _pages[page] = page switch
                 {
-                    Page.Dashboard => new DashboardViewModel(this, new SettingsService("DataField42/Settings.txt"), _settings.DashboardMode),
+                    Page.Dashboard => new DashboardViewModel(this, _settingsService),
                     Page.ServerList => new ServerListViewModel(this),
                     Page.Info => new InfoViewModel(),
-                    Page.Settings => new SettingsViewModel(_settings),
+                    Page.Settings => new SettingsViewModel(_settingsService),
                     Page.SyncMenu => throw new ArgumentException($"The {nameof(IPageViewModel)} for {Page.SyncMenu} should be created before calling {nameof(GetPageViewModel)}."),
                     _ => throw ExhaustiveMatch.Failed(page)
                 };

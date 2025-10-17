@@ -12,7 +12,8 @@
              d:DesignHeight="450" d:DesignWidth="800"
              d:DataContext="{d:DesignInstance ViewModels:DashboardViewModel, IsDesignTimeCreatable=True}">
     <Grid>
-        <ItemsControl ItemsSource="{Binding FavoriteServers}">
+        <ItemsControl ItemsSource="{Binding FavoriteServers}"
+                      Visibility="{Binding DataContext.DisplayOneServer, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}, Converter={Converters:InverseBooleanToVisibilityConverter}}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <UniformGrid Columns="2" />
@@ -92,6 +93,76 @@
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
+        <Grid DataContext="{Binding FirstFavoriteServers}"
+              Visibility="{Binding DataContext.DisplayOneServer, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}, Converter={Converters:BooleanToVisibilityConverter}}">
+            <Border
+                Visibility="{Binding DataContext.EditModeEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}, Converter={Converters:BooleanToVisibilityConverter}}"
+                Margin="10"
+                BorderThickness="2"
+                CornerRadius="8">
+                <Border.InputBindings>
+                    <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                </Border.InputBindings>
+                <Border.BorderBrush>
+                    <DrawingBrush Viewport="0,0,8,8" ViewportUnits="Absolute" TileMode="Tile">
+                        <DrawingBrush.Drawing>
+                            <DrawingGroup>
+                                <GeometryDrawing Brush="#233050">
+                                    <GeometryDrawing.Geometry>
+                                        <GeometryGroup>
+                                            <RectangleGeometry Rect="0,0,50,50" />
+                                            <RectangleGeometry Rect="50,50,50,50" />
+                                        </GeometryGroup>
+                                    </GeometryDrawing.Geometry>
+                                </GeometryDrawing>
+                            </DrawingGroup>
+                        </DrawingBrush.Drawing>
+                    </DrawingBrush>
+                </Border.BorderBrush>
+                <Border.Style>
+                    <Style>
+                        <Setter Property="Border.Background" Value="#1b1e2a"/>
+                        <Style.Triggers>
+                            <Trigger Property="Border.IsMouseOver" Value="True">
+                                <Setter Property="Border.Background" Value="#233050" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid Visibility="{Binding GeneratedItem, Converter={Converters:BooleanToVisibilityConverter}}">
+                        <Label HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#d4d4d4" Padding="0" FontSize="20" Content="Add" />
+                    </Grid>
+                    <Grid Visibility="{Binding GeneratedItem, Converter={Converters:InverseBooleanToVisibilityConverter}}">
+                        <Label Height="30" Foreground="#d4d4d4" Padding="0" HorizontalContentAlignment="Center" VerticalAlignment="Top" Margin="0,10,0,0" FontWeight="Bold" FontSize="12" Content="{Binding Name}" />
+                        <Label HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#d4d4d4" Padding="0" FontSize="20" Content="Change" />
+                    </Grid>
+                </Grid>
+            </Border>
+            <Controls:SimpleButton
+                Visibility="{Binding DataContext.EditModeEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}, Converter={Converters:InverseBooleanToVisibilityConverter}}"
+                Margin="10"
+                BorderThickness="0"
+                Command="{Binding ClickCommand}" >
+                <Grid>
+                    <Label Height="30" Foreground="#d4d4d4" Padding="0" HorizontalContentAlignment="Center" VerticalAlignment="Top" Margin="0,12,0,0" FontWeight="Bold" FontSize="12" Content="{Binding Name}" />
+                    <UniformGrid Columns="2" Margin="0,50,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Label Height="30" Foreground="#d4d4d4" Padding="0" Margin="0,0,0,0" FontWeight="Bold" FontSize="12" Content="Map" />
+                            <Label Height="30" Foreground="#d4d4d4" Padding="0" Margin="10,0,0,0" FontSize="12" Content="{Binding Map}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Label Height="30" Foreground="#d4d4d4" Padding="0" Margin="0,0,0,0" FontWeight="Bold" FontSize="12" Content="Mod" />
+                            <Label Height="30" Foreground="#d4d4d4" Padding="0" Margin="10,0,0,0" FontSize="12" Content="{Binding Mod}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Label Height="30" Foreground="#d4d4d4" Padding="0" Margin="0,0,0,0" FontWeight="Bold" FontSize="12" Content="Players" />
+                            <Label Height="30" Foreground="#d4d4d4" Padding="0" Margin="10,0,0,0" FontSize="12" Content="{Binding Players}" />
+                        </StackPanel>
+                    </UniformGrid>
+                </Grid>
+            </Controls:SimpleButton>
+        </Grid>
         <Controls:SimpleButton
             VerticalAlignment="Top"
             HorizontalAlignment="Right"

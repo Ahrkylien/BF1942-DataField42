@@ -10,8 +10,8 @@
 
     public FileRule(string ignoreSyncScenario, string fileType, string mod, string fileName)
     {
-        IgnoreSyncScenario = Enum.Parse<IgnoreSyncScenarios>(ignoreSyncScenario, true);
-        _fileType = Enum.Parse<Bf1942FileTypes>(fileType, true);
+        IgnoreSyncScenario = Enum.Parse<IgnoreSyncScenarios>(ignoreSyncScenario, ignoreCase: true);
+        _fileType = Enum.Parse<Bf1942FileTypes>(fileType, ignoreCase: true);
         _mod = mod.ToLower();
         _fileName = fileName.ToLower();
 
@@ -48,4 +48,6 @@
         (AllMods || _mod.ToLower() == fileInfo.Mod.ToLower())
         && _fileType == fileInfo.FileType
         && (AllFiles || _fileName.ToLower() == fileInfo.FileNameWithoutPatchNumber.ToLower());
+
+    public string Serialize() => $"{IgnoreSyncScenario} {_fileType} {_mod} {_fileName}";
 }

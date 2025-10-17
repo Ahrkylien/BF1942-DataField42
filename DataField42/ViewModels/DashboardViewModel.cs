@@ -2,19 +2,17 @@
 using CommunityToolkit.Mvvm.Input;
 using DataField42.Enums;
 using DataField42.Interfaces;
-using DF.Watchable;
+using DataField42.Settings;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Net;
 using System.Windows;
-using System.Xml.Linq;
 
 namespace DataField42.ViewModels;
 public partial class DashboardViewModel : ObservableObject, IPageViewModel
 {
     public string Title => "Dashboard";
-
-
 
     private readonly MainWindowViewModel _mainWindowViewModel;
 
@@ -24,30 +22,46 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
 
     private bool _isInitialized = false;
 
-    public IReadOnlyWatchable<DashboardMode> Mode { get; }
+    public ObservableCollection<ServerViewModel> FavoriteServers { get; } = new ();
 
-    public ObservableCollection<ServerViewModel> FavoriteServers { get; set; } = new ();
+    public ServerViewModel? FirstFavoriteServers => FavoriteServers.FirstOrDefault();
 
     [ObservableProperty]
     private bool _editModeEnabled;
+
+    [ObservableProperty]
+    private bool _displayOneServer;
 
     [DesignOnly(true)]
     public DashboardViewModel()
     {
         _mainWindowViewModel = new MainWindowViewModel();
-        _settingsService = new SettingsService("DataField/Settings.txt");
+        _settingsService = new SettingsService("DataField/Settings.ini");
         FavoriteServers.Add(new ServerViewModel(new Bf1942Server(IPAddress.Parse("1.2.3.4"), 23000), ServerSelectedHandler, "BFServer 1", queryServer: true));
         EditModeEnabled = false;
     }
 
-    public DashboardViewModel(MainWindowViewModel mainWindowViewModel, SettingsService settingsService, IReadOnlyWatchable<DashboardMode> mode)
+    public DashboardViewModel(MainWindowViewModel mainWindowViewModel, SettingsService settingsService)
     {
         _mainWindowViewModel = mainWindowViewModel;
         _settingsService = settingsService;
-        Mode = mode;
-        foreach ((var ip, var port, var name) in _settingsService.FavoriteServers)
+
+        foreach ((var ip, var port, var name) in _settingsService.Settings.FavoriteServers)
             FavoriteServers.Add(new ServerViewModel(new Bf1942Server(ip, port), ServerSelectedHandler, name, queryServer: true));
         EditModeEnabled = false;
+        _settingsService.Settings.DashboardMode.Changed += ModeChanged;
+        ModeChanged(_settingsService.Settings.DashboardMode.Value);
+        FavoriteServers.CollectionChanged += FavoriteServers_CollectionChanged;
+    }
+
+    private void FavoriteServers_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(FirstFavoriteServers));
+    }
+
+    private void ModeChanged(DashboardMode mode)
+    {
+        DisplayOneServer = mode == DashboardMode.SingleServer;
     }
 
     public async Task EnterPage()
@@ -109,10 +123,10 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
     {
         if (EditModeEnabled)
         {
-            _settingsService.FavoriteServers.Clear();
+            _settingsService.Settings.FavoriteServers.Clear();
             foreach (var serverViewModel in FavoriteServers)
                 if (!serverViewModel.GeneratedItem)
-                    _settingsService.FavoriteServers.Add((IPAddress.Parse(serverViewModel.Ip), serverViewModel.QueryPort, serverViewModel.Name));
+                    _settingsService.Settings.FavoriteServers.Add((IPAddress.Parse(serverViewModel.Ip), serverViewModel.QueryPort, serverViewModel.Name));
             _settingsService.Save();
         }
 

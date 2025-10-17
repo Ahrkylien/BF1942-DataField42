@@ -17,12 +17,12 @@
     <DebugType>None</DebugType>
   </PropertyGroup>
 
-  <Import Project="..\DataField42.Core\DataField42.Core.projitems" Label="Shared" />
-
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
-    <PackageReference Include="Crc32.NET" Version="1.2.0" />
-    <PackageReference Include="YamlDotNet" Version="13.7.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DataField42.Core\DataField42.Core.csproj" />
   </ItemGroup>
 
 </Project>

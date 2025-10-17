@@ -1,10 +1,11 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace DF.Watchable
 {
-    public interface IReadOnlyWatchable<T>
+    public interface IReadOnlyWatchable<T> : INotifyPropertyChanged
     {
         T Value { get; }
 
