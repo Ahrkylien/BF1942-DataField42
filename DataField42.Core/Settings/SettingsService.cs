@@ -1,32 +1,27 @@
 ﻿using DataField42.Enums;
-using DF.Watchable;
 using Microsoft.Extensions.Configuration;
-using System.ComponentModel;
 using System.Net;
 
 namespace DataField42.Settings;
 
-public class SettingsService
+public class SettingsService : ISettingsSaver
 {
     private readonly string _filePath;
 
     public Settings Settings { get; }
 
+    public event Action? SettingChanged;
+
     public SettingsService(string filePath)
     {
         _filePath = filePath;
         Settings = ParseFile(filePath);
-
-        Settings.DashboardMode.PropertyChanged += DashboardMode_PropertyChanged;
-    }
-
-    private void DashboardMode_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        Save();
     }
 
     private static Settings ParseFile(string filePath)
     {
+        // Optional improvement: use System.Runtime.Serialization.IFormatter
+
         var halfParsedSettings = ParseFileIntoBasicTypes(filePath);
 
         var favoriteServers = new List<(IPAddress, int, string)>();
@@ -47,7 +42,7 @@ public class SettingsService
 
         return new Settings()
         {
-            DashboardMode = new Watchable<DashboardMode>(Enum.Parse<DashboardMode>(halfParsedSettings.Application.DashboardMode)),
+            DashboardMode = Enum.Parse<DashboardMode>(halfParsedSettings.Application.DashboardMode),
             FavoriteServers = favoriteServers,
             AutoJoin = halfParsedSettings.Application.AutoJoin,
             AutoSyncServers = halfParsedSettings.Application.AutoSyncServers,
@@ -74,7 +69,7 @@ public class SettingsService
     {
         var iniFile = new IniFile(_filePath);
 
-        iniFile.Add(nameof(IniSettings.Application), nameof(ApplicationSection.DashboardMode), $"{Settings.DashboardMode.Value}");
+        iniFile.Add(nameof(IniSettings.Application), nameof(ApplicationSection.DashboardMode), $"{Settings.DashboardMode}");
 
         iniFile.Add(nameof(IniSettings.Application), nameof(ApplicationSection.FavoriteServers), Settings.FavoriteServers.Select((x) => $"{x.IpAddress} {x.Port} {x.Name}"));
 
@@ -85,5 +80,7 @@ public class SettingsService
         iniFile.Add(nameof(IniSettings.SynchronisationRules), nameof(SynchronisationRulesSection.IgnoreSyncRules), Settings.IgnoreSyncRules.Select((x) => x.Serialize()));
 
         iniFile.Save();
+
+        SettingChanged?.Invoke();
     }
 }

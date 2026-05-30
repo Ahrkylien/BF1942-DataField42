@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,6 +9,8 @@ namespace DF.Watchable
     public class Watchable<T> : IWatchable<T>
     {
         private T _value;
+
+        private readonly List<(object Subscriber, Action<T> Subscription)> _subscriptions = new List<(object, Action<T>)>();
 
         public Watchable(T initial) => _value = initial;
 
@@ -21,6 +24,8 @@ namespace DF.Watchable
                     _value = value;
                     Changed?.Invoke(value);
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Value)));
+                    foreach (var (_, subscription) in _subscriptions)
+                        subscription(value);
                 }
             }
         }
@@ -28,6 +33,11 @@ namespace DF.Watchable
         public event Action<T> Changed;
 
         public event PropertyChangedEventHandler PropertyChanged;
+
+        public void Subscribe(object subscriber, Action<T> action)
+        {
+            _subscriptions.Add((subscriber, action));
+        }
 
         public Task WaitFor(T value, CancellationToken cancellationToken) => WaitForInternal((x) => Equals(x, value), cancellationToken);
 
@@ -73,6 +83,8 @@ namespace DF.Watchable
                 }
             }
         }
+
+        public override string ToString() => Value.ToString();
     }
 
 }

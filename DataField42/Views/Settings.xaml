@@ -4,20 +4,54 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:DataField42.Views"
+             xmlns:ViewModels="clr-namespace:DataField42.ViewModels"
              xmlns:Converters="clr-namespace:DataField42.Converters"
+             xmlns:Settings="clr-namespace:DF.Settings;assembly=DF.Settings"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Grid VerticalAlignment="Top">
-        <StackPanel Orientation="Horizontal" Height="22">
-            <TextBlock
-                Text="Dashboard Mode"
-                Margin="0,0,10,0"
-                Foreground="#d4d4d4"
-                VerticalAlignment="Center"/>
-            <ComboBox
-                ItemsSource="{Binding DashboardModes}"
-                SelectedItem="{Binding SelectedDashboardMode, Mode=TwoWay}"
-                Width="200"/>
-        </StackPanel>
-    </Grid>
+             d:DesignHeight="450" d:DesignWidth="800"
+             d:DataContext="{d:DesignInstance ViewModels:SettingsViewModel, IsDesignTimeCreatable=False}">
+    <UserControl.Resources>
+
+        <ControlTemplate x:Key="SettingTemplateBase" TargetType="ContentControl">
+            <Border Padding="5" Margin="4" Background="#1b1e2a" CornerRadius="4">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Name}" Foreground="#d4d4d4" Width="150" VerticalAlignment="Center"/>
+                    <ContentPresenter/>
+                </StackPanel>
+            </Border>
+        </ControlTemplate>
+
+        <!-- Specific templates -->
+        <DataTemplate DataType="{x:Type Settings:BoolSetting}">
+            <ContentControl Template="{StaticResource SettingTemplateBase}">
+                <CheckBox IsChecked="{Binding Value}" VerticalAlignment="Center"/>
+            </ContentControl>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type Settings:NumericSetting}">
+            <ContentControl Template="{StaticResource SettingTemplateBase}">
+                <TextBox Text="{Binding Value}" Width="60" VerticalAlignment="Center"/>
+            </ContentControl>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type Settings:SingleItemFromList}">
+            <ContentControl Template="{StaticResource SettingTemplateBase}">
+                <ComboBox
+                    ItemsSource="{Binding Values}"
+                    SelectedItem="{Binding Value, Mode=TwoWay}"
+                    Width="auto"/>
+            </ContentControl>
+        </DataTemplate>
+
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <ItemsControl ItemsSource="{Binding Settings}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Vertical"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
+    </ScrollViewer>
 </UserControl>

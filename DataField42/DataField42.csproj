@@ -32,6 +32,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DataField42.Core\DataField42.Core.csproj" />
+    <ProjectReference Include="..\DF.Settings\DF.Settings.csproj" />
   </ItemGroup>
 
 </Project>

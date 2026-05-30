@@ -1,6 +1,4 @@
-﻿using System.Net;
-
-namespace DataField42.Settings;
+﻿namespace DataField42.Settings;
 
 public class IniSettings
 {

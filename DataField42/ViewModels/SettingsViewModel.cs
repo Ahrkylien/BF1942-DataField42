@@ -1,36 +1,30 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using DataField42.Enums;
 using DataField42.Interfaces;
-using DataField42.Settings;
-using System.Collections.ObjectModel;
+using DF.Settings;
 
 namespace DataField42.ViewModels;
 public partial class SettingsViewModel : ObservableObject, IPageViewModel
 {
     public string Title => "Settings";
 
-    private readonly SettingsService _settingsService;
+    private readonly ISettingsSaver _settingsSaver;
 
-    public SettingsViewModel(SettingsService settingsService)
+    public IEnumerable<ISetting> Settings { get; }
+
+    public SettingsViewModel(IEnumerable<ISetting> settings, ISettingsSaver settingsSaver)
     {
-        _settingsService = settingsService;
+        Settings = settings;
 
-        // Populate enum values for binding
-        DashboardModes = new ObservableCollection<DashboardMode>(
-            Enum.GetValues(typeof(DashboardMode)) as DashboardMode[]
-        );
+        _settingsSaver = settingsSaver;
 
-        // Subscribe to changes in Watchable
-        _settingsService.Settings.DashboardMode.Changed += value => OnPropertyChanged(nameof(SelectedDashboardMode));
+        // Hacky way to save the settings:
+        // It would be cleaner to create a wrapping VM for each setting to avoid saving the settings if they are edited outside of SettingsViewModel.
+        foreach (var setting in Settings)
+            setting.PropertyChanged += Setting_PropertyChanged;
     }
 
-    // Expose the list of enum values for a ComboBox
-    public ObservableCollection<DashboardMode> DashboardModes { get; }
-
-    // Expose the current value for binding
-    public DashboardMode SelectedDashboardMode
+    private void Setting_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        get => _settingsService.Settings.DashboardMode.Value;
-        set => _settingsService.Settings.DashboardMode.Value = value;
+        _settingsSaver.Save();
     }
 }

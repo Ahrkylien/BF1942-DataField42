@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using DataField42.Enums;
 using System.Windows;
 using DataField42.Settings;
+using DF.Settings;
 
 namespace DataField42.ViewModels;
 public partial class MainWindowViewModel : ObservableObject
@@ -85,15 +86,15 @@ public partial class MainWindowViewModel : ObservableObject
             }
         }
 
-        _settingsService.Settings.DashboardMode.Changed += DashboardModeChanged;
-        DashboardModeChanged(_settingsService.Settings.DashboardMode.Value);
+        _settingsService.SettingChanged += SettingChanged;
+        SettingChanged();
 
-        _ = Task.Run(() => GoToPage(_settingsService.Settings.DashboardMode.Value == DashboardMode.Hidden ? Page.ServerList : Page.Dashboard));
+        _ = Task.Run(() => GoToPage(_settingsService.Settings.DashboardMode == DashboardMode.Hidden ? Page.ServerList : Page.Dashboard));
     }
 
-    private void DashboardModeChanged(DashboardMode mode)
+    private void SettingChanged()
     {
-        DisplayDashboard = mode != DashboardMode.Hidden;
+        DisplayDashboard = _settingsService.Settings.DashboardMode != DashboardMode.Hidden;
     }
 
     public void DisplayMessage(string message)
@@ -185,7 +186,7 @@ public partial class MainWindowViewModel : ObservableObject
                     Page.Dashboard => new DashboardViewModel(this, _settingsService),
                     Page.ServerList => new ServerListViewModel(this),
                     Page.Info => new InfoViewModel(),
-                    Page.Settings => new SettingsViewModel(_settingsService),
+                    Page.Settings => new SettingsViewModel(new SettingsProvider<Settings.Settings>(_settingsService.Settings, new SettingSelector()).Settings, _settingsService),
                     Page.SyncMenu => throw new ArgumentException($"The {nameof(IPageViewModel)} for {Page.SyncMenu} should be created before calling {nameof(GetPageViewModel)}."),
                     _ => throw ExhaustiveMatch.Failed(page)
                 };
@@ -193,10 +194,5 @@ public partial class MainWindowViewModel : ObservableObject
         }
             
         return _pages[page];
-    }
-
-    private void Sync(ServerViewModel serverViewModel)
-    {
-
     }
 }

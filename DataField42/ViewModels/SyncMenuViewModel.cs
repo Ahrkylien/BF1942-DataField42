@@ -50,7 +50,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
     private MainWindowViewModel _mainWindowViewModel;
     private SettingsService _settingsService;
     private DataField42Communication? _communicationWithServer;
-    private ISyncRuleManager? _syncRuleManager;
+    private ISyncRuleManager _syncRuleManager;
     private DownloadManager? _downloadManager;
     private ulong _totalSizeExpected;
     private bool _joinServerWhenReturnToGame = false;
@@ -61,6 +61,7 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
     {
         _mainWindowViewModel = mainWindowViewModel;
         _settingsService = settingsService;
+        _syncRuleManager = new SyncRuleManager(_settingsService);
         _syncParameters = syncParameters;
         Task.Run(async () => await PrepareDownload());
     }
@@ -211,7 +212,6 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
             {
                 try
                 {
-                    _syncRuleManager = new SyncRuleManager(_settingsService);
                     ILocalFileCacheManager localFileCacheManager = new LocalFileCacheManager("DataField42/cache", "DataField42/tmp", "");
                     var downloadDecisionMaker = new DownloadDecisionMaker(_syncRuleManager, localFileCacheManager);
                     _downloadManager = new DownloadManager(_communicationWithServer, downloadDecisionMaker, localFileCacheManager);
@@ -250,8 +250,9 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
             }
         }
 
+        // For now we set joinServer: true, because we want to join the server even when the central DB is offline
         if (!stageSuccessful)
-            EnterReturnToGameStage(joinServer: false);
+            EnterReturnToGameStage(joinServer: true, automaticJoinServer: _syncRuleManager.IsAutoJoinEnabled()); 
     }
 
     [RelayCommand]
@@ -293,23 +294,13 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
     private void EnterReturnToGameStage(bool joinServer = false, bool automaticJoinServer = false)
     {
         _joinServerWhenReturnToGame = joinServer;
-        if (joinServer)
-        {
-            if (automaticJoinServer)
-            {
-                ReturnBackToGame();
-            }
-            else
-            {
-                ReturnToGameStage = true;
-                AutoJoinServerCheckboxVisible = true;
-            }
-        }
-        else
-        {
-            ReturnToGameStage = true;
-            AutoJoinServerCheckboxVisible = false;
-        }
+
+        if (joinServer && automaticJoinServer)
+            ReturnBackToGame();
+
+        AutoJoinServerCheckboxVisible = _joinServerWhenReturnToGame;
+        ReturnToGameStage = true;
+
         // TODO: Think of a way to check if the central db / server has the map.
         // Then think of how to procede. (join mod, not server if map not found)
     }

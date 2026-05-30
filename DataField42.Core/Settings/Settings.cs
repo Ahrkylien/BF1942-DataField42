@@ -6,7 +6,7 @@ namespace DataField42.Settings;
 
 public class Settings
 {
-    public Watchable<DashboardMode> DashboardMode { get; init; }
+    public DashboardMode DashboardMode { get; init; }
 
     public List<(IPAddress IpAddress, int Port, string Name)> FavoriteServers { get; set; }
 

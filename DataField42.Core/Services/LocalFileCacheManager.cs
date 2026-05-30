@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-public class LocalFileCacheManager : ILocalFileCacheManager
+﻿public class LocalFileCacheManager : ILocalFileCacheManager
 {
     public string ChacheDirectory { get; init; }
     public string WorkingDirectory { get; init; }

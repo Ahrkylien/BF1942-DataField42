@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.Security.Principal;
-using System.Threading;
 using System.Windows;
 
 namespace DataField42;

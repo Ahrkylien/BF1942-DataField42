@@ -35,8 +35,8 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
     [DesignOnly(true)]
     public DashboardViewModel()
     {
-        _mainWindowViewModel = new MainWindowViewModel();
-        _settingsService = new SettingsService("DataField/Settings.ini");
+        _mainWindowViewModel = null;
+        _settingsService = null;
         FavoriteServers.Add(new ServerViewModel(new Bf1942Server(IPAddress.Parse("1.2.3.4"), 23000), ServerSelectedHandler, "BFServer 1", queryServer: true));
         EditModeEnabled = false;
     }
@@ -49,8 +49,8 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
         foreach ((var ip, var port, var name) in _settingsService.Settings.FavoriteServers)
             FavoriteServers.Add(new ServerViewModel(new Bf1942Server(ip, port), ServerSelectedHandler, name, queryServer: true));
         EditModeEnabled = false;
-        _settingsService.Settings.DashboardMode.Changed += ModeChanged;
-        ModeChanged(_settingsService.Settings.DashboardMode.Value);
+        _settingsService.SettingChanged += SettingChanged;
+        SettingChanged();
         FavoriteServers.CollectionChanged += FavoriteServers_CollectionChanged;
     }
 
@@ -59,9 +59,9 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
         OnPropertyChanged(nameof(FirstFavoriteServers));
     }
 
-    private void ModeChanged(DashboardMode mode)
+    private void SettingChanged()
     {
-        DisplayOneServer = mode == DashboardMode.SingleServer;
+        DisplayOneServer = _settingsService.Settings.DashboardMode == DashboardMode.SingleServer;
     }
 
     public async Task EnterPage()

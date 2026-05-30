@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-public class UpdateManager
+﻿public class UpdateManager
 {
     public static Version Version { get; } = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
 

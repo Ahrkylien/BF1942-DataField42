@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-public class DownloadManager
+﻿public class DownloadManager
 {
     private readonly DataField42Communication _communication;
     private readonly DownloadDecisionMaker _downloadDecisionMaker;

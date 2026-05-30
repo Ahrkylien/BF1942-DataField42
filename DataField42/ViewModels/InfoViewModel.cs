@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using DataField42.Interfaces;
-using System.Windows.Input;
 
 namespace DataField42.ViewModels;
 public partial class InfoViewModel : ObservableObject, IPageViewModel

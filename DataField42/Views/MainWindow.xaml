@@ -16,7 +16,7 @@
         WindowStartupLocation="CenterScreen"
         WindowStyle="SingleBorderWindow"
         Background="Transparent"
-        >
+        d:DataContext="{d:DesignInstance ViewModels:DashboardViewModel, IsDesignTimeCreatable=False}">
     <Window.DataContext>
         <ViewModels:MainWindowViewModel />
     </Window.DataContext>

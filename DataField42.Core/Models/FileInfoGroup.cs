@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-public class FileInfoGroup
+﻿public class FileInfoGroup
 {
     public List<FileInfo> FileInfos { get; private set; } = new List<FileInfo>();
 

@@ -164,5 +164,77 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        
+        <Style x:Key="{x:Type CheckBox}" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#d4d4d4"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="18"/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- box -->
+                            <Border x:Name="Box"
+                                Width="14"
+                                Height="14"
+                                Background="#1b1e2a"
+                                BorderBrush="#233050"
+                                BorderThickness="2"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"/>
+
+                            <!-- check mark -->
+                            <Path x:Name="Check"
+                                Grid.Column="0"
+                                Data="M2,7 L5,10 L12,3"
+                                Stroke="#d4d4d4"
+                                StrokeThickness="2"
+                                Visibility="Hidden"
+                                StrokeStartLineCap="Round"
+                                StrokeEndLineCap="Round"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"/>
+
+                            <!-- label -->
+                            <ContentPresenter
+                                Grid.Column="1"
+                                Margin="6,0,0,0"
+                                VerticalAlignment="Center"/>
+
+                        </Grid>
+
+                        <ControlTemplate.Triggers>
+
+                            <!-- checked -->
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="Box" Property="Background" Value="#233050"/>
+                            </Trigger>
+
+                            <!-- hover -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="BorderBrush" Value="#2f3f66"/>
+                            </Trigger>
+
+                            <!-- disabled -->
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="#888888"/>
+                                <Setter TargetName="Box" Property="BorderBrush" Value="#555555"/>
+                                <Setter TargetName="Box" Property="Background" Value="#222222"/>
+                                <Setter TargetName="Check" Property="Stroke" Value="#777777"/>
+                            </Trigger>
+
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Application.Resources>
 </Application>

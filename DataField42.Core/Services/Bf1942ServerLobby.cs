@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using System.Net.Http;
 using System.Text.Json;
 
 public class Bf1942ServerLobby

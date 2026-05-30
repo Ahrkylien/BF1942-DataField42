@@ -9,7 +9,7 @@
              xmlns:Converters="clr-namespace:DataField42.Converters"
              xmlns:svg="https://github.com/dotnetprojects/SVGImage"
              xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
-             d:DataContext="{d:DesignInstance ViewModels:ServerListViewModel, IsDesignTimeCreatable=True}"
+             d:DataContext="{d:DesignInstance ViewModels:ServerListViewModel, IsDesignTimeCreatable=False}"
              mc:Ignorable="d">
 
     <Grid>

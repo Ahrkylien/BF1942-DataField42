@@ -5,11 +5,13 @@ VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataField42", "DataField42\DataField42.csproj", "{5AEA35FC-2FD1-4EE9-B8C2-F702A47F89D6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataField42.Core", "DataField42.Core\DataField42.Core.csproj", "{D4916D93-F51D-4671-B111-8893AE49C8FC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataField42.Core", "DataField42.Core\DataField42.Core.csproj", "{D4916D93-F51D-4671-B111-8893AE49C8FC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataField42 Updater", "DataField42 Updater\DataField42 Updater.csproj", "{B0A49413-4E69-4C14-BB79-7B4787398A01}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DF.Watchable", "DF.Watchable\DF.Watchable.csproj", "{DF114A91-83F9-41BE-B53A-6C1E21FD9D03}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DF.Watchable", "DF.Watchable\DF.Watchable.csproj", "{DF114A91-83F9-41BE-B53A-6C1E21FD9D03}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DF.Settings", "DF.Settings\DF.Settings.csproj", "{522163CF-D6F6-47EF-ADA6-2E142F27709E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{DF114A91-83F9-41BE-B53A-6C1E21FD9D03}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DF114A91-83F9-41BE-B53A-6C1E21FD9D03}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DF114A91-83F9-41BE-B53A-6C1E21FD9D03}.Release|Any CPU.Build.0 = Release|Any CPU
+		{522163CF-D6F6-47EF-ADA6-2E142F27709E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{522163CF-D6F6-47EF-ADA6-2E142F27709E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{522163CF-D6F6-47EF-ADA6-2E142F27709E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{522163CF-D6F6-47EF-ADA6-2E142F27709E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

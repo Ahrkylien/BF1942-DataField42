@@ -1,5 +1,4 @@
 ﻿using Force.Crc32;
-using System.IO;
 
 public static class CheckSums
 {
