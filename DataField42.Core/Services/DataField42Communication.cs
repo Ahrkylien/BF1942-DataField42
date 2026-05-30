@@ -33,8 +33,6 @@ public class DataField42Communication : TcpCommunicationBase
     {
         SendString($"handshake {version}");
         var responseData = await ReceiveSpaceSeperatedString(2);
-        if (responseData.Count() != 2)
-            throw new Exception($"During Hanshake the server ({_domainNameOrIp}) responded with an unexpected count ({responseData.Count()}): {responseData}");
         var redirectServerIp = responseData.ElementAt(0) == "null" ? null : IPAddress.Parse(responseData.ElementAt(0));
         var versionReceived = new Version(responseData.ElementAt(1));
         return (redirectServerIp, versionReceived);

@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 public class Bf1942ServerLobby
 {
@@ -31,11 +32,13 @@ public class Bf1942ServerLobby
 
             if (response.IsSuccessStatusCode)
             {
-                string json = await response.Content.ReadAsStringAsync();
+                var json = await response.Content.ReadAsStringAsync();
 
                 // Deserialize JSON data
 
-                List<List<object>>? jsonData = JsonSerializer.Deserialize<List<List<object>>>(json);
+                var options = new JsonSerializerOptions { TypeInfoResolver = new DefaultJsonTypeInfoResolver() };
+
+                List<List<object>>? jsonData = JsonSerializer.Deserialize<List<List<object>>>(json, options);
 
                 if (jsonData == null || jsonData.Count == 0)
                     throw new Exception($"Failed to retrieve data from Master Api. Data: {jsonData} Count: {jsonData?.Count ?? 0}");
