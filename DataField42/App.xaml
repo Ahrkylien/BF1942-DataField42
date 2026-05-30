@@ -165,7 +165,7 @@
             </Setter>
         </Style>
 
-        
+
         <Style x:Key="{x:Type CheckBox}" TargetType="CheckBox">
             <Setter Property="Foreground" Value="#d4d4d4"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -236,5 +236,44 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+
+        <Style TargetType="{x:Type ScrollBar}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Width" Value="12"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollBar}">
+                        <Grid Background="Transparent" SnapsToDevicePixels="True">
+                            <!-- Track background -->
+                            <Border Background="Transparent" CornerRadius="6" Margin="2"/>
+                            <!-- Track -->
+                            <Track Name="PART_Track" IsDirectionReversed="True">
+                                <!-- Decrease button (hidden but required) -->
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Opacity="0" IsEnabled="False"/>
+                                </Track.DecreaseRepeatButton>
+                                <!-- Thumb (movable part) -->
+                                <Track.Thumb>
+                                    <Thumb BorderThickness="0" Margin="2">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Background="#60a8ff" CornerRadius="6"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <!-- Increase button (hidden but required) -->
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Opacity="0" IsEnabled="False"/>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+
     </Application.Resources>
 </Application>
