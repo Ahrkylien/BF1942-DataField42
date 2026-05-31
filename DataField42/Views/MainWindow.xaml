@@ -16,7 +16,7 @@
         WindowStartupLocation="CenterScreen"
         WindowStyle="SingleBorderWindow"
         Background="Transparent"
-        d:DataContext="{d:DesignInstance ViewModels:DashboardViewModel, IsDesignTimeCreatable=False}">
+        d:DataContext="{d:DesignInstance ViewModels:MainWindowViewModel, IsDesignTimeCreatable=False}">
     <Window.DataContext>
         <ViewModels:MainWindowViewModel />
     </Window.DataContext>
@@ -146,6 +146,17 @@
                         </Grid.RowDefinitions>
                         <Border Grid.Row="0" Visibility="{Binding HasMessagesOrErrors, Converter={Converters:BooleanToVisibilityConverter}}" Background="#090b12" BorderBrush="#233050" BorderThickness="2" Padding="10" Margin="10,10,10,0">
                             <StackPanel>
+                                <Grid Visibility="{Binding WarnDataField42PatchNotApplied, Converter={Converters:BooleanToVisibilityConverter}}" >
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Foreground="#FA9405" VerticalAlignment="Center" Padding="0" Text="The DataField42 patch is missing from BF1942.exe. Press Apply to repair this." TextWrapping="Wrap"/>
+                                    <Controls:SimpleButton Grid.Column="1" Command="{Binding ApplyDataField42PatchCommand}">
+                                        <Label Content="Apply" Foreground="#d4d4d4" />
+                                    </Controls:SimpleButton>
+                                </Grid>
+                                
                                 <TextBlock Foreground="#d4d4d4" Padding="0" Visibility="{Binding HasMessages, Converter={Converters:BooleanToVisibilityConverter}}" Text="{Binding Messages}" TextWrapping="Wrap"/>
                                 <TextBlock Foreground="#ab0909" Padding="0" Visibility="{Binding HasErrorMessages, Converter={Converters:BooleanToVisibilityConverter}}" Text="{Binding ErrorMessages}" TextWrapping="Wrap"/>
                             </StackPanel>

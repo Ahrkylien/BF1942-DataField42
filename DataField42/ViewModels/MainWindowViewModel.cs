@@ -1,17 +1,20 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DataField42.Interfaces;
-using ExhaustiveMatching;
-using System.Diagnostics.CodeAnalysis;
 using DataField42.Enums;
-using System.Windows;
+using DataField42.Interfaces;
 using DataField42.Settings;
 using DF.Settings;
+using ExhaustiveMatching;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Windows;
 
 namespace DataField42.ViewModels;
 public partial class MainWindowViewModel : ObservableObject
 {
     private readonly SettingsService _settingsService = new("DataField42/Settings.ini");
+
+    private readonly Bf1942Client _bf1942Client = new("BF1942.exe");
 
     [ObservableProperty]
     private Page? _currentPage;
@@ -42,22 +45,21 @@ public partial class MainWindowViewModel : ObservableObject
 
     public bool HasErrorMessages => !string.IsNullOrEmpty(ErrorMessages);
 
-    public bool HasMessagesOrErrors => HasMessages || HasErrorMessages;
+    public bool HasMessagesOrErrors => HasMessages || HasErrorMessages || WarnDataField42PatchNotApplied;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasMessagesOrErrors))]
+    private bool _warnDataField42PatchNotApplied;
 
-    private Dictionary<Page, IPageViewModel> _pages = new();
+    private readonly Dictionary<Page, IPageViewModel> _pages = [];
 
     public MainWindowViewModel()
     {
         var successfulCommandLineArguments = true;
         try
         {
-#if DEBUG
             //CommandLineArguments.Parse(new[] { "", "map", "SOFTWARE\\Electronic Arts\\EA GAMES\\Battlefield 1942\\ergc", "1.1.1.1:14567", "", "bf1942/levels/matrix/", "bf1942" });
             CommandLineArguments.Parse(Environment.GetCommandLineArgs());
-#else
-            CommandLineArguments.Parse(Environment.GetCommandLineArgs());
-#endif
         }
         catch (Exception e)
         {
@@ -77,13 +79,19 @@ public partial class MainWindowViewModel : ObservableObject
         {
             try
             {
-                Bf1942Client.ApplyDataField42Patch();
+                if (!_bf1942Client.IsDataField42PatchApplied())
+                    _bf1942Client.ApplyDataField42Patch();
                 Environment.Exit(0);
             }
             catch (Exception ex)
             {
                 DisplayError(ex.Message);
             }
+        }
+        else
+        {
+            if (!_bf1942Client.IsDataField42PatchApplied())
+                WarnDataField42PatchNotApplied = true;
         }
 
         _settingsService.SettingChanged += SettingChanged;
@@ -115,7 +123,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     public void GoToSyncMenu(SyncParameters syncParameters)
     {
-        _pages[Page.SyncMenu] = new SyncMenuViewModel(this, _settingsService, syncParameters);
+        _pages[Page.SyncMenu] = new SyncMenuViewModel(this, _settingsService, syncParameters, _bf1942Client);
         DisplayPopup(_pages[Page.SyncMenu]);
     }
 
@@ -132,7 +140,7 @@ public partial class MainWindowViewModel : ObservableObject
             var keyHash = "-";
             try
             {
-                keyHash = Md5.Hash(Registry.ReadKey(Bf1942Client.GetKeyRegistryPath()));
+                keyHash = Md5.Hash(Registry.ReadKey(_bf1942Client.GetKeyRegistryPath()));
             }
             catch
             {
@@ -158,6 +166,20 @@ public partial class MainWindowViewModel : ObservableObject
     {
         _ = Task.Run(() => CurrentPopUpViewModel?.LeavePage());
         ShowPopup = false;
+    }
+
+    [RelayCommand]
+    private void ApplyDataField42Patch()
+    {
+        try
+        {
+            _bf1942Client.ApplyDataField42Patch();
+            WarnDataField42PatchNotApplied = false;
+        }
+        catch(Exception ex)
+        {
+            DisplayError(ex.Message);
+        }
     }
 
     [RelayCommand]

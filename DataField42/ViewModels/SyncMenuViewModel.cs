@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using DataField42.Interfaces;
 using DataField42.Settings;
+using System.Diagnostics;
 using System.Net;
 using System.Text.RegularExpressions;
 
@@ -55,14 +56,16 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
     private ulong _totalSizeExpected;
     private bool _joinServerWhenReturnToGame = false;
     private readonly SyncParameters _syncParameters;
+    private readonly Bf1942Client _bf1942Client;
     private readonly CancellationTokenSource _cancelationTokenSource = new();
 
-    public SyncMenuViewModel(MainWindowViewModel mainWindowViewModel, SettingsService settingsService, SyncParameters syncParameters)
+    public SyncMenuViewModel(MainWindowViewModel mainWindowViewModel, SettingsService settingsService, SyncParameters syncParameters, Bf1942Client bf1942Client)
     {
         _mainWindowViewModel = mainWindowViewModel;
         _settingsService = settingsService;
         _syncRuleManager = new SyncRuleManager(_settingsService);
         _syncParameters = syncParameters;
+        _bf1942Client = bf1942Client;
         Task.Run(async () => await PrepareDownload());
     }
 
@@ -315,14 +318,12 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
 
             _syncRuleManager.AutoJoinEnable();
         }
-#if !DEBUG
+
         if (_joinServerWhenReturnToGame)
-            Bf1942Client.Start(_syncParameters.Mod, $"{_syncParameters.Ip}:{_syncParameters.Port}", _syncParameters.Password);
+            _bf1942Client.Start(_syncParameters.Mod, $"{_syncParameters.Ip}:{_syncParameters.Port}", _syncParameters.Password);
         else
-            Bf1942Client.Start(_syncParameters.Mod);
-#else
-        Environment.Exit(0);
-#endif
+            _bf1942Client.Start(_syncParameters.Mod);
+
     }
 
     private void PostMessage(string message)
