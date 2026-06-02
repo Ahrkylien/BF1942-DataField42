@@ -1,3 +1,7 @@
 [*.csproj]
 indent_style = space
 indent_size = 2
+
+[*.cs]
+dotnet_diagnostic.CA1873.severity = none
+dotnet_diagnostic.CA2254.severity = none
