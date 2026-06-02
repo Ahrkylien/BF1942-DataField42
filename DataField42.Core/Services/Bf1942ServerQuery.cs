@@ -52,7 +52,7 @@ public class Bf1942ServerQuery
         }
         catch (OperationCanceledException ex)
         {
-            throw new TimeoutException($"Querying server {_ip}:{_port} timed out");
+            throw new TimeoutException($"Querying server {_ip}:{_port} timed out", ex);
         }
         finally
         {

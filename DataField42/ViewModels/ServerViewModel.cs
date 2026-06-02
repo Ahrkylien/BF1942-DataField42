@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 
 namespace DataField42.ViewModels;
 
@@ -7,6 +8,7 @@ public partial class ServerViewModel : ObservableObject
 {
     private readonly Bf1942Server _bf1942Server;
     private readonly Action<ServerViewModel> _onSelectionHandler;
+    private readonly ILogger _logger;
     private readonly string? _storedServerName;
 
     public string Name => QueryResult?.HostName ?? _storedServerName ?? string.Empty;
@@ -52,11 +54,13 @@ public partial class ServerViewModel : ObservableObject
 
     public ServerViewModel(Bf1942Server bf1942Server,
                            Action<ServerViewModel> onSelectionHandler,
+                           ILogger logger,
                            string? storedServerName = null,
                            bool queryServer = false)
     {
         _bf1942Server = bf1942Server;
         _onSelectionHandler = onSelectionHandler;
+        _logger = logger;
         _storedServerName = storedServerName;
         bf1942Server.NewQuery += RefreshData;
         Loading = true;
@@ -79,6 +83,7 @@ public partial class ServerViewModel : ObservableObject
         {
             ErrorOccured = true;
             ErrorMessage = $"During querying of the server an exception occured: {ex.Message}";
+            _logger.LogError(ex, "During querying of the server an exception occured");
         }
         finally
         {
