@@ -17,12 +17,6 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        SetupSerilog();
-        var loggerFactory = LoggerFactory.Create(b => b.AddSerilog(dispose: true));
-        _logger = loggerFactory.CreateLogger<App>();
-
-        _logger.LogInformation($"Application starting. Version: {UpdateManager.Version}.");
-
         base.OnStartup(e);
 
         if (!IsAdministrator() && IsInAdminDirectory())
@@ -30,6 +24,13 @@ public partial class App : Application
             _logger.LogInformation("Not running as administrator in an admin-protected directory — relaunching with elevation.");
             ExternalProcess.SwitchTo(Environment.ProcessPath, adminMode: true);
         }
+
+        // Startup logger after admin mode has atained (if needed).
+        SetupSerilog();
+        var loggerFactory = LoggerFactory.Create(b => b.AddSerilog(dispose: true));
+        _logger = loggerFactory.CreateLogger<App>();
+
+        _logger.LogInformation($"Application starting. Version: {UpdateManager.Version}.");
 
         var settingsService = new SettingsService("DataField42/Settings.ini");
         var bf1942Client = new Bf1942Client("BF1942.exe");
