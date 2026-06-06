@@ -15,6 +15,7 @@ public partial class MainWindowViewModel : ObservableObject
 {
     private readonly SettingsService _settingsService;
     private readonly Bf1942Client _bf1942Client;
+    private readonly Bf1942ServerLobby _serverLobby;
     private readonly ILogger<MainWindowViewModel> _logger;
     private readonly ILoggerFactory _loggerFactory;
 
@@ -62,6 +63,7 @@ public partial class MainWindowViewModel : ObservableObject
         _settingsService = settingsService;
         _bf1942Client = bf1942Client;
         _loggerFactory = loggerFactory;
+        _serverLobby = new Bf1942ServerLobby(loggerFactory.CreateLogger<Bf1942ServerLobby>());
         _logger = loggerFactory.CreateLogger<MainWindowViewModel>();
 
         _logger.LogInformation("MainWindowViewModel initializing.");
@@ -157,8 +159,14 @@ public partial class MainWindowViewModel : ObservableObject
     public void GoToSyncMenu(SyncParameters syncParameters)
     {
         _logger.LogDebug($"Opening sync menu for {syncParameters.Ip}:{syncParameters.Port}, mod={syncParameters.Mod}, map={syncParameters.Map}.");
-        _pages[Page.SyncMenu] = new SyncMenuViewModel(this, _settingsService, syncParameters, _bf1942Client, _loggerFactory);
+        _pages[Page.SyncMenu] = new SyncMenuViewModel(_settingsService, syncParameters, _bf1942Client, _serverLobby, _loggerFactory);
         DisplayPopup(_pages[Page.SyncMenu]);
+    }
+
+    public void DisplayServerInfo(ServerViewModel serverViewModel)
+    {
+        _logger.LogDebug($"Displaying server info for {serverViewModel.Ip}.");
+        DisplayPopup(serverViewModel);
     }
 
     public void GoToSyncMenu(ServerViewModel serverViewModel)
@@ -256,12 +264,12 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 _pages[page] = page switch
                 {
-                    Page.Dashboard => new DashboardViewModel(this, _settingsService, _loggerFactory),
+                    Page.Dashboard => new DashboardViewModel(this, _settingsService, _serverLobby, _loggerFactory),
                     Page.ServerList => new ServerListViewModel(
                         this,
                         _loggerFactory.CreateLogger<AbstractServerListViewModel>(),
                         _loggerFactory,
-                        new Bf1942ServerLobby(_loggerFactory.CreateLogger<Bf1942ServerLobby>())),
+                        _serverLobby),
                     Page.Info => new InfoViewModel(),
                     Page.Settings => new SettingsViewModel(
                         new SettingsProvider<Settings.Settings>(_settingsService.Settings, new SettingSelector()).Settings,

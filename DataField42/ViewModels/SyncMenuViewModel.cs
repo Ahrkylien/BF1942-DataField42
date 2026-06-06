@@ -46,8 +46,6 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
     public bool HasErrorMessages => !string.IsNullOrEmpty(ErrorMessages);
     public bool HasMessagesOrErrors => HasMessages || HasErrorMessages;
 
-    private readonly MainWindowViewModel _mainWindowViewModel;
-    private readonly SettingsService _settingsService;
     private readonly ILogger<SyncMenuViewModel> _logger;
     private readonly ILoggerFactory _loggerFactory;
     private DataField42Communication? _communicationWithServer;
@@ -57,20 +55,20 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
     private bool _joinServerWhenReturnToGame = false;
     private readonly SyncParameters _syncParameters;
     private readonly Bf1942Client _bf1942Client;
+    private readonly Bf1942ServerLobby _serverLobby;
     private readonly CancellationTokenSource _cancelationTokenSource = new();
 
     public SyncMenuViewModel(
-        MainWindowViewModel mainWindowViewModel,
         SettingsService settingsService,
         SyncParameters syncParameters,
         Bf1942Client bf1942Client,
+        Bf1942ServerLobby serverLobby,
         ILoggerFactory loggerFactory)
     {
-        _mainWindowViewModel = mainWindowViewModel;
-        _settingsService = settingsService;
         _syncRuleManager = new SyncRuleManager(settingsService);
         _syncParameters = syncParameters;
         _bf1942Client = bf1942Client;
+        _serverLobby = serverLobby;
         _loggerFactory = loggerFactory;
         _logger = loggerFactory.CreateLogger<SyncMenuViewModel>();
 
@@ -89,20 +87,19 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
         {
             _logger.LogDebug("Map is wildcard — querying master server for current map.");
             PostMessage($"Querying master server to get query port...");
-            var serverLobby = new Bf1942ServerLobby(_loggerFactory.CreateLogger<Bf1942ServerLobby>());
             try
             {
-                await serverLobby.GetServerListFromHttpApi();
+                await _serverLobby.GetServerListFromHttpApi();
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Failed to get server list from master API.");
                 PostError($"Can't get server list: {ex.Message}");
             }
-            await serverLobby.QueryAllServers();
+            await _serverLobby.QueryAllServers();
 
             int port = 23000;
-            foreach (var server in serverLobby.Servers)
+            foreach (var server in _serverLobby.Servers)
             {
                 if (server.QueryResult != null && server.Ip.ToString() == _syncParameters.Ip && server.QueryResult.HostPort == _syncParameters.Port)
                 {

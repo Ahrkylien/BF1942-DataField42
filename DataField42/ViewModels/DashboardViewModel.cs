@@ -18,6 +18,7 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
 
     private readonly MainWindowViewModel _mainWindowViewModel;
     private readonly SettingsService _settingsService;
+    private readonly Bf1942ServerLobby _serverLobby;
     private readonly ILogger<DashboardViewModel> _logger;
     private readonly ILoggerFactory _loggerFactory;
 
@@ -38,26 +39,29 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
     {
         _mainWindowViewModel = null!;
         _settingsService = null!;
+        _serverLobby = null!;
         _logger = null!;
         _loggerFactory = null!;
-        FavoriteServers.Add(new ServerViewModel(new Bf1942Server(IPAddress.Parse("1.2.3.4"), 23000), ServerSelectedHandler, _loggerFactory.CreateLogger<ServerViewModel>(), "BFServer 1", queryServer: true));
+        FavoriteServers.Add(new ServerViewModel(new Bf1942Server(IPAddress.Parse("1.2.3.4"), 23000), ServerSelectedHandler, null!, null!, "BFServer 1"));
         EditModeEnabled = false;
     }
 
     public DashboardViewModel(
         MainWindowViewModel mainWindowViewModel,
         SettingsService settingsService,
+        Bf1942ServerLobby serverLobby,
         ILoggerFactory loggerFactory)
     {
         _mainWindowViewModel = mainWindowViewModel;
         _settingsService = settingsService;
+        _serverLobby = serverLobby;
         _loggerFactory = loggerFactory;
         _logger = loggerFactory.CreateLogger<DashboardViewModel>();
 
         _logger.LogDebug("DashboardViewModel initializing.");
 
         foreach ((var ip, var port, var name) in _settingsService.Settings.FavoriteServers)
-            FavoriteServers.Add(new ServerViewModel(new Bf1942Server(ip, port), ServerSelectedHandler, _loggerFactory.CreateLogger<ServerViewModel>(), name, queryServer: true));
+            FavoriteServers.Add(new ServerViewModel(new Bf1942Server(ip, port), ServerSelectedHandler, _mainWindowViewModel.GoToSyncMenu, _loggerFactory.CreateLogger<ServerViewModel>(), name, queryServer: true));
 
         EditModeEnabled = false;
         _settingsService.SettingChanged += SettingChanged;
@@ -109,10 +113,9 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
             return;
         }
 
-        var serverLobby = new Bf1942ServerLobby(_loggerFactory.CreateLogger<Bf1942ServerLobby>());
         try
         {
-            await serverLobby.GetServerListFromHttpApi();
+            await _serverLobby.GetServerListFromHttpApi();
         }
         catch (Exception ex)
         {
@@ -120,13 +123,13 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
             _mainWindowViewModel.DisplayError($"Can't get server list: {ex.Message}");
         }
 
-        foreach (var server in serverLobby.Servers)
+        foreach (var server in _serverLobby.Servers)
         {
             if (!FavoriteServers.Any(x => x.Ip == server.Ip.ToString() && x.QueryPort == server.QueryPort))
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    FavoriteServers.Add(new ServerViewModel(server, ServerSelectedHandler, _loggerFactory.CreateLogger<ServerViewModel>(), "loading...", queryServer: true) { GeneratedItem = true });
+                    FavoriteServers.Add(new ServerViewModel(server, ServerSelectedHandler, _mainWindowViewModel.GoToSyncMenu, _loggerFactory.CreateLogger<ServerViewModel>(), "loading...", queryServer: true) { GeneratedItem = true });
                 });
                 _logger.LogDebug($"Auto-added generated server {server.Ip}:{server.QueryPort} to dashboard.");
                 if (FavoriteServers.Count >= 4)
@@ -137,7 +140,7 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
         // if the servers list could not be retrived or there are to few, add up to 4:
         for (var i = FavoriteServers.Count; i < 4; i++)
         {
-            FavoriteServers.Add(new ServerViewModel(new Bf1942Server(IPAddress.Parse("1.1.1.1"), 23000), ServerSelectedHandler, _loggerFactory.CreateLogger<ServerViewModel>(), "Go to edit mode to select server") { GeneratedItem = true });
+            FavoriteServers.Add(new ServerViewModel(new Bf1942Server(IPAddress.Parse("1.1.1.1"), 23000), ServerSelectedHandler, _mainWindowViewModel.GoToSyncMenu, _loggerFactory.CreateLogger<ServerViewModel>(), "Go to edit mode to select server") { GeneratedItem = true });
             _logger.LogDebug($"Added placeholder server slot {i + 1}.");
         }
     }
@@ -171,17 +174,16 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
         }
 
         _logger.LogDebug($"Replacing server with selection: {newServerViewModel.Ip}:{newServerViewModel.QueryPort}.");
-        FavoriteServers[FavoriteServers.IndexOf(serverViewModel)] = newServerViewModel;
+        FavoriteServers[FavoriteServers.IndexOf(serverViewModel)] = (ServerViewModel)newServerViewModel;
     }
 
     private async Task<ServerViewModel?> GetServerViewModelFromUserInput()
     {
-        var serverLobby = new Bf1942ServerLobby(_loggerFactory.CreateLogger<Bf1942ServerLobby>());
         var vm = new ServerSelectionViewModel(
             _mainWindowViewModel,
             _loggerFactory.CreateLogger<AbstractServerListViewModel>(),
             _loggerFactory,
-            serverLobby);
+            _serverLobby);
         _mainWindowViewModel.DisplayPopup(vm);
         return await vm.AwaitSelection();
     }
@@ -189,7 +191,7 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
     private void ServerSelectedHandler(ServerViewModel serverViewModel)
     {
         _logger.LogDebug($"Favorite server selected: {serverViewModel.Ip}:{serverViewModel.QueryPort}.");
-        _mainWindowViewModel.GoToSyncMenu(serverViewModel);
+        _mainWindowViewModel.DisplayServerInfo(serverViewModel);
     }
 
     public Task LeavePage() => Task.CompletedTask;

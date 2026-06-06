@@ -80,7 +80,7 @@ public abstract partial class AbstractServerListViewModel : ObservableObject, IP
             {
                 if (!Servers.Any(x => x.Equals(server)))
                 {
-                    var vm = new ServerViewModel(server, ServerSelectedHandler, _loggerFactory.CreateLogger<ServerViewModel>());
+                    var vm = new ServerViewModel(server, ServerSelectedHandler, _mainWindowViewModel.GoToSyncMenu, _loggerFactory.CreateLogger<ServerViewModel>());
                     vm.NewQuery += RefreshList;
                     newServers.Add(vm);
                 }

@@ -14,6 +14,6 @@ public partial class ServerListViewModel : AbstractServerListViewModel
     protected override void ServerSelectedHandler(ServerViewModel serverViewModel)
     {
         _logger.LogDebug($"Server selected from list: {serverViewModel.Ip}:{serverViewModel.QueryPort}.");
-        _mainWindowViewModel.GoToSyncMenu(serverViewModel);
+        _mainWindowViewModel.DisplayServerInfo(serverViewModel);
     }
 }
