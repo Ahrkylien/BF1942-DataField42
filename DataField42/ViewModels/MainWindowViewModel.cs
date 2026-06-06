@@ -135,7 +135,7 @@ public partial class MainWindowViewModel : ObservableObject
     private void SettingChanged()
     {
         DisplayDashboard = _settingsService.Settings.DashboardMode != DashboardMode.Hidden;
-        _logger.LogDebug($"Settings changed — DashboardMode={_settingsService.Settings.DashboardMode}, DisplayDashboard={DisplayDashboard}.");
+        _logger.LogDebug($"DisplayDashboard={DisplayDashboard}.");
     }
 
     public void DisplayMessage(string message)

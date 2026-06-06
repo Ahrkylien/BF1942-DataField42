@@ -79,7 +79,7 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
     private void SettingChanged()
     {
         DisplayOneServer = _settingsService.Settings.DashboardMode == DashboardMode.SingleServer;
-        _logger.LogDebug($"Settings changed — DashboardMode={_settingsService.Settings.DashboardMode}, DisplayOneServer={DisplayOneServer}.");
+        _logger.LogDebug($"DashboardMode={_settingsService.Settings.DashboardMode}");
     }
 
     public async Task EnterPage()

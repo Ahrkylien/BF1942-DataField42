@@ -20,10 +20,7 @@ public partial class App : Application
         base.OnStartup(e);
 
         if (!IsAdministrator() && IsInAdminDirectory())
-        {
-            _logger.LogInformation("Not running as administrator in an admin-protected directory — relaunching with elevation.");
             ExternalProcess.SwitchTo(Environment.ProcessPath, adminMode: true);
-        }
 
         // Startup logger after admin mode has atained (if needed).
         SetupSerilog();
