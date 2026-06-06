@@ -20,7 +20,7 @@ public class Bf1942ServerLobby
         _logger.LogDebug($"Querying all {Servers.Count} servers.");
         var queryTasks = new List<Task>();
         foreach (var server in Servers)
-            queryTasks.Add(server.QueryServer());
+            queryTasks.Add(server.QueryServer(TimeSpan.FromSeconds(3)));
         try
         {
             await Task.WhenAll(queryTasks);

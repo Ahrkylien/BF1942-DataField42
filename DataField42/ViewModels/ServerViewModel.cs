@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DataField42.Interfaces;
+using DF.Watchable;
 using Microsoft.Extensions.Logging;
 
 namespace DataField42.ViewModels;
@@ -63,9 +64,6 @@ public partial class ServerViewModel : ObservableObject, IPageViewModel
         ? $"{RoundTime / 60}m {RoundTime % 60}s"
         : string.Empty;
 
-    // ── Infrastructure ─────────────────────────────────────────────────────────
-    public bool HasQueryResult => QueryResult is not null;
-
     // ── Bool settings ─────────────────────────────────────────────────────────
     public bool AutoBalanceTeams => QueryResult?.AutoBalanceTeams ?? false;
     public bool HasPunkbuster => QueryResult?.UsesPunkbuster ?? false;
@@ -118,8 +116,10 @@ public partial class ServerViewModel : ObservableObject, IPageViewModel
 
     public Bf1942QueryResult? QueryResult => _bf1942Server.QueryResult;
 
-    [ObservableProperty]
-    private bool _loading;
+    // ── Infrastructure ─────────────────────────────────────────────────────────
+    public bool HasQueryResult => QueryResult is not null;
+
+    public Watchable<ConnectionState> ConnectionState => _bf1942Server.State;
 
     [ObservableProperty]
     private bool _errorOccured;
@@ -147,7 +147,6 @@ public partial class ServerViewModel : ObservableObject, IPageViewModel
         _logger = logger;
         _storedServerName = storedServerName;
         bf1942Server.NewQuery += RefreshData;
-        Loading = true;
         if (queryServer)
             _ = Task.Run(Initialize);
     }
@@ -156,7 +155,7 @@ public partial class ServerViewModel : ObservableObject, IPageViewModel
     {
         try
         {
-            await _bf1942Server.QueryServer(TimeSpan.FromMilliseconds(99999));
+            await _bf1942Server.QueryServer(TimeSpan.FromSeconds(3));
         }
         catch (TimeoutException)
         {
@@ -169,10 +168,6 @@ public partial class ServerViewModel : ObservableObject, IPageViewModel
             ErrorMessage = $"During querying of the server an exception occurred: {ex.Message}";
             _logger.LogError(ex, "During querying of the server an exception occurred");
         }
-        finally
-        {
-            Loading = false;
-        }
     }
 
     [RelayCommand]
@@ -183,7 +178,6 @@ public partial class ServerViewModel : ObservableObject, IPageViewModel
 
     private void RefreshData()
     {
-        Loading = false;
         OnPropertyChanged(string.Empty);
         NewQuery?.Invoke();
     }

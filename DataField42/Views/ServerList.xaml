@@ -61,6 +61,9 @@
                                 <Grid.Style>
                                     <Style TargetType="Grid">
                                         <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ConnectionState.Value}" Value="Disconnected">
+                                                <Setter Property="Opacity" Value="0.4"/>
+                                            </DataTrigger>
                                             <DataTrigger Binding="{Binding NumberOfPlayers}" Value="0">
                                                 <Setter Property="Opacity" Value="0.4"/>
                                             </DataTrigger>
@@ -80,7 +83,14 @@
                                                Visibility="{Binding HasPassword, Converter={Converters:BooleanToVisibilityConverter}}"/>
                                 </StackPanel>
                                 <TextBlock Grid.Column="1" Foreground="#8899bb" FontSize="11" Text="{Binding IpAndGamePort}" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="2" Foreground="#8899bb" FontWeight="Bold" Text="{Binding Players}" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                    <TextBlock Foreground="#8899bb" FontWeight="Bold" Text="{Binding Players}"
+                                               Visibility="{Binding ConnectionState.Value, Converter={Converters:EnumToVisibilityConverter}, ConverterParameter=Connected}"/>
+                                    <TextBlock Foreground="#3a4560" FontSize="10" Text="..."
+                                               Visibility="{Binding ConnectionState.Value, Converter={Converters:EnumToVisibilityConverter}, ConverterParameter=Connecting}"/>
+                                    <TextBlock Foreground="#7a3333" FontSize="9" FontWeight="Bold" Text="offline"
+                                               Visibility="{Binding ConnectionState.Value, Converter={Converters:EnumToVisibilityConverter}, ConverterParameter=Disconnected}"/>
+                                </StackPanel>
                                 <TextBlock Grid.Column="3" Foreground="#8899bb" FontSize="11" TextAlignment="Right" Text="{Binding Map}" VerticalAlignment="Center"/>
                                 <TextBlock Grid.Column="4" Foreground="#8899bb" FontSize="11" TextAlignment="Right" Text="{Binding Mod}" VerticalAlignment="Center"/>
                             </Grid>

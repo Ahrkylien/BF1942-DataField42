@@ -42,7 +42,14 @@
                            FontSize="13" TextTrimming="CharacterEllipsis" Margin="0,0,0,5"/>
 
                 <!-- Row 1: Players bar + time remaining bar -->
-                <Grid Grid.Row="1" Margin="0,0,0,5">
+                <TextBlock Grid.Row="1" Margin="0,0,0,5"
+                           Visibility="{Binding ConnectionState.Value, Converter={Converters:EnumToVisibilityConverter}, ConverterParameter=Connecting}"
+                           Text="Connecting..." Foreground="#3a4560" FontSize="11"/>
+                <TextBlock Grid.Row="1" Margin="0,0,0,5"
+                           Visibility="{Binding ConnectionState.Value, Converter={Converters:EnumToVisibilityConverter}, ConverterParameter=Disconnected}"
+                           Text="Offline" Foreground="#7a3333" FontSize="11" FontWeight="Bold"/>
+                <Grid Grid.Row="1" Margin="0,0,0,5"
+                      Visibility="{Binding ConnectionState.Value, Converter={Converters:EnumToVisibilityConverter}, ConverterParameter=Connected}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="auto"/>
                         <RowDefinition Height="auto"/>
@@ -89,7 +96,8 @@
                 </Grid>
 
                 <!-- Row 2: Map · Mod · Mode -->
-                <WrapPanel Grid.Row="2" Margin="0,0,0,6">
+                <WrapPanel Grid.Row="2" Margin="0,0,0,6"
+                           Visibility="{Binding ConnectionState.Value, Converter={Converters:EnumToVisibilityConverter}, ConverterParameter=Connected}">
                     <TextBlock Text="{Binding Map}" Foreground="#7788aa" FontSize="14"/>
                     <TextBlock Text=" · " Foreground="#3a4560" FontSize="14"/>
                     <TextBlock Text="{Binding Mod}" Foreground="#7788aa" FontSize="14"/>
@@ -100,7 +108,8 @@
                 </WrapPanel>
 
                 <!-- Row 3: Top-3 team columns -->
-                <Grid Grid.Row="3">
+                <Grid Grid.Row="3"
+                      Visibility="{Binding ConnectionState.Value, Converter={Converters:EnumToVisibilityConverter}, ConverterParameter=Connected}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="auto"/>
