@@ -43,11 +43,10 @@
                            TextTrimming="CharacterEllipsis"/>
                 <TextBlock Text="{Binding IpAndGamePort}" Foreground="#4a5680" FontSize="10" Margin="0,2,0,0"/>
             </StackPanel>
-            <Controls:SimpleButton Grid.Column="1" Width="32" Height="32" VerticalAlignment="Center" Command="{Binding JoinServerCommand}">
+            <Controls:SimpleButton Grid.Column="1" Width="36" Height="36" Padding="3" VerticalAlignment="Center" Command="{Binding JoinServerCommand}">
                 <svg:SVGImage UriSource="/Resources/Images/play.svg"
                               SizeType="ViewBoxToSizeNoStretch"
-                              OverrideStrokeColor="#d4d4d4"
-                              Margin="8"/>
+                              OverrideStrokeColor="#84db81"/>
             </Controls:SimpleButton>
         </Grid>
 
@@ -107,7 +106,7 @@
         <!-- Row 2: Map name (prominent) + game mode -->
         <WrapPanel Grid.Row="2" Margin="0,0,0,10"
                    Visibility="{Binding ConnectionState.Value, Converter={Converters:EnumToVisibilityConverter}, ConverterParameter=Connected}">
-            <TextBlock Text="{Binding Map}" FontSize="18" FontWeight="Bold" Foreground="#c8d8f0"
+            <TextBlock Text="{Binding Map, Converter={Converters:TitleCaseConverter}}" FontSize="18" FontWeight="Bold" Foreground="#c8d8f0"
                 TextTrimming="CharacterEllipsis"/>
             <Border Background="#111830" CornerRadius="4" Padding="8,4" Margin="2,0,0,0"
                 Visibility="{Binding Mode, Converter={Converters:StringNotEmptyToVisibilityConverter}}">
@@ -116,7 +115,7 @@
             <Border Background="#111830" CornerRadius="4" Padding="8,4" Margin="2,0,0,0">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="MOD" FontSize="9" Foreground="#4a5680" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <TextBlock Text="{Binding Mod}" FontSize="11" Foreground="#aabbd0" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding Mod, Converter={Converters:TitleCaseConverter}}" FontSize="11" Foreground="#aabbd0" Margin="5,0,0,0" VerticalAlignment="Center"/>
                 </StackPanel>
             </Border>
             <Border Background="#1a1020" CornerRadius="4" Padding="8,4" Margin="2,0,0,0"
@@ -252,8 +251,115 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Left column: ROUND + GAME RULES -->
             <StackPanel Grid.Column="0">
+                <!-- ROUND & SERVER INFO block -->
+                <Border Background="#090b18" CornerRadius="6" BorderBrush="#1a2540" BorderThickness="1" Padding="12,8" Margin="0,0,0,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="SERVER INFO" FontSize="9" Foreground="#4a5680" FontWeight="Bold" Margin="0,0,0,6"/>
+                        <TextBlock Grid.Row="1" Style="{StaticResource LabelStyle}" Margin="0,2"
+                            Visibility="{Binding Stage, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="Stage"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"
+                            Visibility="{Binding Stage, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="{Binding Stage}"/>
+                        <TextBlock Grid.Row="2" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Status"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2" Text="{Binding Status}"/>
+                        <TextBlock Grid.Row="3" Style="{StaticResource LabelStyle}" Margin="0,2"
+                            Visibility="{Binding ActiveMods, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="Active Mods"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"
+                            Visibility="{Binding ActiveMods, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="{Binding ActiveMods}"/>
+                        <TextBlock Grid.Row="4" Style="{StaticResource LabelStyle}" Margin="0,2"
+                            Visibility="{Binding DedicatedServerType, Converter={Converters:NullableToVisibilityConverter}}" Text="Host Type"/>
+                        <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"
+                            Visibility="{Binding DedicatedServerType, Converter={Converters:NullableToVisibilityConverter}}"
+                            Text="{Binding DedicatedServerType, Converter={Converters:EnumDescriptionConverter}}"/>
+                        <TextBlock Grid.Row="5" Style="{StaticResource LabelStyle}" Margin="0,2"
+                            Visibility="{Binding Cpu, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="CPU"/>
+                        <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"
+                            Visibility="{Binding Cpu, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="{Binding Cpu}"/>
+                        <TextBlock Grid.Row="6" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Average FPS"/>
+                        <TextBlock Grid.Row="6" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding AverageFps, Mode=OneWay}"/><Run Text=" fps" Foreground="#4a5680"/></TextBlock>
+                        <TextBlock Grid.Row="7" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Bandwidth Choke"/>
+                        <TextBlock Grid.Row="7" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding BandwidthChokeLimit, Mode=OneWay}"/><Run Text=" kbps" Foreground="#4a5680"/></TextBlock>
+                        <TextBlock Grid.Row="8" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Content Check"/>
+                        <TextBlock Grid.Row="8" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2" Text="{Binding ContentCheck}"/>
+                        <TextBlock Grid.Row="9" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Mods w/o Content Check"/>
+                        <TextBlock Grid.Row="9" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2" Text="{Binding UnpureModsDisplay}"/>
+                        <TextBlock Grid.Row="10" Style="{StaticResource LabelStyle}" Margin="0,2"
+                            Visibility="{Binding Language, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="Language"/>
+                        <TextBlock Grid.Row="10" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"
+                            Visibility="{Binding Language, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="{Binding Language}"/>
+                        <TextBlock Grid.Row="11" Style="{StaticResource LabelStyle}" Margin="0,2"
+                            Visibility="{Binding Location, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="Location"/>
+                        <TextBlock Grid.Row="11" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"
+                            Visibility="{Binding Location, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="{Binding Location}"/>
+                    </Grid>
+                </Border>
+                
+                <!-- FRIENDLY FIRE & GAMEPLAY block -->
+                <Border Background="#090b18" CornerRadius="6" BorderBrush="#1a2540" BorderThickness="1" Padding="12,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="FRIENDLY FIRE &amp; GAMEPLAY" FontSize="9" Foreground="#4a5680" FontWeight="Bold" Margin="0,0,0,6"/>
+                        <TextBlock Grid.Row="1" Style="{StaticResource LabelStyle}" Margin="0,2"
+                                   Visibility="{Binding TkMode, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="Team Kill Mode"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"
+                                   Visibility="{Binding TkMode, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="{Binding TkMode}"/>
+                        <TextBlock Grid.Row="2" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Spawn Delay"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding SpawnDelay, Mode=OneWay}"/><Run Text="s" Foreground="#4a5680"/></TextBlock>
+                        <TextBlock Grid.Row="3" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Spawn Wave Time"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding SpawnWaveTime, Mode=OneWay}"/><Run Text="s" Foreground="#4a5680"/></TextBlock>
+                        <TextBlock Grid.Row="4" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Game Start Delay"/>
+                        <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding GameStartDelay, Mode=OneWay}"/><Run Text="s" Foreground="#4a5680"/></TextBlock>
+                        <TextBlock Grid.Row="5" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Soldier FF"/>
+                        <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding SoldierFriendlyFire, Mode=OneWay}"/><Run Text="%" Foreground="#4a5680"/></TextBlock>
+                        <TextBlock Grid.Row="6" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Soldier FF Splash"/>
+                        <TextBlock Grid.Row="6" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding SoldierFriendlyFireOnSplash, Mode=OneWay}"/><Run Text="%" Foreground="#4a5680"/></TextBlock>
+                        <TextBlock Grid.Row="7" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Vehicle FF"/>
+                        <TextBlock Grid.Row="7" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding VehicleFriendlyFire, Mode=OneWay}"/><Run Text="%" Foreground="#4a5680"/></TextBlock>
+                        <TextBlock Grid.Row="8" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Vehicle FF Splash"/>
+                        <TextBlock Grid.Row="8" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding VehicleFriendlyFireOnSplash, Mode=OneWay}"/><Run Text="%" Foreground="#4a5680"/></TextBlock>
+                        <TextBlock Grid.Row="9" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Kickback"/>
+                        <TextBlock Grid.Row="9" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding KickBack, Mode=OneWay}"/><Run Text="%" Foreground="#4a5680"/></TextBlock>
+                        <TextBlock Grid.Row="10" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Kickback on Splash"/>
+                        <TextBlock Grid.Row="10" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding KickBackOnSplash, Mode=OneWay}"/><Run Text="%" Foreground="#4a5680"/></TextBlock>
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2">
 
                 <!-- GAME RULES block -->
                 <Border Background="#090b18" CornerRadius="6" BorderBrush="#1a2540" BorderThickness="1" Padding="12,8">
@@ -318,116 +424,6 @@
                                    Visibility="{Binding TeamRatio, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="Team Ratio (Axis:Allied)"/>
                         <TextBlock Grid.Row="14" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"
                                    Visibility="{Binding TeamRatio, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="{Binding TeamRatio}"/>
-                    </Grid>
-                </Border>
-            </StackPanel>
-
-            <!-- Right column: SERVER INFO + FRIENDLY FIRE & GAMEPLAY -->
-            <StackPanel Grid.Column="2">
-
-                <!-- ROUND & SERVER INFO block -->
-                <Border Background="#090b18" CornerRadius="6" BorderBrush="#1a2540" BorderThickness="1" Padding="12,8" Margin="0,0,0,8">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                        </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="ROUND &amp; SERVER INFO" FontSize="9" Foreground="#4a5680" FontWeight="Bold" Margin="0,0,0,6"/>
-                        <TextBlock Grid.Row="1" Style="{StaticResource LabelStyle}" Margin="0,2"
-                                   Visibility="{Binding Stage, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="Stage"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"
-                                   Visibility="{Binding Stage, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="{Binding Stage}"/>
-                        <TextBlock Grid.Row="2" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Status"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2" Text="{Binding Status}"/>
-                        <TextBlock Grid.Row="3" Style="{StaticResource LabelStyle}" Margin="0,2"
-                                   Visibility="{Binding ActiveMods, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="Active Mods"/>
-                        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"
-                                   Visibility="{Binding ActiveMods, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="{Binding ActiveMods}"/>
-                        <TextBlock Grid.Row="4" Style="{StaticResource LabelStyle}" Margin="0,2"
-                                   Visibility="{Binding DedicatedServerType, Converter={Converters:NullableToVisibilityConverter}}" Text="Host Type"/>
-                        <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"
-                                   Visibility="{Binding DedicatedServerType, Converter={Converters:NullableToVisibilityConverter}}"
-                                   Text="{Binding DedicatedServerType, Converter={Converters:EnumDescriptionConverter}}"/>
-                        <TextBlock Grid.Row="5" Style="{StaticResource LabelStyle}" Margin="0,2"
-                                   Visibility="{Binding Cpu, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="CPU"/>
-                        <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"
-                                   Visibility="{Binding Cpu, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="{Binding Cpu}"/>
-                        <TextBlock Grid.Row="6" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Average FPS"/>
-                        <TextBlock Grid.Row="6" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding AverageFps, Mode=OneWay}"/><Run Text=" fps" Foreground="#4a5680"/></TextBlock>
-                        <TextBlock Grid.Row="7" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Bandwidth Choke"/>
-                        <TextBlock Grid.Row="7" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding BandwidthChokeLimit, Mode=OneWay}"/><Run Text=" kbps" Foreground="#4a5680"/></TextBlock>
-                        <TextBlock Grid.Row="8" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Content Check"/>
-                        <TextBlock Grid.Row="8" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2" Text="{Binding ContentCheck}"/>
-                        <TextBlock Grid.Row="9" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Mods w/o Content Check"/>
-                        <TextBlock Grid.Row="9" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2" Text="{Binding UnpureModsDisplay}"/>
-                        <TextBlock Grid.Row="10" Style="{StaticResource LabelStyle}" Margin="0,2"
-                                   Visibility="{Binding Language, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="Language"/>
-                        <TextBlock Grid.Row="10" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"
-                                   Visibility="{Binding Language, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="{Binding Language}"/>
-                        <TextBlock Grid.Row="11" Style="{StaticResource LabelStyle}" Margin="0,2"
-                                   Visibility="{Binding Location, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="Location"/>
-                        <TextBlock Grid.Row="11" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"
-                                   Visibility="{Binding Location, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="{Binding Location}"/>
-                    </Grid>
-                </Border>
-
-                <!-- FRIENDLY FIRE & GAMEPLAY block -->
-                <Border Background="#090b18" CornerRadius="6" BorderBrush="#1a2540" BorderThickness="1" Padding="12,8">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                        </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="FRIENDLY FIRE &amp; GAMEPLAY" FontSize="9" Foreground="#4a5680" FontWeight="Bold" Margin="0,0,0,6"/>
-                        <TextBlock Grid.Row="1" Style="{StaticResource LabelStyle}" Margin="0,2"
-                                   Visibility="{Binding TkMode, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="Team Kill Mode"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"
-                                   Visibility="{Binding TkMode, Converter={Converters:StringNotEmptyToVisibilityConverter}}" Text="{Binding TkMode}"/>
-                        <TextBlock Grid.Row="2" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Spawn Delay"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding SpawnDelay, Mode=OneWay}"/><Run Text="s" Foreground="#4a5680"/></TextBlock>
-                        <TextBlock Grid.Row="3" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Spawn Wave Time"/>
-                        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding SpawnWaveTime, Mode=OneWay}"/><Run Text="s" Foreground="#4a5680"/></TextBlock>
-                        <TextBlock Grid.Row="4" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Game Start Delay"/>
-                        <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding GameStartDelay, Mode=OneWay}"/><Run Text="s" Foreground="#4a5680"/></TextBlock>
-                        <TextBlock Grid.Row="5" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Soldier FF"/>
-                        <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding SoldierFriendlyFire, Mode=OneWay}"/><Run Text="%" Foreground="#4a5680"/></TextBlock>
-                        <TextBlock Grid.Row="6" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Soldier FF Splash"/>
-                        <TextBlock Grid.Row="6" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding SoldierFriendlyFireOnSplash, Mode=OneWay}"/><Run Text="%" Foreground="#4a5680"/></TextBlock>
-                        <TextBlock Grid.Row="7" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Vehicle FF"/>
-                        <TextBlock Grid.Row="7" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding VehicleFriendlyFire, Mode=OneWay}"/><Run Text="%" Foreground="#4a5680"/></TextBlock>
-                        <TextBlock Grid.Row="8" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Vehicle FF Splash"/>
-                        <TextBlock Grid.Row="8" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding VehicleFriendlyFireOnSplash, Mode=OneWay}"/><Run Text="%" Foreground="#4a5680"/></TextBlock>
-                        <TextBlock Grid.Row="9" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Kickback"/>
-                        <TextBlock Grid.Row="9" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding KickBack, Mode=OneWay}"/><Run Text="%" Foreground="#4a5680"/></TextBlock>
-                        <TextBlock Grid.Row="10" Style="{StaticResource LabelStyle}" Margin="0,2" Text="Kickback on Splash"/>
-                        <TextBlock Grid.Row="10" Grid.Column="1" Style="{StaticResource ValueStyle}" Margin="0,2"><Run Text="{Binding KickBackOnSplash, Mode=OneWay}"/><Run Text="%" Foreground="#4a5680"/></TextBlock>
                     </Grid>
                 </Border>
             </StackPanel>
