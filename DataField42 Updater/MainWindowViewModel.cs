@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Diagnostics;
 using System.IO;
 
@@ -22,7 +23,7 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasErrorMessages))]
     [NotifyPropertyChangedFor(nameof(HasMessagesOrErrors))]
-    private string _errorMessages;
+    private string _errorMessages = string.Empty;
 
     public bool HasErrorMessages => !string.IsNullOrEmpty(ErrorMessages);
 
@@ -41,7 +42,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         try
         {
-            var communication = new DataField42Communication();
+            var communication = new DataField42Communication(NullLogger<DataField42Communication>.Instance);
             var backgroundWorker = new DownloadBackgroundWorker();
             backgroundWorker.ProgressChanged += BackgroundWorkerCurrentFile_ProgressChanged;
 
