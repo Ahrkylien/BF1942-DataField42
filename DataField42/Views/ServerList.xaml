@@ -91,8 +91,8 @@
                                     <TextBlock Foreground="#7a3333" FontSize="9" FontWeight="Bold" Text="offline"
                                                Visibility="{Binding ConnectionState.Value, Converter={Converters:EnumToVisibilityConverter}, ConverterParameter=Disconnected}"/>
                                 </StackPanel>
-                                <TextBlock Grid.Column="3" Foreground="#8899bb" FontSize="11" TextAlignment="Right" Text="{Binding Map}" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="4" Foreground="#8899bb" FontSize="11" TextAlignment="Right" Text="{Binding Mod}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="3" Foreground="#8899bb" FontSize="11" TextAlignment="Right" Text="{Binding Map, Converter={Converters:TitleCaseConverter}}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="4" Foreground="#8899bb" FontSize="11" TextAlignment="Right" Text="{Binding Mod, Converter={Converters:TitleCaseConverter}}" VerticalAlignment="Center"/>
                             </Grid>
                         </Controls:SimpleButton>
                     </DataTemplate>

@@ -98,9 +98,9 @@
                 <!-- Row 2: Map · Mod · Mode -->
                 <WrapPanel Grid.Row="2" Margin="0,0,0,6"
                            Visibility="{Binding ConnectionState.Value, Converter={Converters:EnumToVisibilityConverter}, ConverterParameter=Connected}">
-                    <TextBlock Text="{Binding Map}" Foreground="#7788aa" FontSize="14"/>
+                    <TextBlock Text="{Binding Map, Converter={Converters:TitleCaseConverter}}" Foreground="#7788aa" FontSize="14"/>
                     <TextBlock Text=" · " Foreground="#3a4560" FontSize="14"/>
-                    <TextBlock Text="{Binding Mod}" Foreground="#7788aa" FontSize="14"/>
+                    <TextBlock Text="{Binding Mod, Converter={Converters:TitleCaseConverter}}" Foreground="#7788aa" FontSize="14"/>
                     <TextBlock Text=" · " Foreground="#3a4560" FontSize="14"
                                Visibility="{Binding Mode, Converter={Converters:StringNotEmptyToVisibilityConverter}}"/>
                     <TextBlock Text="{Binding Mode}" Foreground="#7788aa" FontSize="14"
@@ -270,8 +270,22 @@
 
         <!-- Edit/save toggle (top-right, always on top) -->
         <Controls:SimpleButton VerticalAlignment="Top" HorizontalAlignment="Right"
-                               Margin="-5" Height="40" Width="40"
+                               Height="40" Width="40"
                                Command="{Binding ToggleEditModeCommand}">
+            <Controls:SimpleButton.Style> <!-- dirty fix for avoiding overlapping buttons -->
+                <Style TargetType="Controls:SimpleButton" BasedOn="{StaticResource {x:Type Controls:SimpleButton}}">
+                    <Setter Property="Margin" Value="-5"/>
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding DisplayOneServer}" Value="True"/>
+                                <Condition Binding="{Binding EditModeEnabled}" Value="False"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Margin" Value="55,5"/>
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Controls:SimpleButton.Style>
             <Grid>
                 <svg:SVGImage Visibility="{Binding EditModeEnabled, Converter={Converters:InverseBooleanToVisibilityConverter}}"
                               UriSource="/Resources/Images/edit.svg" SizeType="ViewBoxToSizeNoStretch"
