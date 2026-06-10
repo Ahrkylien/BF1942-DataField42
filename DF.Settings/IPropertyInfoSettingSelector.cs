@@ -9,6 +9,6 @@ namespace DF.Settings
         /// Return False when this <see cref="IPropertyInfoSettingSelector"/> leaves selecting the settings instance to another selector.
         /// Return True with a null setting when this property should be skipped.
         /// </summary>
-        bool TryGetSettingFromProperty(PropertyInfo propertyInfo, out ISetting setting);
+        bool TryGetSettingFromProperty(object settingsObject, PropertyInfo propertyInfo, out ISetting setting);
     }
 }

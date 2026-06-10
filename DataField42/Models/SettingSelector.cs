@@ -1,21 +1,27 @@
-﻿using DF.Settings;
+using DataField42.Settings;
+using DF.Settings;
 using System.Reflection;
 
 namespace DataField42;
 
 public class SettingSelector : IPropertyInfoSettingSelector
 {
-    private readonly string[] _namesToSkip = new string[] {
-        nameof(Settings.Settings.AutoSyncServers),
-        nameof(Settings.Settings.IgnoreSyncRules),
-        nameof(Settings.Settings.FavoriteServers),
-    };
-
-    public bool TryGetSettingFromProperty(PropertyInfo propertyInfo, out ISetting? setting)
+    public bool TryGetSettingFromProperty(object settingsObject, PropertyInfo propertyInfo, out ISetting? setting)
     {
-        if (_namesToSkip.Contains(propertyInfo.Name))
+        var settings = (Settings.Settings)settingsObject;
+
+        if (propertyInfo.Name == nameof(Settings.Settings.FavoriteServers))
         {
             setting = null;
+            return true;
+        }
+
+        if (propertyInfo.PropertyType == typeof(List<FileRule>))
+        {
+            setting = new FileRuleCollectionSetting(
+                "Ignore Sync Rules",
+                () => settings.IgnoreSyncRules,
+                v => settings.IgnoreSyncRules = v);
             return true;
         }
 

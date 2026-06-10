@@ -1,13 +1,14 @@
-﻿<UserControl x:Class="DataField42.Views.Settings"
+<UserControl x:Class="DataField42.Views.Settings"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:DataField42.Views"
              xmlns:ViewModels="clr-namespace:DataField42.ViewModels"
-             xmlns:Converters="clr-namespace:DataField42.Converters"
+xmlns:Converters="clr-namespace:DataField42.Converters"
              xmlns:Settings="clr-namespace:DF.Settings;assembly=DF.Settings"
-             mc:Ignorable="d" 
+             xmlns:df="clr-namespace:DataField42"
+             mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800"
              d:DataContext="{d:DesignInstance ViewModels:SettingsViewModel, IsDesignTimeCreatable=False}">
     <UserControl.Resources>
@@ -20,6 +21,37 @@
                 </StackPanel>
             </Border>
         </ControlTemplate>
+
+        <ControlTemplate x:Key="CollectionSettingTemplate" TargetType="ContentControl">
+            <Border Padding="10" Margin="4" Background="#1b1e2a" CornerRadius="4">
+                <ContentPresenter/>
+            </Border>
+        </ControlTemplate>
+
+        <!-- Shared column widths for rule grids -->
+        <GridLength x:Key="ColScenario">110</GridLength>
+        <GridLength x:Key="ColFileType">110</GridLength>
+        <GridLength x:Key="ColMod">90</GridLength>
+        <GridLength x:Key="ColFileName">140</GridLength>
+
+        <Style x:Key="ColHeader" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#666"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+        </Style>
+
+
+
+        <Style x:Key="RuleTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="#2a2d3e"/>
+            <Setter Property="Foreground" Value="#d4d4d4"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
 
         <!-- Specific templates -->
         <DataTemplate DataType="{x:Type Settings:BoolSetting}">
@@ -40,6 +72,157 @@
                     ItemsSource="{Binding Values}"
                     SelectedItem="{Binding Value, Mode=TwoWay}"
                     Width="auto"/>
+            </ContentControl>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type Settings:StringCollectionSetting}">
+            <ContentControl Template="{StaticResource CollectionSettingTemplate}">
+                <StackPanel>
+                    <TextBlock Text="{Binding Name}" Foreground="#d4d4d4" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                    <ItemsControl ItemsSource="{Binding Items}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="0,2">
+                                    <TextBlock Text="{Binding}" Foreground="#b0b0b0" VerticalAlignment="Center" MinWidth="200"/>
+                                    <Button Content="✕"
+                                            Style="{StaticResource CollectionRemoveButton}"
+                                            Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                        <TextBox Style="{StaticResource StringCollectionTextBox}"
+                                 Text="{Binding NewItemText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding AddCommand}"/>
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <Button Content="Add"
+                                Style="{StaticResource CollectionAddButton}"
+                                Margin="4,0,0,0"
+                                Command="{Binding AddCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+            </ContentControl>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type df:FileRuleCollectionSetting}">
+            <ContentControl Template="{StaticResource CollectionSettingTemplate}">
+                <StackPanel>
+                    <TextBlock Text="{Binding Name}" Foreground="#d4d4d4" FontWeight="SemiBold" Margin="0,0,0,8"/>
+
+                    <!-- Column headers -->
+                    <Grid Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="140"/>
+                            <ColumnDefinition Width="24"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Scenario" Style="{StaticResource ColHeader}"/>
+                        <TextBlock Grid.Column="1" Text="File type" Style="{StaticResource ColHeader}"/>
+                        <TextBlock Grid.Column="2" Text="Mod (* = all)" Style="{StaticResource ColHeader}"/>
+                        <TextBlock Grid.Column="3" Text="File name (* = all)" Style="{StaticResource ColHeader}"/>
+                    </Grid>
+
+                    <!-- Existing rules (editable) -->
+                    <ItemsControl ItemsSource="{Binding Items}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type df:FileRuleViewModel}">
+                                <Grid Margin="0,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="24"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox Grid.Column="0" Margin="0,0,6,0" MinWidth="0"
+                                              ItemsSource="{x:Static df:FileRuleViewModel.AllScenarios}"
+                                              SelectedItem="{Binding Scenario, Mode=TwoWay}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={Converters:CamelCaseSpacesConverter}}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                    <ComboBox Grid.Column="1" Margin="0,0,6,0" MinWidth="0"
+                                              ItemsSource="{x:Static df:FileRuleViewModel.AllFileTypes}"
+                                              SelectedItem="{Binding FileType, Mode=TwoWay}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={Converters:CamelCaseSpacesConverter}}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                    <TextBox Grid.Column="2"
+                                             Style="{StaticResource RuleTextBox}"
+                                             Text="{Binding Mod, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
+                                    <TextBox Grid.Column="3"
+                                             Style="{StaticResource RuleTextBox}"
+                                             Text="{Binding FileName, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
+                                    <Button Grid.Column="4"
+                                            Content="✕"
+                                            Style="{StaticResource CollectionRemoveButton}"
+                                            Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Separator -->
+                    <Rectangle Height="1" Fill="#2a2d3e" Margin="0,8"/>
+
+                    <!-- New rule entry row -->
+                    <TextBlock Text="Add new rule" Foreground="#666" FontSize="11" Margin="0,0,0,4"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="140"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox Grid.Column="0" Margin="0,0,6,0" MinWidth="0"
+                                  ItemsSource="{x:Static df:FileRuleViewModel.AllScenarios}"
+                                  SelectedItem="{Binding NewRule.Scenario, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Converter={Converters:CamelCaseSpacesConverter}}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <ComboBox Grid.Column="1" Margin="0,0,6,0" MinWidth="0"
+                                  ItemsSource="{x:Static df:FileRuleViewModel.AllFileTypes}"
+                                  SelectedItem="{Binding NewRule.FileType, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Converter={Converters:CamelCaseSpacesConverter}}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBox Grid.Column="2"
+                                 Style="{StaticResource RuleTextBox}"
+                                 Text="{Binding NewRule.Mod, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="Mod folder name, or * for all mods"/>
+                        <TextBox Grid.Column="3"
+                                 Style="{StaticResource RuleTextBox}"
+                                 Text="{Binding NewRule.FileName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="File name (extension optional), or * for all files">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding CommitNewRuleCommand}"/>
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <Button Grid.Column="4"
+                                Content="Add"
+                                Style="{StaticResource CollectionAddButton}"
+                                Command="{Binding CommitNewRuleCommand}"/>
+                    </Grid>
+                </StackPanel>
             </ContentControl>
         </DataTemplate>
 

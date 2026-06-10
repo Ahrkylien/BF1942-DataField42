@@ -35,7 +35,7 @@ namespace DF.Settings
                 var name = display?.Name ?? property.Name;
                 var description = display?.Description ?? "";
 
-                if (propertyInfoSettingSelector.TryGetSettingFromProperty(property, out setting))
+                if (propertyInfoSettingSelector.TryGetSettingFromProperty(settingsObject, property, out setting))
                 {
                     if (setting == null)
                         continue;
@@ -64,6 +64,8 @@ namespace DF.Settings
                     setting = new StringSetting(name, () => (string)property.GetValue(settingsObject), x => property.SetValue(settingsObject, x));
                 else if (value is bool)
                     setting = new BoolSetting(name, () => (bool)property.GetValue(settingsObject), x => property.SetValue(settingsObject, x));
+                else if (value is IEnumerable<string>)
+                    setting = new StringCollectionSetting(name, () => ((IEnumerable<string>)property.GetValue(settingsObject)).ToList(), x => property.SetValue(settingsObject, x));
                 else
                     throw new NotSupportedException($"{settingsType}.{name} has type {type} which is not supported");
 
