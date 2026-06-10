@@ -27,26 +27,34 @@
                     <ColumnDefinition />
                     <ColumnDefinition Width="20" />
                 </Grid.ColumnDefinitions>
-                <Border x:Name="Border" 
+                <Border x:Name="Border"
                         Grid.ColumnSpan="2"
                         CornerRadius="0"
                         Background="#233050"
                         BorderBrush="#233050"
                         BorderThickness="2" />
-                <Border Grid.Column="0"
-                        CornerRadius="0" 
-                        Margin="1" 
-                        Background="#1b1e2a" 
+                <Border x:Name="Inner"
+                        Grid.Column="0"
+                        CornerRadius="0"
+                        Margin="1"
+                        Background="#1b1e2a"
                         BorderBrush="#1b1e2a"
                         BorderThickness="0,0,2,0" />
                 <Path x:Name="Arrow"
-                      Grid.Column="1"     
+                      Grid.Column="1"
                       Fill="#d4d4d4"
                       HorizontalAlignment="Center"
                       VerticalAlignment="Center"
                       Data="M0,0 L0,2 L4,6 L8,2 L8,0 L4,4 z"
                     />
             </Grid>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Border" Property="Background" Value="#2a3a60"/>
+                    <Setter TargetName="Inner" Property="Background" Value="#233050"/>
+                    <Setter TargetName="Inner" Property="BorderBrush" Value="#233050"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
         </ControlTemplate>
 
         <ControlTemplate x:Key="ComboBoxTextBox" TargetType="{x:Type TextBox}">
@@ -288,30 +296,50 @@
         </Style>
 
 
-        <Style x:Key="CollectionRemoveButton" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#555"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="4,0"/>
-            <Setter Property="Cursor" Value="Hand"/>
+        <!-- Global Button style: custom template so Background/Foreground triggers actually apply -->
+        <Style TargetType="Button">
+            <Setter Property="Foreground" Value="#d4d4d4"/>
+            <Setter Property="Background" Value="#1b1e2a"/>
+            <Setter Property="BorderBrush" Value="#233050"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Foreground" Value="#e06c75"/>
+                    <Setter Property="Background" Value="#233050"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Foreground" Value="#888888"/>
+                    <Setter Property="BorderBrush" Value="#555555"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
-        <Style x:Key="CollectionAddButton" TargetType="Button">
+        <Style x:Key="CollectionRemoveButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#2a2d3e"/>
+            <Setter Property="Foreground" Value="#e06c75"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="4,0"/>
+        </Style>
+
+        <Style x:Key="CollectionAddButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Background" Value="#2a2d3e"/>
             <Setter Property="Foreground" Value="#d4d4d4"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="10,3"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#3a3d4e"/>
-                </Trigger>
-            </Style.Triggers>
         </Style>
 
         <Style x:Key="StringCollectionTextBox" TargetType="TextBox">
