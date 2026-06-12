@@ -1,0 +1,23 @@
+name: Build
+
+on:
+  push:
+    branches: ['**']
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore DataField42.sln
+
+      - name: Build
+        run: dotnet build DataField42.sln --no-restore --configuration Release
