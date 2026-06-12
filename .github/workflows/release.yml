@@ -26,8 +26,12 @@ jobs:
       - name: Publish DataField42
         run: dotnet publish DataField42/DataField42.csproj /p:PublishProfile=DataField42/Properties/PublishProfiles/FolderProfile.pubxml --configuration Release
 
+      - name: Build Installer
+        run: iscc "DataField42 Installer/DataField42.iss"
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             DataField42/bin/Publish/DataField42.exe
+            DataField42 Installer/bin/DataField42 v*.exe
