@@ -409,7 +409,6 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
 
     private void BackgroundWorkerCurrentFile_ProgressChanged(int percentage)
     {
-        _logger.LogDebug($"Download progress: {percentage}%.");
         Percentage = percentage;
     }
 
