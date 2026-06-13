@@ -36,6 +36,7 @@ ergc equ 0x8C52D0
     push    2                           ; mode
     call    [0x8c34f8]                  ; _spawnl
     add     esp, 0x14                   ; 4*times of push
+
     mov     esp, ebp                    ; restore ESP
     pop     esi
     pop     edi
