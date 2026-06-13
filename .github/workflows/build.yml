@@ -20,4 +20,4 @@ jobs:
         run: dotnet restore DataField42.sln -r win-x64
 
       - name: Build
-        run: dotnet build DataField42.sln --no-restore --configuration Release -r win-x64
+        run: dotnet build DataField42.sln --no-restore --configuration Release
