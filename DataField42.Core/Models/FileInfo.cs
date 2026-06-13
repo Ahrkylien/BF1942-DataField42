@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
-using System.IO;
 
 public class FileInfo
 {
@@ -9,7 +8,7 @@ public class FileInfo
     public string Checksum { get; set; }
     public ulong Size { get; set; }
     public ulong LastModifiedTimestamp { get; set; }
-    public Bf1942FileTypes FileType { get; set; } = Bf1942FileTypes.None;
+    public Bf1942FileType FileType { get; set; } = Bf1942FileType.None;
 
     public SyncType SyncType { get; set; } = SyncType.Unknown;
 
@@ -21,7 +20,7 @@ public class FileInfo
     {
         get
         {
-            if (FileType == Bf1942FileTypes.Level || FileType == Bf1942FileTypes.Archive)
+            if (FileType == Bf1942FileType.Level || FileType == Bf1942FileType.Archive)
             {
                 var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(FileName);
                 var fileExtension = Path.GetExtension(FileName);
@@ -90,14 +89,14 @@ public class FileInfo
         //TODO Parse/validate Crc32 & Size & LastModifiedTimestamp, except if fast
 
         // parse FilePath:
-        List<Tuple<string, Bf1942FileTypes>> fileTypeFolderLocations = new()
+        List<Tuple<string, Bf1942FileType>> fileTypeFolderLocations = new()
         {   // mind the order!
-            new("movies/", Bf1942FileTypes.Movie),
-            new("music/", Bf1942FileTypes.Music),
-            new("archives/bf1942/levels/", Bf1942FileTypes.Level),
-            new("archives/bf1942/", Bf1942FileTypes.Archive),
-            new("archives/", Bf1942FileTypes.Archive),
-            new("", Bf1942FileTypes.ModMiscFile),
+            new("movies/", Bf1942FileType.Movie),
+            new("music/", Bf1942FileType.Music),
+            new("archives/bf1942/levels/", Bf1942FileType.Level),
+            new("archives/bf1942/", Bf1942FileType.Archive),
+            new("archives/", Bf1942FileType.Archive),
+            new("", Bf1942FileType.ModMiscFile),
         };
         List<string> modMiscFileNames = new()
         {
@@ -122,7 +121,7 @@ public class FileInfo
             }
 
         }
-        if (FileType == Bf1942FileTypes.None)
+        if (FileType == Bf1942FileType.None)
             throw new Exception($"Can't determine file type: {filePathLower}");
 
         var fileExtensionLower = Path.GetExtension(fileName).ToLower();
@@ -130,17 +129,17 @@ public class FileInfo
 
         switch (FileType)
         {
-            case Bf1942FileTypes.Movie:
-            case Bf1942FileTypes.Music:
+            case Bf1942FileType.Movie:
+            case Bf1942FileType.Music:
                 if (fileExtensionLower != ".bik")
                     throw new Exception($"Illegal file extension for {filePathLower}");
                 break;
-            case Bf1942FileTypes.ModMiscFile:
+            case Bf1942FileType.ModMiscFile:
                 if (!modMiscFileNames.Contains(fileName.ToLower()))
                     throw new Exception($"Illegal file: {filePathLower}");
                 break;
-            case Bf1942FileTypes.Archive:
-            case Bf1942FileTypes.Level:
+            case Bf1942FileType.Archive:
+            case Bf1942FileType.Level:
                 if (fileExtensionLower != ".rfa")
                     throw new Exception($"Illegal file extension for {filePathLower}");
                 break;

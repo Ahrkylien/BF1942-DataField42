@@ -1,18 +1,35 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DataField42.Enums;
 using DataField42.Interfaces;
+using DataField42.Settings;
+using DF.Settings;
+using ExhaustiveMatching;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Windows.Controls;
+using System.Windows;
 
 namespace DataField42.ViewModels;
+
 public partial class MainWindowViewModel : ObservableObject
 {
-    [ObservableProperty]
-    private IPageViewModel _currentPageViewModel;
+    private readonly SettingsService _settingsService;
+    private readonly Bf1942Client _bf1942Client;
+    private readonly Bf1942ServerLobby _serverLobby;
+    private readonly ILogger<MainWindowViewModel> _logger;
+    private readonly ILoggerFactory _loggerFactory;
 
     [ObservableProperty]
-    private IPageViewModel _currentPopUpViewModel;
+    private Page? _currentPage;
+
+    [ObservableProperty]
+    private bool _displayDashboard;
+
+    [ObservableProperty]
+    private IPageViewModel? _currentPageViewModel;
+
+    [ObservableProperty]
+    private IPageViewModel? _currentPopUpViewModel;
 
     [ObservableProperty]
     private bool _showPopup;
@@ -27,29 +44,40 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasErrorMessages))]
     [NotifyPropertyChangedFor(nameof(HasMessagesOrErrors))]
-    private string _errorMessages;
+    private string _errorMessages = string.Empty;
 
     public bool HasErrorMessages => !string.IsNullOrEmpty(ErrorMessages);
+    public bool HasMessagesOrErrors => HasMessages || HasErrorMessages || WarnDataField42PatchNotApplied;
 
-    public bool HasMessagesOrErrors => HasMessages || HasErrorMessages;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasMessagesOrErrors))]
+    private bool _warnDataField42PatchNotApplied;
 
+    private readonly Dictionary<Page, IPageViewModel> _pages = [];
 
-    private Dictionary<Page, IPageViewModel> _pages = new();
-
-    public MainWindowViewModel()
+    public MainWindowViewModel(
+        SettingsService settingsService,
+        Bf1942Client bf1942Client,
+        ILoggerFactory loggerFactory)
     {
+        _settingsService = settingsService;
+        _bf1942Client = bf1942Client;
+        _loggerFactory = loggerFactory;
+        _serverLobby = new Bf1942ServerLobby(loggerFactory.CreateLogger<Bf1942ServerLobby>());
+        _logger = loggerFactory.CreateLogger<MainWindowViewModel>();
+
+        _logger.LogInformation("MainWindowViewModel initializing.");
+
         var successfulCommandLineArguments = true;
         try
         {
-#if DEBUG
             //CommandLineArguments.Parse(new[] { "", "map", "SOFTWARE\\Electronic Arts\\EA GAMES\\Battlefield 1942\\ergc", "1.1.1.1:14567", "", "bf1942/levels/matrix/", "bf1942" });
             CommandLineArguments.Parse(Environment.GetCommandLineArgs());
-#else
-            CommandLineArguments.Parse(Environment.GetCommandLineArgs());
-#endif
+            _logger.LogDebug($"Command line arguments parsed: Identifier={CommandLineArguments.Identifier}.");
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Failed to parse command line arguments.");
             DisplayError($"Can't parse command line arguments: {e.Message}");
             successfulCommandLineArguments = false;
         }
@@ -60,25 +88,59 @@ public partial class MainWindowViewModel : ObservableObject
         }
         else if (CommandLineArguments.Identifier == CommandLineArgumentIdentifier.SyncAndJoinServer)
         {
+            _logger.LogInformation($"Launching sync menu from command line: mod={CommandLineArguments.Mod}, map={CommandLineArguments.Map}, ip={CommandLineArguments.Ip}, port={CommandLineArguments.Port}.");
             GoToSyncMenu(new SyncParameters(CommandLineArguments.Mod, CommandLineArguments.Map, CommandLineArguments.Ip, CommandLineArguments.Port, CommandLineArguments.KeyHash, CommandLineArguments.Password));
         }
         else if (CommandLineArguments.Identifier == CommandLineArgumentIdentifier.Install)
         {
+            _logger.LogInformation("Running in install mode.");
             try
             {
-                Bf1942Client.ApplyDataField42Patch();
+                if (!_bf1942Client.IsDataField42PatchApplied())
+                {
+                    _logger.LogInformation("Applying DataField42 patch to BF1942.exe.");
+                    _bf1942Client.ApplyDataField42Patch();
+                }
+                else
+                {
+                    _logger.LogDebug("DataField42 patch already applied.");
+                }
                 Environment.Exit(0);
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to apply DataField42 patch.");
                 DisplayError(ex.Message);
             }
         }
-        GoToPage(Page.Info);
+        else
+        {
+            if (!_bf1942Client.IsDataField42PatchApplied())
+            {
+                _logger.LogWarning("DataField42 patch is not applied to BF1942.exe.");
+                WarnDataField42PatchNotApplied = true;
+            }
+            else
+            {
+                _logger.LogDebug("DataField42 patch verified as applied.");
+            }
+        }
+
+        _settingsService.SettingChanged += SettingChanged;
+        SettingChanged();
+
+        _ = Task.Run(() => GoToPage(_settingsService.Settings.DashboardMode == DashboardMode.Hidden ? Page.ServerList : Page.Dashboard));
+    }
+
+    private void SettingChanged()
+    {
+        DisplayDashboard = _settingsService.Settings.DashboardMode != DashboardMode.Hidden;
+        _logger.LogDebug($"DisplayDashboard={DisplayDashboard}.");
     }
 
     public void DisplayMessage(string message)
     {
+        _logger.LogInformation($"UI message: {message}");
         message = ">> " + message;
         if (HasMessages)
             message = $"\n{message}";
@@ -87,6 +149,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     public void DisplayError(string message)
     {
+        _logger.LogError($"UI error: {message}");
         message = ">> " + message;
         if (HasErrorMessages)
             message = $"\n{message}";
@@ -95,37 +158,129 @@ public partial class MainWindowViewModel : ObservableObject
 
     public void GoToSyncMenu(SyncParameters syncParameters)
     {
-        _pages[Page.SyncMenu] = new SyncMenuViewModel(this, syncParameters);
-        DisplayPopup();
+        _logger.LogDebug($"Opening sync menu for {syncParameters.Ip}:{syncParameters.Port}, mod={syncParameters.Mod}, map={syncParameters.Map}.");
+        _pages[Page.SyncMenu] = new SyncMenuViewModel(_settingsService, syncParameters, _bf1942Client, _serverLobby, _loggerFactory);
+        DisplayPopup(_pages[Page.SyncMenu]);
     }
 
-    public void DisplayPopup()
+    public void DisplayServerInfo(ServerViewModel serverViewModel)
     {
-        CurrentPopUpViewModel = _pages[Page.SyncMenu];
+        _logger.LogDebug($"Displaying server info for {serverViewModel.Ip}.");
+        DisplayPopup(serverViewModel);
+    }
+
+    public void GoToSyncMenu(ServerViewModel serverViewModel)
+    {
+        if (serverViewModel.QueryResult == null)
+        {
+            _logger.LogWarning($"GoToSyncMenu called for server {serverViewModel.Ip} but QueryResult is null.");
+            DisplayError("Can't sync with server because its not queried.");
+            return;
+        }
+
+        try
+        {
+            var keyHash = "-";
+            try
+            {
+                keyHash = Md5.Hash(Registry.ReadKey(_bf1942Client.GetKeyRegistryPath()));
+                _logger.LogDebug("Registry key hash computed successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not read registry key hash — using default.");
+            }
+
+            GoToSyncMenu(new SyncParameters(
+                serverViewModel.QueryResult.Mod,
+                serverViewModel.QueryResult.MapName.Replace(' ', '_'),
+                serverViewModel.Ip,
+                (int)serverViewModel.QueryResult.HostPort,
+                keyHash, ""));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Failed to open sync menu for server {serverViewModel.Ip}.");
+            DisplayError(ex.Message);
+        }
+    }
+
+    public void DisplayPopup(IPageViewModel viewModel)
+    {
+        _logger.LogDebug($"Displaying popup: {viewModel.Title}.");
+        CurrentPopUpViewModel = viewModel;
         ShowPopup = true;
+        _ = Task.Run(() => CurrentPopUpViewModel.EnterPage());
     }
 
     [RelayCommand]
-    public async Task ClosePopUp()
+    private async Task ClosePopUp()
     {
-        CurrentPopUpViewModel.LeavePage();
+        _logger.LogDebug($"Closing popup: {CurrentPopUpViewModel?.Title}.");
+        _ = Task.Run(() => CurrentPopUpViewModel?.LeavePage());
         ShowPopup = false;
     }
 
     [RelayCommand]
-    [MemberNotNull(nameof(CurrentPageViewModel))]
-    public async Task GoToPage(Page page)
+    private void ApplyDataField42Patch()
     {
+        _logger.LogInformation("Applying DataField42 patch manually.");
+        try
+        {
+            _bf1942Client.ApplyDataField42Patch();
+            WarnDataField42PatchNotApplied = false;
+            _logger.LogInformation("DataField42 patch applied successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to apply DataField42 patch.");
+            DisplayError(ex.Message);
+        }
+    }
+
+    [RelayCommand]
+    [MemberNotNull(nameof(CurrentPageViewModel))]
+    private async Task GoToPage(Page page)
+    {
+        _logger.LogDebug($"Navigating to page: {page}.");
+
         if (CurrentPageViewModel != null)
             await CurrentPageViewModel.LeavePage();
-        
+
+        CurrentPageViewModel = GetPageViewModel(page);
+        CurrentPage = page;
+
+        _logger.LogInformation($"Navigated to page: {page}.");
+        _ = Task.Run(() => CurrentPageViewModel.EnterPage());
+    }
+
+    private IPageViewModel GetPageViewModel(Page page)
+    {
         if (!_pages.ContainsKey(page))
-            _pages[page] = page switch
+        {
+            _logger.LogDebug($"Creating ViewModel for page: {page}.");
+            // Create all View Models on the UI thread
+            Application.Current.Dispatcher.Invoke(() =>
             {
-                Page.ServerList => new ServerListViewModel(this),
-                Page.Info => new InfoViewModel(),
-                _ => throw new Exception($"There is no linked ViewModel for Page: {page} in {nameof(GoToPage)}"),
-            };
-        CurrentPageViewModel = _pages[page];
+                _pages[page] = page switch
+                {
+                    Page.Dashboard => new DashboardViewModel(this, _settingsService, _serverLobby, _loggerFactory),
+                    Page.ServerList => new ServerListViewModel(
+                        this,
+                        _loggerFactory.CreateLogger<AbstractServerListViewModel>(),
+                        _loggerFactory,
+                        _serverLobby),
+                    Page.Info => new InfoViewModel(),
+                    Page.Settings => new SettingsViewModel(
+                        new SettingsProvider<Settings.Settings>(_settingsService.Settings, new SettingSelector()).Settings,
+                        _settingsService,
+                        _loggerFactory.CreateLogger<SettingsViewModel>()),
+                    Page.SyncMenu => throw new ArgumentException($"The {nameof(IPageViewModel)} for {Page.SyncMenu} should be created before calling {nameof(GetPageViewModel)}."),
+                    _ => throw ExhaustiveMatch.Failed(page)
+                };
+            });
+        }
+
+        return _pages[page];
     }
 }

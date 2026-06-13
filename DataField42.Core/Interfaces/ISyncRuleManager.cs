@@ -1,6 +1,6 @@
 ﻿public interface ISyncRuleManager
 {
-    IgnoreSyncScenarios GetIgnoreFileSyncScenario(FileInfo fileInfo);
+    IgnoreSyncScenario GetIgnoreFileSyncScenario(FileInfo fileInfo);
     bool IsAutoSyncEnabled(string DomainOrIp);
     void AutoSyncEnable(string DomainOrIp);
     bool IsAutoJoinEnabled();

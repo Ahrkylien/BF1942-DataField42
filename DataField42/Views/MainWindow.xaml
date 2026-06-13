@@ -4,18 +4,19 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:DataField42="clr-namespace:DataField42"
+        xmlns:Enums="clr-namespace:DataField42.Enums"
         xmlns:ViewModels="clr-namespace:DataField42.ViewModels"
         xmlns:Views="clr-namespace:DataField42.Views"
+        xmlns:svg="https://github.com/dotnetprojects/SVGImage"
+        xmlns:Controls="clr-namespace:DataField42.Controls"
+        xmlns:Converters="clr-namespace:DataField42.Converters"
         mc:Ignorable="d"
         Title="DataField42"
         Height="450" Width="800"
         WindowStartupLocation="CenterScreen"
         WindowStyle="SingleBorderWindow"
         Background="Transparent"
-        >
-    <Window.DataContext>
-        <ViewModels:MainWindowViewModel />
-    </Window.DataContext>
+        d:DataContext="{d:DesignInstance ViewModels:MainWindowViewModel, IsDesignTimeCreatable=False}">
 
     <WindowChrome.WindowChrome>
         <WindowChrome     
@@ -27,14 +28,26 @@
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
+        <DataTemplate DataType="{x:Type ViewModels:DashboardViewModel}">
+            <Views:Dashboard />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type ViewModels:ServerListViewModel}">
             <Views:ServerList />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type ViewModels:SettingsViewModel}">
+            <Views:Settings />
         </DataTemplate>
         <DataTemplate DataType="{x:Type ViewModels:InfoViewModel}">
             <Views:Info />
         </DataTemplate>
         <DataTemplate DataType="{x:Type ViewModels:SyncMenuViewModel}">
             <Views:SyncMenu />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type ViewModels:ServerSelectionViewModel}">
+            <Views:ServerList />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type ViewModels:ServerViewModel}">
+            <Views:ServerInfo />
         </DataTemplate>
     </Window.Resources>
 
@@ -46,10 +59,25 @@
                 <RowDefinition Height="auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <DockPanel Grid.Row="0" Height="50" MouseLeftButtonDown="ControlBar_MouseLeftButtonDown" MouseEnter="ControlBar_MouseEnter">
-                <Button Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Background="#c33c3c" BorderThickness="2" BorderBrush="#c33c3c" Foreground="#d4d4d4" Click="CloseButton_Click">X</Button>
-                <Button Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Click="MaximizeButton_Click">[ ]</Button>
-                <Button Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Click="MinimizeButton_Click">-</Button>
+            <DockPanel Grid.Row="0" Height="50" MouseLeftButtonDown="ControlBar_MouseLeftButtonDown">
+                <Controls:SimpleButton Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Click="CloseButton_Click" >
+                    <svg:SVGImage
+                        UriSource="/Resources/Images/x.svg"
+                        SizeType="ViewBoxToSizeNoStretch"
+                        OverrideStrokeColor="#c33c3c" />
+                </Controls:SimpleButton>
+                <Controls:SimpleButton Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Click="MaximizeButton_Click">
+                    <svg:SVGImage
+                        UriSource="/Resources/Images/maximize.svg"
+                        SizeType="ViewBoxToSizeNoStretch"
+                        OverrideStrokeColor="#d4d4d4" />
+                </Controls:SimpleButton>
+                <Controls:SimpleButton Margin="0,0,10,0" DockPanel.Dock="Right" Width="30" Height="30" Click="MinimizeButton_Click">
+                    <svg:SVGImage
+                        UriSource="/Resources/Images/minus.svg"
+                        SizeType="ViewBoxToSizeNoStretch"
+                        OverrideStrokeColor="#d4d4d4" />
+                </Controls:SimpleButton>
                 <Label Margin="120,0,0,0" Height="30" Foreground="#d4d4d4" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="15">DataField42</Label>
             </DockPanel>
             <Grid Grid.Row="1">
@@ -58,9 +86,56 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Border Grid.Column="0" Visibility="Visible" CornerRadius="0" BorderBrush="#233050" BorderThickness="0,0,2,0" Padding="0" Background="#090b12">
-                    <StackPanel Width="115" Margin="0,2,0,0">
-                        <Button Margin="0,10,0,0" Width="90" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Command="{Binding GoToPageCommand}" CommandParameter="{x:Static DataField42:Page.ServerList}">Servers</Button>
-                        <Button Margin="0,10,0,0" Width="90" Height="30" Background="#0a1225" BorderThickness="2" BorderBrush="#233050" Foreground="#d4d4d4" Command="{Binding GoToPageCommand}" CommandParameter="{x:Static DataField42:Page.Info}">Info</Button>
+                    <StackPanel Width="60" Margin="0,2,0,0">
+                        <Controls:SimpleButton
+                            Margin="0,10,0,0"
+                            Width="40" Height="40"
+                            Command="{Binding GoToPageCommand}"
+                            CommandParameter="{x:Static Enums:Page.Dashboard}"
+                            Visibility="{Binding DisplayDashboard, Converter={Converters:BooleanToVisibilityConverter}}"
+                            IsSelected="{Binding CurrentPage, Converter={Converters:EqualityToBoolConverter}, ConverterParameter={x:Static Enums:Page.Dashboard}}" >
+                            <svg:SVGImage
+                                UriSource="/Resources/Images/home.svg"
+                                SizeType="ViewBoxToSizeNoStretch"
+                                OverrideStrokeColor="#d4d4d4"
+                                Margin="5" />
+                        </Controls:SimpleButton>
+                        <Controls:SimpleButton
+                            Margin="0,10,0,0"
+                            Width="40" Height="40"
+                            Command="{Binding GoToPageCommand}"
+                            CommandParameter="{x:Static Enums:Page.ServerList}"
+                            IsSelected="{Binding CurrentPage, Converter={Converters:EqualityToBoolConverter}, ConverterParameter={x:Static Enums:Page.ServerList}}" >
+                            <svg:SVGImage
+                                UriSource="/Resources/Images/layout-list.svg"
+                                SizeType="ViewBoxToSizeNoStretch"
+                                OverrideStrokeColor="#d4d4d4"
+                                Margin="5" />
+                        </Controls:SimpleButton>
+                        <Controls:SimpleButton
+                            Margin="0,10,0,0"
+                            Width="40" Height="40"
+                            Command="{Binding GoToPageCommand}"
+                            CommandParameter="{x:Static Enums:Page.Settings}"
+                            IsSelected="{Binding CurrentPage, Converter={Converters:EqualityToBoolConverter}, ConverterParameter={x:Static Enums:Page.Settings}}" >
+                            <svg:SVGImage
+                                UriSource="/Resources/Images/settings.svg"
+                                SizeType="ViewBoxToSizeNoStretch"
+                                OverrideStrokeColor="#d4d4d4"
+                                Margin="4" />
+                        </Controls:SimpleButton>
+                        <Controls:SimpleButton
+                            Margin="0,10,0,0"
+                            Width="40" Height="40"
+                            Command="{Binding GoToPageCommand}"
+                            CommandParameter="{x:Static Enums:Page.Info}"
+                            IsSelected="{Binding CurrentPage, Converter={Converters:EqualityToBoolConverter}, ConverterParameter={x:Static Enums:Page.Info}}" >
+                            <svg:SVGImage
+                                UriSource="/Resources/Images/info-small.svg"
+                                SizeType="ViewBoxToSizeNoStretch"
+                                OverrideStrokeColor="#d4d4d4"
+                                Margin="0" />
+                        </Controls:SimpleButton>
                     </StackPanel>
                 </Border>
                 <Border Grid.Column="1" Background="#0a1225" BorderBrush="#233050" BorderThickness="0,2,0,0">
@@ -69,10 +144,21 @@
                             <RowDefinition Height="auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-                        <Border Grid.Row="0" Visibility="{Binding HasMessagesOrErrors, Converter={StaticResource BooleanToVisibilityConverter}}" Background="#090b12" BorderBrush="#233050" BorderThickness="2" Padding="10" Margin="10,10,10,0">
+                        <Border Grid.Row="0" Visibility="{Binding HasMessagesOrErrors, Converter={Converters:BooleanToVisibilityConverter}}" Background="#090b12" BorderBrush="#233050" BorderThickness="2" Padding="10" Margin="10,10,10,0">
                             <StackPanel>
-                                <TextBlock Foreground="#d4d4d4" Padding="0" Visibility="{Binding HasMessages, Converter={StaticResource BooleanToVisibilityConverter}}" Text="{Binding Messages}" TextWrapping="Wrap"/>
-                                <TextBlock Foreground="#ab0909" Padding="0" Visibility="{Binding HasErrorMessages, Converter={StaticResource BooleanToVisibilityConverter}}" Text="{Binding ErrorMessages}" TextWrapping="Wrap"/>
+                                <Grid Visibility="{Binding WarnDataField42PatchNotApplied, Converter={Converters:BooleanToVisibilityConverter}}" >
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Foreground="#FA9405" VerticalAlignment="Center" Padding="0" Text="The DataField42 patch is missing from BF1942.exe. Press Apply to repair this." TextWrapping="Wrap"/>
+                                    <Controls:SimpleButton Grid.Column="1" Command="{Binding ApplyDataField42PatchCommand}">
+                                        <Label Content="Apply" Foreground="#d4d4d4" />
+                                    </Controls:SimpleButton>
+                                </Grid>
+                                
+                                <TextBlock Foreground="#d4d4d4" Padding="0" Visibility="{Binding HasMessages, Converter={Converters:BooleanToVisibilityConverter}}" Text="{Binding Messages}" TextWrapping="Wrap"/>
+                                <TextBlock Foreground="#ab0909" Padding="0" Visibility="{Binding HasErrorMessages, Converter={Converters:BooleanToVisibilityConverter}}" Text="{Binding ErrorMessages}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
                         <ScrollViewer Grid.Row="1" x:Name="centralControl" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -84,7 +170,7 @@
                         </ScrollViewer>
                     </Grid>
                 </Border>
-                <Grid Grid.Column="0" Grid.ColumnSpan="2" Visibility="{Binding ShowPopup, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid Grid.Column="0" Grid.ColumnSpan="2" Visibility="{Binding ShowPopup, Converter={Converters:BooleanToVisibilityConverter}}">
                     <Border Background="#090b12" Opacity=".6">
                         <Border.InputBindings>
                             <MouseBinding MouseAction="LeftClick" Command="{Binding ClosePopUpCommand}"/>
@@ -98,8 +184,18 @@
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
                                 <DockPanel Grid.Row="0" Height="32" Background="#233050">
-                                    <Button Margin="0,0,0,2" DockPanel.Dock="Right" Width="30" Height="30" Background="#c33c3c" BorderThickness="2" BorderBrush="#c33c3c" Foreground="#d4d4d4" Command="{Binding ClosePopUpCommand}">X</Button>
-                                    <Label Margin="30,0,0,0" Height="30" Foreground="#d4d4d4" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="15">File Synchronization</Label>
+                                    <Controls:SimpleButton
+                                        Margin="0,0,0,2"
+                                        DockPanel.Dock="Right"
+                                        Width="30"
+                                        Height="30"
+                                        Command="{Binding ClosePopUpCommand}" >
+                                        <svg:SVGImage
+                                            UriSource="/Resources/Images/x.svg"
+                                            SizeType="ViewBoxToSizeNoStretch"
+                                            OverrideStrokeColor="#c33c3c" />
+                                    </Controls:SimpleButton>
+                                    <Label Margin="30,0,0,0" Height="30" Foreground="#d4d4d4" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="15" Content="{Binding CurrentPopUpViewModel.Title}" />
                                 </DockPanel>
                                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                                     <ContentControl Content="{Binding CurrentPopUpViewModel}" Margin="10" />

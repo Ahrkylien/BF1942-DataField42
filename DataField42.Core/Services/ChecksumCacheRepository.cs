@@ -1,5 +1,4 @@
 ﻿using YamlDotNet.Serialization;
-using System.IO;
 
 public class ChecksumRepository
 {

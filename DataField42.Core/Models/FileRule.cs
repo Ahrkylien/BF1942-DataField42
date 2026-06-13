@@ -1,51 +1,67 @@
 ﻿public class FileRule
 {
-    public IgnoreSyncScenarios IgnoreSyncScenario { get; init; }
-    private readonly Bf1942FileTypes _fileType;
-    private readonly string _mod;
-    private readonly string _fileName;
+    public IgnoreSyncScenario IgnoreSyncScenario { get; }
+    public Bf1942FileType FileType { get; }
+    public string Mod { get; }
+    public string FileName { get; }
 
-    private bool AllMods => _mod == "*";
-    private bool AllFiles => _fileName == "*";
+    private bool AllMods => Mod == "*";
+    private bool AllFiles => FileName == "*";
 
     public FileRule(string ignoreSyncScenario, string fileType, string mod, string fileName)
     {
-        IgnoreSyncScenario = Enum.Parse<IgnoreSyncScenarios>(ignoreSyncScenario, true);
-        _fileType = Enum.Parse<Bf1942FileTypes>(fileType, true);
-        _mod = mod.ToLower();
-        _fileName = fileName.ToLower();
+        IgnoreSyncScenario = Enum.Parse<IgnoreSyncScenario>(ignoreSyncScenario, ignoreCase: true);
+        FileType = Enum.Parse<Bf1942FileType>(fileType, ignoreCase: true);
+        Mod = mod.ToLower();
+        FileName = CorrectFileName(fileName, FileType);
+    }
+
+    public FileRule(IgnoreSyncScenario ignoreSyncScenarios, Bf1942FileType fileType, string mod, string fileName)
+    {
+        IgnoreSyncScenario = ignoreSyncScenarios;
+        FileType = fileType;
+        Mod = mod.ToLower();
+        FileName = CorrectFileName(fileName, FileType);
+    }
+
+    private static string CorrectFileName(string fileName, Bf1942FileType fileType)
+    {
+        fileName = fileName.ToLower();
 
         // append file extension to FileName if not provided
-        if (_fileName != "*")
+        if (fileName != "*")
         {
-            if ((_fileType == Bf1942FileTypes.Level || _fileType == Bf1942FileTypes.Archive) && !_fileName.EndsWith(".rfa"))
-                _fileName += ".rfa";
-            else if ((_fileType == Bf1942FileTypes.Movie || _fileType == Bf1942FileTypes.Music) && !_fileName.EndsWith(".bik"))
-                _fileName += ".bik";
-            else if (_fileType == Bf1942FileTypes.ModMiscFile)
+            if ((fileType == Bf1942FileType.Level || fileType == Bf1942FileType.Archive) && !fileName.EndsWith(".rfa"))
+                fileName += ".rfa";
+            else if ((fileType == Bf1942FileType.Movie || fileType == Bf1942FileType.Music) && !fileName.EndsWith(".bik"))
+                fileName += ".bik";
+            else if (fileType == Bf1942FileType.ModMiscFile)
             {
-                switch (_fileName)
+                switch (fileName)
                 {
                     case "contentcrc32":
                     case "init":
-                        _fileName += ".con";
+                        fileName += ".con";
                         break;
                     case "mod":
-                        _fileName += ".dll";
+                        fileName += ".dll";
                         break;
                     case "lexiconall":
-                        _fileName += ".dat";
+                        fileName += ".dat";
                         break;
                     case "serverinfo":
-                        _fileName += ".dds";
+                        fileName += ".dds";
                         break;
                 }
             }
         }
+        return fileName;
     }
 
     public bool Matches(FileInfo fileInfo) => 
-        (AllMods || _mod.ToLower() == fileInfo.Mod.ToLower())
-        && _fileType == fileInfo.FileType
-        && (AllFiles || _fileName.ToLower() == fileInfo.FileNameWithoutPatchNumber.ToLower());
+        (AllMods || Mod.ToLower() == fileInfo.Mod.ToLower())
+        && FileType == fileInfo.FileType
+        && (AllFiles || FileName.ToLower() == fileInfo.FileNameWithoutPatchNumber.ToLower());
+
+    public string Serialize() => $"{IgnoreSyncScenario} {FileType} {Mod} {FileName}";
 }

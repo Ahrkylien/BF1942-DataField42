@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore DataField42.sln -r win-x64
+
+      - name: Publish DataField42
+        run: dotnet publish DataField42/DataField42.csproj /p:PublishProfile=DataField42/Properties/PublishProfiles/FolderProfile.pubxml --configuration Release
+
+      - name: Publish DataField42 Updater
+        run: dotnet publish DataField42 Updater/DataField42 Updater.csproj /p:PublishProfile=DataField42 Updater/Properties/PublishProfiles/FolderProfile.pubxml --configuration Release
+
+      - name: Build Installer
+        run: iscc "DataField42 Installer/DataField42.iss"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            DataField42 Installer/bin/DataField42 v*.exe
+            DataField42/bin/Publish/DataField42.exe
+            DataField42 Updater/bin/Publish/DataField42 Updater.exe

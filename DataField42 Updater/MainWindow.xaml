@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:DataField42_Updater="clr-namespace:DataField42_Updater"
+        xmlns:Converters="clr-namespace:DataField42_Updater.Converters"
         mc:Ignorable="d"
         Title="DataField42"
         Height="300" Width="500"
@@ -43,10 +44,10 @@
                         <RowDefinition Height="auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <Border Grid.Row="0" Visibility="{Binding HasMessagesOrErrors, Converter={StaticResource BooleanToVisibilityConverter}}" Background="#090b12" BorderBrush="#233050" BorderThickness="2" Padding="10" Margin="10,10,10,0">
+                    <Border Grid.Row="0" Visibility="{Binding HasMessagesOrErrors, Converter={Converters:BooleanToVisibilityConverter}}" Background="#090b12" BorderBrush="#233050" BorderThickness="2" Padding="10" Margin="10,10,10,0">
                         <StackPanel>
-                            <TextBlock Foreground="#d4d4d4" Padding="0" Visibility="{Binding HasMessages, Converter={StaticResource BooleanToVisibilityConverter}}" Text="{Binding Messages}" TextWrapping="Wrap"/>
-                            <TextBlock Foreground="#ab0909" Padding="0" Visibility="{Binding HasErrorMessages, Converter={StaticResource BooleanToVisibilityConverter}}" Text="{Binding ErrorMessages}" TextWrapping="Wrap"/>
+                            <TextBlock Foreground="#d4d4d4" Padding="0" Visibility="{Binding HasMessages, Converter={Converters:BooleanToVisibilityConverter}}" Text="{Binding Messages}" TextWrapping="Wrap"/>
+                            <TextBlock Foreground="#ab0909" Padding="0" Visibility="{Binding HasErrorMessages, Converter={Converters:BooleanToVisibilityConverter}}" Text="{Binding ErrorMessages}" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
                     <ScrollViewer Grid.Row="1" x:Name="centralControl" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Hidden">

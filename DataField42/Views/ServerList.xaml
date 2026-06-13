@@ -1,48 +1,103 @@
-﻿<UserControl x:Class="DataField42.Views.ServerList"
+<UserControl x:Class="DataField42.Views.ServerList"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:DataField42.Views"
              xmlns:ViewModels="clr-namespace:DataField42.ViewModels"
-             d:DataContext="{d:DesignInstance ViewModels:ServerListViewModel, IsDesignTimeCreatable=True}"
+             xmlns:Controls="clr-namespace:DataField42.Controls"
+             xmlns:Converters="clr-namespace:DataField42.Converters"
+             xmlns:svg="https://github.com/dotnetprojects/SVGImage"
+             d:DataContext="{d:DesignInstance ViewModels:ServerListViewModel, IsDesignTimeCreatable=False}"
              mc:Ignorable="d">
 
     <Grid>
-        <ItemsControl ItemsSource="{Binding Servers}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Border Margin="2" Padding="7,3,7,1" CornerRadius="3">
-                        <Border.InputBindings>
-                            <MouseBinding MouseAction="LeftClick" Command="{Binding ClickCommand}"/>
-                        </Border.InputBindings>
-                        <Border.Style>
-                            <Style>
-                                <Setter Property="Border.Background" Value="#1b1e2a"/>
-                                <Style.Triggers>
-                                    <Trigger Property="Border.IsMouseOver" Value="True">
-                                        <Setter Property="Border.Background" Value="#233050" />
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                        <Grid Margin="0,0,0,5">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*" />
-                                <ColumnDefinition Width="140" />
-                                <ColumnDefinition Width="50" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Foreground="#d4d4d4" TextWrapping="Wrap" Text="{Binding Name}" />
-                            <TextBlock Grid.Column="1" Foreground="#d4d4d4" Text="{Binding Ip}" />
-                            <TextBlock Grid.Column="2" Foreground="#d4d4d4" Text="{Binding Players}" />
-                            <TextBlock Grid.Column="3" Foreground="#d4d4d4" TextAlignment="Right" Text="{Binding Map}" />
-                            <TextBlock Grid.Column="4" Foreground="#d4d4d4" TextAlignment="Right" Text="{Binding Mod}" />
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="auto" />
+        </Grid.ColumnDefinitions>
+
+        <Controls:SimpleButton
+            Grid.Column="1"
+            Margin="5,0,0,0"
+            VerticalAlignment="Top"
+            Width="30"
+            Height="30"
+            Command="{Binding RefreshCommand}" >
+            <svg:SVGImage
+                UriSource="/Resources/Images/refresh.svg"
+                SizeType="ViewBoxToSizeNoStretch"
+                OverrideStrokeColor="#d4d4d4" />
+        </Controls:SimpleButton>
+
+        <StackPanel Grid.Column="0">
+            <!-- Column headers -->
+            <Grid Margin="4,2,8,2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="140" />
+                    <ColumnDefinition Width="55" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="SERVER" Foreground="#4a5680" FontSize="9" FontWeight="Bold" Margin="7,0,0,0"/>
+                <TextBlock Grid.Column="1" Text="ADDRESS" Foreground="#4a5680" FontSize="9" FontWeight="Bold"/>
+                <TextBlock Grid.Column="2" Text="PLAYERS" Foreground="#4a5680" FontSize="9" FontWeight="Bold"/>
+                <TextBlock Grid.Column="3" Text="MAP" Foreground="#4a5680" FontSize="9" FontWeight="Bold" TextAlignment="Right"/>
+                <TextBlock Grid.Column="4" Text="MOD" Foreground="#4a5680" FontSize="9" FontWeight="Bold" TextAlignment="Right"/>
+            </Grid>
+
+            <!-- Server rows -->
+            <ItemsControl ItemsSource="{Binding ServersCollectionView}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Controls:SimpleButton
+                            Margin="2,1"
+                            Padding="7,4,7,4"
+                            BorderThickness="0"
+                            CornerRadius="3"
+                            Command="{Binding ClickCommand}">
+                            <Grid>
+                                <Grid.Style>
+                                    <Style TargetType="Grid">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ConnectionState.Value}" Value="Disconnected">
+                                                <Setter Property="Opacity" Value="0.4"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding NumberOfPlayers}" Value="0">
+                                                <Setter Property="Opacity" Value="0.4"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Grid.Style>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*" />
+                                    <ColumnDefinition Width="140" />
+                                    <ColumnDefinition Width="55" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Foreground="#d4d4d4" TextWrapping="Wrap" Text="{Binding Name}"/>
+                                    <TextBlock Text=" 🔒" FontSize="11" Foreground="#e06c75" VerticalAlignment="Center"
+                                               Visibility="{Binding HasPassword, Converter={Converters:BooleanToVisibilityConverter}}"/>
+                                </StackPanel>
+                                <TextBlock Grid.Column="1" Foreground="#8899bb" FontSize="11" Text="{Binding IpAndGamePort}" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                    <TextBlock Foreground="#8899bb" FontWeight="Bold" Text="{Binding Players}"
+                                               Visibility="{Binding ConnectionState.Value, Converter={Converters:EnumToVisibilityConverter}, ConverterParameter=Connected}"/>
+                                    <TextBlock Foreground="#3a4560" FontSize="10" Text="..."
+                                               Visibility="{Binding ConnectionState.Value, Converter={Converters:EnumToVisibilityConverter}, ConverterParameter=Connecting}"/>
+                                    <TextBlock Foreground="#7a3333" FontSize="9" FontWeight="Bold" Text="offline"
+                                               Visibility="{Binding ConnectionState.Value, Converter={Converters:EnumToVisibilityConverter}, ConverterParameter=Disconnected}"/>
+                                </StackPanel>
+                                <TextBlock Grid.Column="3" Foreground="#8899bb" FontSize="11" TextAlignment="Right" Text="{Binding Map, Converter={Converters:TitleCaseConverter}}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="4" Foreground="#8899bb" FontSize="11" TextAlignment="Right" Text="{Binding Mod, Converter={Converters:TitleCaseConverter}}" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Controls:SimpleButton>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
     </Grid>
 </UserControl>

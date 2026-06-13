@@ -1,10 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using DataField42.Interfaces;
-using System.Windows.Input;
 
 namespace DataField42.ViewModels;
 public partial class InfoViewModel : ObservableObject, IPageViewModel
 {
+    public string Title => "Information";
+
     private readonly string _version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "";
     public string Introduction =>
 @$"Welcome to DataField42

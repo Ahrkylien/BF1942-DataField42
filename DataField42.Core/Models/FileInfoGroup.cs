@@ -1,10 +1,8 @@
-﻿using System.Collections.Generic;
-
-public class FileInfoGroup
+﻿public class FileInfoGroup
 {
     public List<FileInfo> FileInfos { get; private set; } = new List<FileInfo>();
 
-    public Bf1942FileTypes FileType => FileInfos.Count > 0 ? FileInfos[0].FileType : Bf1942FileTypes.None;
+    public Bf1942FileType FileType => FileInfos.Count > 0 ? FileInfos[0].FileType : Bf1942FileType.None;
 
     public string Mod => FileInfos.Count > 0 ? FileInfos[0].Mod : "";
 
@@ -12,7 +10,9 @@ public class FileInfoGroup
 
     public string FileNameWithoutPatchNumber => FileInfos.Count > 0 ? FileInfos[0].FileNameWithoutPatchNumber : "" ;
 
-    public string Directory => FileInfos.Count > 0 ? FileInfos[0].Directory : "" ;
+    public string Directory => FileInfos.Count > 0 ? FileInfos[0].Directory : "";
+
+    public bool IgnoreDuringSync => FileInfos.Any(x => x.SyncType == SyncType.None);
 
     public FileInfoGroup(FileInfo fileInfo)
     {
@@ -25,7 +25,7 @@ public class FileInfoGroup
         foreach (FileInfo fileInfo in fileInfos)
         {
             var addedToList = false;
-            if (fileInfo.FileType == Bf1942FileTypes.Level || fileInfo.FileType == Bf1942FileTypes.Archive)
+            if (fileInfo.FileType == Bf1942FileType.Level || fileInfo.FileType == Bf1942FileType.Archive)
             {
                 foreach (FileInfoGroup fileInfoGroup in fileInfoGroups)
                 {
