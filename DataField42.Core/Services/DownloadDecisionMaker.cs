@@ -32,12 +32,12 @@ public class DownloadDecisionMaker
                 fileInfo.SyncType = SyncType.None;
                 _logger.LogDebug($"File {fileInfo.FilePath} — skipped (duplicate in list).");
             }
-            else if (ignoreSyncScenario == IgnoreSyncScenarios.Always)
+            else if (ignoreSyncScenario == IgnoreSyncScenario.Always)
             {
                 fileInfo.SyncType = SyncType.None;
                 _logger.LogDebug($"File {fileInfo.FilePath} — skipped (rule: Always ignore).");
             }
-            else if (ignoreSyncScenario == IgnoreSyncScenarios.DifferentVersion && _localFileCacheManager.CheckIfSimilarFileExistsInGame(fileInfo))
+            else if (ignoreSyncScenario == IgnoreSyncScenario.DifferentVersion && _localFileCacheManager.CheckIfSimilarFileExistsInGame(fileInfo))
             {
                 fileInfo.SyncType = SyncType.None;
                 _logger.LogDebug($"File {fileInfo.FilePath} — skipped (rule: DifferentVersion, similar file exists in game).");

@@ -111,7 +111,7 @@ public class LocalFileCacheManager : ILocalFileCacheManager
                 continue;
             }
 
-            if (fileInfoGroup.FileType == Bf1942FileTypes.Level || fileInfoGroup.FileType == Bf1942FileTypes.Archive)
+            if (fileInfoGroup.FileType == Bf1942FileType.Level || fileInfoGroup.FileType == Bf1942FileType.Archive)
             {
                 string[] filesToCheck = Array.Empty<string>();
                 try

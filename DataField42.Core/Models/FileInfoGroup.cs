@@ -2,7 +2,7 @@
 {
     public List<FileInfo> FileInfos { get; private set; } = new List<FileInfo>();
 
-    public Bf1942FileTypes FileType => FileInfos.Count > 0 ? FileInfos[0].FileType : Bf1942FileTypes.None;
+    public Bf1942FileType FileType => FileInfos.Count > 0 ? FileInfos[0].FileType : Bf1942FileType.None;
 
     public string Mod => FileInfos.Count > 0 ? FileInfos[0].Mod : "";
 
@@ -25,7 +25,7 @@
         foreach (FileInfo fileInfo in fileInfos)
         {
             var addedToList = false;
-            if (fileInfo.FileType == Bf1942FileTypes.Level || fileInfo.FileType == Bf1942FileTypes.Archive)
+            if (fileInfo.FileType == Bf1942FileType.Level || fileInfo.FileType == Bf1942FileType.Archive)
             {
                 foreach (FileInfoGroup fileInfoGroup in fileInfoGroups)
                 {

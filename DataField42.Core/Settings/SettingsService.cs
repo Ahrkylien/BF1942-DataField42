@@ -40,20 +40,28 @@ public class SettingsService : ISettingsSaver
             ignoreSyncRules.Add(new FileRule(parts[0], parts[1], parts[2], parts[3]));
         }
 
-        return new Settings()
-        {
-            DashboardMode = Enum.Parse<DashboardMode>(halfParsedSettings.Application.DashboardMode),
-            FavoriteServers = favoriteServers,
-            AutoJoin = halfParsedSettings.Application.AutoJoin,
-            AutoSyncServers = halfParsedSettings.Application.AutoSyncServers,
-            IgnoreSyncRules = ignoreSyncRules
-        };
+        return new Settings(
+            dashboardMode: Enum.Parse<DashboardMode>(halfParsedSettings.Application.DashboardMode),
+            favoriteServers: favoriteServers,
+            autoJoin: halfParsedSettings.Application.AutoJoin,
+            autoSyncServers: halfParsedSettings.Application.AutoSyncServers,
+            ignoreSyncRules: ignoreSyncRules
+        );
     }
 
     private static IniSettings ParseFileIntoBasicTypes(string filePath)
     {
         if (!File.Exists(filePath))
-            FileHelper.WriteText(filePath, "[SynchronisationRules]\nIgnoreSyncRules: 0 = Always ModMiscFile * mod.dll");
+        {
+            var defaultSettings = new Settings(
+                dashboardMode: DashboardMode.FourServers,
+                favoriteServers: [],
+                autoJoin: false,
+                autoSyncServers: [],
+                ignoreSyncRules: [new FileRule(IgnoreSyncScenario.Always, Bf1942FileType.ModMiscFile, "*", "mod.dll")]
+            );
+            Save(defaultSettings, filePath);
+        }
 
         var configuration = new ConfigurationBuilder()
             .AddIniFile(filePath)
@@ -67,20 +75,24 @@ public class SettingsService : ISettingsSaver
 
     public void Save()
     {
-        var iniFile = new IniFile(_filePath);
+        Save(Settings, _filePath);
+        SettingChanged?.Invoke();
+    }
 
-        iniFile.Add(nameof(IniSettings.Application), nameof(ApplicationSection.DashboardMode), $"{Settings.DashboardMode}");
+    private static void Save(Settings settings, string filePath)
+    {
+        var iniFile = new IniFile(filePath);
 
-        iniFile.Add(nameof(IniSettings.Application), nameof(ApplicationSection.FavoriteServers), Settings.FavoriteServers.Select((x) => $"{x.IpAddress} {x.Port} {x.Name}"));
+        iniFile.Add(nameof(IniSettings.Application), nameof(ApplicationSection.DashboardMode), $"{settings.DashboardMode}");
 
-        iniFile.Add(nameof(IniSettings.Application), nameof(ApplicationSection.AutoJoin), $"{Settings.AutoJoin}");
+        iniFile.Add(nameof(IniSettings.Application), nameof(ApplicationSection.FavoriteServers), settings.FavoriteServers.Select((x) => $"{x.IpAddress} {x.Port} {x.Name}"));
 
-        iniFile.Add(nameof(IniSettings.Application), nameof(ApplicationSection.AutoSyncServers), Settings.AutoSyncServers);
+        iniFile.Add(nameof(IniSettings.Application), nameof(ApplicationSection.AutoJoin), $"{settings.AutoJoin}");
 
-        iniFile.Add(nameof(IniSettings.SynchronisationRules), nameof(SynchronisationRulesSection.IgnoreSyncRules), Settings.IgnoreSyncRules.Select((x) => x.Serialize()));
+        iniFile.Add(nameof(IniSettings.Application), nameof(ApplicationSection.AutoSyncServers), settings.AutoSyncServers);
+
+        iniFile.Add(nameof(IniSettings.SynchronisationRules), nameof(SynchronisationRulesSection.IgnoreSyncRules), settings.IgnoreSyncRules.Select((x) => x.Serialize()));
 
         iniFile.Save();
-
-        SettingChanged?.Invoke();
     }
 }

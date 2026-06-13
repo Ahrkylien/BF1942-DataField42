@@ -1,4 +1,4 @@
-﻿public enum Bf1942FileTypes
+﻿public enum Bf1942FileType
 {
     None,
     Movie,

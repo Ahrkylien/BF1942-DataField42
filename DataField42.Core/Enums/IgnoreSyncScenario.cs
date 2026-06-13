@@ -1,4 +1,4 @@
-﻿public enum IgnoreSyncScenarios
+﻿public enum IgnoreSyncScenario
 {
     /// <summary>
     /// In this scenario the file(s) will not be synced (ignored during sync).

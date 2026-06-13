@@ -9,27 +9,27 @@ namespace DataField42;
 
 public class FileRuleViewModel : INotifyPropertyChanged
 {
-    public static IReadOnlyList<IgnoreSyncScenarios> AllScenarios { get; } =
-        Enum.GetValues(typeof(IgnoreSyncScenarios)).Cast<IgnoreSyncScenarios>().ToList();
+    public static IReadOnlyList<IgnoreSyncScenario> AllScenarios { get; } =
+        Enum.GetValues(typeof(IgnoreSyncScenario)).Cast<IgnoreSyncScenario>().ToList();
 
-    public static IReadOnlyList<Bf1942FileTypes> AllFileTypes { get; } =
-        Enum.GetValues(typeof(Bf1942FileTypes)).Cast<Bf1942FileTypes>()
-            .Where(t => t != Bf1942FileTypes.None).ToList();
+    public static IReadOnlyList<Bf1942FileType> AllFileTypes { get; } =
+        Enum.GetValues(typeof(Bf1942FileType)).Cast<Bf1942FileType>()
+            .Where(t => t != Bf1942FileType.None).ToList();
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    private IgnoreSyncScenarios _scenario = IgnoreSyncScenarios.Always;
-    private Bf1942FileTypes _fileType = AllFileTypes[0];
+    private IgnoreSyncScenario _scenario = IgnoreSyncScenario.Always;
+    private Bf1942FileType _fileType = AllFileTypes[0];
     private string _mod = "*";
     private string _fileName = "*";
 
-    public IgnoreSyncScenarios Scenario
+    public IgnoreSyncScenario Scenario
     {
         get => _scenario;
         set { _scenario = value; Notify(nameof(Scenario)); }
     }
 
-    public Bf1942FileTypes FileType
+    public Bf1942FileType FileType
     {
         get => _fileType;
         set { _fileType = value; Notify(nameof(FileType)); }
@@ -48,7 +48,7 @@ public class FileRuleViewModel : INotifyPropertyChanged
     }
 
     public bool IsValid =>
-        _fileType != Bf1942FileTypes.None
+        _fileType != Bf1942FileType.None
         && !string.IsNullOrWhiteSpace(_mod)
         && !string.IsNullOrWhiteSpace(_fileName);
 

@@ -74,7 +74,7 @@ public class DownloadManager
             if (fileInfo.Mod.ToLower() == _mod.ToLower())
             {
                 hasMod = true;
-                if (fileInfo.FileType == Bf1942FileTypes.Level && Path.GetFileNameWithoutExtension(fileInfo.FileNameWithoutPatchNumber).ToLower() == _map.ToLower())
+                if (fileInfo.FileType == Bf1942FileType.Level && Path.GetFileNameWithoutExtension(fileInfo.FileNameWithoutPatchNumber).ToLower() == _map.ToLower())
                     hasMap = true;
             }
         }

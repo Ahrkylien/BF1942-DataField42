@@ -1,7 +1,7 @@
 ﻿public class FileRule
 {
-    public IgnoreSyncScenarios IgnoreSyncScenario { get; }
-    public Bf1942FileTypes FileType { get; }
+    public IgnoreSyncScenario IgnoreSyncScenario { get; }
+    public Bf1942FileType FileType { get; }
     public string Mod { get; }
     public string FileName { get; }
 
@@ -10,38 +10,52 @@
 
     public FileRule(string ignoreSyncScenario, string fileType, string mod, string fileName)
     {
-        IgnoreSyncScenario = Enum.Parse<IgnoreSyncScenarios>(ignoreSyncScenario, ignoreCase: true);
-        FileType = Enum.Parse<Bf1942FileTypes>(fileType, ignoreCase: true);
+        IgnoreSyncScenario = Enum.Parse<IgnoreSyncScenario>(ignoreSyncScenario, ignoreCase: true);
+        FileType = Enum.Parse<Bf1942FileType>(fileType, ignoreCase: true);
         Mod = mod.ToLower();
-        FileName = fileName.ToLower();
+        FileName = CorrectFileName(fileName, FileType);
+    }
+
+    public FileRule(IgnoreSyncScenario ignoreSyncScenarios, Bf1942FileType fileType, string mod, string fileName)
+    {
+        IgnoreSyncScenario = ignoreSyncScenarios;
+        FileType = fileType;
+        Mod = mod.ToLower();
+        FileName = CorrectFileName(fileName, FileType);
+    }
+
+    private static string CorrectFileName(string fileName, Bf1942FileType fileType)
+    {
+        fileName = fileName.ToLower();
 
         // append file extension to FileName if not provided
-        if (FileName != "*")
+        if (fileName != "*")
         {
-            if ((FileType == Bf1942FileTypes.Level || FileType == Bf1942FileTypes.Archive) && !FileName.EndsWith(".rfa"))
-                FileName += ".rfa";
-            else if ((FileType == Bf1942FileTypes.Movie || FileType == Bf1942FileTypes.Music) && !FileName.EndsWith(".bik"))
-                FileName += ".bik";
-            else if (FileType == Bf1942FileTypes.ModMiscFile)
+            if ((fileType == Bf1942FileType.Level || fileType == Bf1942FileType.Archive) && !fileName.EndsWith(".rfa"))
+                fileName += ".rfa";
+            else if ((fileType == Bf1942FileType.Movie || fileType == Bf1942FileType.Music) && !fileName.EndsWith(".bik"))
+                fileName += ".bik";
+            else if (fileType == Bf1942FileType.ModMiscFile)
             {
-                switch (FileName)
+                switch (fileName)
                 {
                     case "contentcrc32":
                     case "init":
-                        FileName += ".con";
+                        fileName += ".con";
                         break;
                     case "mod":
-                        FileName += ".dll";
+                        fileName += ".dll";
                         break;
                     case "lexiconall":
-                        FileName += ".dat";
+                        fileName += ".dat";
                         break;
                     case "serverinfo":
-                        FileName += ".dds";
+                        fileName += ".dds";
                         break;
                 }
             }
         }
+        return fileName;
     }
 
     public bool Matches(FileInfo fileInfo) => 
