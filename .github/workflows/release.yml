@@ -21,7 +21,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore DataField42.sln
+        run: dotnet restore DataField42.sln -r win-x64
 
       - name: Publish DataField42
         run: dotnet publish DataField42/DataField42.csproj /p:PublishProfile=DataField42/Properties/PublishProfiles/FolderProfile.pubxml --configuration Release
