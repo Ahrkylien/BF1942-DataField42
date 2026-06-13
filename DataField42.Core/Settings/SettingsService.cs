@@ -49,16 +49,34 @@ public class SettingsService : ISettingsSaver
         );
     }
 
+    private static readonly string LegacyFileName = "Synchronization rules.txt";
+
     private static IniSettings ParseFileIntoBasicTypes(string filePath)
     {
         if (!File.Exists(filePath))
         {
+            var legacyPath = Path.Combine(Path.GetDirectoryName(filePath) ?? "", LegacyFileName);
+            List<FileRule> legacyRules;
+            List<string> legacyAutoSync;
+            bool legacyAutoJoin;
+            if (File.Exists(legacyPath))
+            {
+                (legacyRules, legacyAutoSync, legacyAutoJoin) = LegacyRuleFileParser.Parse(legacyPath);
+                File.Delete(legacyPath);
+            }
+            else
+            {
+                legacyRules = [new(IgnoreSyncScenario.Always, Bf1942FileType.ModMiscFile, "*", "mod.dll")];
+                legacyAutoSync = [];
+                legacyAutoJoin = false;
+            }
+
             var defaultSettings = new Settings(
                 dashboardMode: DashboardMode.FourServers,
                 favoriteServers: [],
-                autoJoin: false,
-                autoSyncServers: [],
-                ignoreSyncRules: [new FileRule(IgnoreSyncScenario.Always, Bf1942FileType.ModMiscFile, "*", "mod.dll")]
+                autoJoin: legacyAutoJoin,
+                autoSyncServers: legacyAutoSync,
+                ignoreSyncRules: legacyRules
             );
             Save(defaultSettings, filePath);
         }
