@@ -565,7 +565,7 @@ def download_files(communication: DataField42Communication, map_name: str, mod_n
     communication.await_acknowledgement()
 
 
-dataField42_server_version = Version("2.0.1.0")
+dataField42_server_version = Version("2.1.0.0")
 checksum_repository_manager = ChecksumRepositoryManager("ChecksumRepository.json")
 sync_rule_manager = SyncRuleManager("Synchronization rules.txt")
 
