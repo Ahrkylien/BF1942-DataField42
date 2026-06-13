@@ -32,6 +32,16 @@ public class Bf1942ServerLobby
         }
     }
 
+    public Bf1942Server GetOrCreate(IPAddress ip, int port)
+    {
+        var existing = Servers.FirstOrDefault(s => s.Ip.Equals(ip) && s.QueryPort == port);
+        if (existing != null)
+            return existing;
+        var server = new Bf1942Server(ip, port);
+        Servers.Add(server);
+        return server;
+    }
+
     public async Task GetServerListFromHttpApi()
     {
         _logger.LogDebug($"Fetching server list from {_masterApiEntryPoint}.");

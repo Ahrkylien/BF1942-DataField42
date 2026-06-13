@@ -25,7 +25,7 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
     private readonly SemaphoreSlim _semaphore = new(1);
     private bool _isInitialized = false;
 
-    public ObservableCollection<ServerViewModel> FavoriteServers { get; } = new();
+    public ObservableCollection<ServerViewModel> FavoriteServers { get; } = [];
     public ServerViewModel? FirstFavoriteServers => FavoriteServers.FirstOrDefault();
 
     [ObservableProperty]
@@ -61,7 +61,7 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
         _logger.LogDebug("DashboardViewModel initializing.");
 
         foreach ((var ip, var port, var name) in _settingsService.Settings.FavoriteServers)
-            FavoriteServers.Add(new ServerViewModel(new Bf1942Server(ip, port), ServerSelectedHandler, _mainWindowViewModel.GoToSyncMenu, _loggerFactory.CreateLogger<ServerViewModel>(), name, queryServer: true));
+            FavoriteServers.Add(new ServerViewModel(_serverLobby.GetOrCreate(ip, port), ServerSelectedHandler, _mainWindowViewModel.GoToSyncMenu, _loggerFactory.CreateLogger<ServerViewModel>(), name, queryServer: true));
 
         EditModeEnabled = false;
         _settingsService.SettingChanged += SettingChanged;
