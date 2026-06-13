@@ -82,7 +82,7 @@ public class Bf1942Client(string path)
             var buffer = new byte[length];
             using var clientExe = new FileStream(path, FileMode.Open, FileAccess.Read);
             clientExe.Seek(offset, SeekOrigin.Begin);
-            clientExe.Read(buffer, 0, length);
+            clientExe.ReadExactly(buffer, 0, length);
             return buffer;
         }
         catch (Exception ex)
