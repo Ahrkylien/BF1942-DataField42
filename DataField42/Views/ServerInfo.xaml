@@ -19,6 +19,7 @@
             <Setter Property="Foreground" Value="#c0ccdd"/>
             <Setter Property="FontSize" Value="10"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="Margin" Value="6,0,0,0"/>
         </Style>
     </UserControl.Resources>
