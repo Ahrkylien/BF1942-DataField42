@@ -16,7 +16,7 @@ xmlns:Converters="clr-namespace:DataField42.Converters"
         <ControlTemplate x:Key="SettingTemplateBase" TargetType="ContentControl">
             <Border Padding="5" Margin="4" Background="#1b1e2a" CornerRadius="4">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Name}" Foreground="#d4d4d4" Width="150" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding Name, Converter={Converters:CamelCaseSpacesConverter}}" Foreground="#d4d4d4" Width="150" VerticalAlignment="Center"/>
                     <ContentPresenter/>
                 </StackPanel>
             </Border>
@@ -78,7 +78,7 @@ xmlns:Converters="clr-namespace:DataField42.Converters"
         <DataTemplate DataType="{x:Type Settings:StringCollectionSetting}">
             <ContentControl Template="{StaticResource CollectionSettingTemplate}">
                 <StackPanel>
-                    <TextBlock Text="{Binding Name}" Foreground="#d4d4d4" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                    <TextBlock Text="{Binding Name, Converter={Converters:CamelCaseSpacesConverter}}" Foreground="#d4d4d4" FontWeight="SemiBold" Margin="0,0,0,6"/>
                     <ItemsControl ItemsSource="{Binding Items}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
