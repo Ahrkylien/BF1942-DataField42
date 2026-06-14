@@ -13,7 +13,8 @@ A Battlefield 1942 tool for automatic map/mod downloads.
 
 ## How to install:
 1. Download the latest installer (`DataField42 v... Installer.exe`) from the [Releases page](https://github.com/Ahrkylien/BF1942-DataField42/releases/latest).
-2. Run the installer and point it to your Battlefield 1942 installation folder.
+2. Run the installer. Because the installer is not code-signed, Windows SmartScreen may show a warning saying "Windows protected your PC". Click **More info** and then **Run anyway** to proceed.
+3. Point the installer to your Battlefield 1942 installation folder.
 3. Launch DataField42 or start BF1942 as usual — DataField42 will handle the rest automatically.
 
 ## How it works:
