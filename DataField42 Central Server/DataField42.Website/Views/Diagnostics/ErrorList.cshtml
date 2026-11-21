@@ -1,0 +1,14 @@
+@model ErrorListPageViewModel
+<div class='container fullW'>
+	<div class='textBox'>
+		@foreach (var group in Model.Groups)
+		{
+			<div style='font-weight: bold;font-size:20px;'>@group.Title</div>
+			@foreach (var finding in group.Findings)
+			{
+				<div>@finding</div>
+			}
+			<br>
+		}
+	</div>
+</div>

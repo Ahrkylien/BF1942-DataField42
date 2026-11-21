@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/DataField42 Central Server/">
+    <Project Path="DataField42 Central Server/DataField42.Website/DataField42.Website.csproj" />
+  </Folder>
+  <Project Path="DataField42 Updater/DataField42 Updater.csproj" />
+  <Project Path="BF1942.Core/BF1942.Core.csproj" />
+  <Project Path="BF1942.FileSystem/BF1942.FileSystem.csproj" />
+  <Project Path="DataField42.Core/DataField42.Core.csproj" />
+  <Project Path="DataField42/DataField42.csproj" />
+  <Project Path="DF.Settings/DF.Settings.csproj" />
+  <Project Path="DF.Watchable/DF.Watchable.csproj" />
+</Solution>

@@ -1,0 +1,226 @@
+@model ServerRoundPageViewModel
+@{
+    const int BarWidth = 100;
+    var status = Model.Status;
+
+    // One labelled setting. A server reports every property the protocol defines, so only the
+    // genuinely optional ones -- the two a Windows server alone sends -- can be absent.
+    Microsoft.AspNetCore.Html.IHtmlContent Setting(string label, object? value, string labelColor = "#d4d4d4")
+    {
+        if (value is null || value.ToString() is not { Length: > 0 } text)
+            return Microsoft.AspNetCore.Html.HtmlString.Empty;
+
+        return new Microsoft.AspNetCore.Html.HtmlString(
+            $"<span style='color:{System.Net.WebUtility.HtmlEncode(labelColor)};'>{System.Net.WebUtility.HtmlEncode(label)}: </span>"
+            + $"{System.Net.WebUtility.HtmlEncode(text)}<br>");
+    }
+}
+<div class='container fullfW'>
+	<div class='titleBox'>
+		@Model.Name
+		<span class='subTitle'>@Model.Ip:@Model.GamePort</span>
+	</div>
+</div>
+@if (!Model.IsLive)
+{
+	<div class='container fullfW'>
+		<div class='subtitleBox'>
+			@Model.StartDateTime
+		</div>
+	</div>
+}
+<div style='clear: both;'></div>
+
+@if (Model.RoundTimePercentage is { } roundTimePercentage && Model.IsLive)
+{
+	<div style='width:100%;padding:5px;'>
+		<div style='position:relative;width:@(BarWidth)px;background:#090b12;height:20px;border: solid 2px #233050;'>
+			<div style='float:left;width:@(((BarWidth - 4) * (1 - roundTimePercentage / 100)).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))px;background:#57a857;height:16px;'></div>
+		</div>
+	</div>
+}
+
+@if (status is not null && Model.Team1 is not null && Model.Team2 is not null)
+{
+	<div class='serverTeams'>
+		@await Html.PartialAsync("_TeamScoreboard", new TeamScoreboardViewModel(Model.Team1, Model.Players.Where(player => player.Team == 1).ToList()))
+		@await Html.PartialAsync("_TeamScoreboard", new TeamScoreboardViewModel(Model.Team2, Model.Players.Where(player => player.Team == 2).ToList()))
+	</div>
+}
+else
+{
+	<div class='container fullfW'>
+		<div class='titleBox'>Can't reach server</div>
+	</div>
+}
+
+@if (Model.IsLive && Model.PlayerNumbers is not null)
+{
+	@await Html.PartialAsync("_LineGraph", Model.PlayerNumbers)
+}
+
+@if (Model.Map is not null)
+{
+	@await Html.PartialAsync("_MapBanner", Model.Map)
+}
+
+@if (status is not null)
+{
+	<div class='container halfW serverSettings'>
+		<div class='textBox' style='line-height: 21px;'>
+			@if (Model.MapId is { } liveMapId)
+			{
+				<span style='color:#d4d4d4;'>Map: </span><a href='/Map/@liveMapId' class='urlLine'>@Model.MapNameFormatted</a>
+				<br>
+				<span style='color:#d4d4d4;'>Mod: </span><a href='/Maps?mod=@status.GameId' class='urlLine'>@status.GameId</a>
+				<br>
+			}
+			else
+			{
+				@Setting("Map", Model.MapNameFormatted)
+				@Setting("Mod", status.GameId)
+				@if (status.Mod != status.GameId)
+				{
+					@Setting("Mod (mapId, not gameId)", status.Mod, labelColor: "red")
+				}
+			}
+			@Setting("Mode", status.GameType)
+			@Setting("Tickets Team 1", status.Tickets1)
+			@Setting("Tickets Team 2", status.Tickets2)
+			@Setting("Maximum Players", status.MaximumNumberOfPlayers)
+			@Setting("Reserved Slots", status.ReservedSlots)
+			@Setting("Number of Players", status.NumberOfPlayers)
+			@if (status.TimeLimit is { } timeLimit && timeLimit * 60 != status.RoundTime)
+			{
+				@Setting("Time Limit", $"{timeLimit}m", labelColor: "red")
+			}
+			@Setting("Round Time", $"{status.RoundTime}s")
+			@Setting("Round Time Remaining", $"{status.RoundTimeRemain}s")
+			@Setting("Stage", status.GameMode)
+			@Setting("Status", status.Status)
+			@Setting("Active Mods", status.ActiveMods)
+			@Setting("CPU", status.Cpu)
+			@Setting("Average FPS", status.AverageFps)
+			@Setting("Bandwidth Choke Limit", status.BandwidthChokeLimit)
+			@Setting("Host Type", status.DedicatedServerType switch
+			{
+				DedicatedServerType.Windows => "Windows Server",
+				DedicatedServerType.Linux => "Linux Server",
+				DedicatedServerType.NonDedicated => "Windows Client",
+				_ => status.DedicatedServerType.ToString(),
+			})
+			@Setting("Location (LCID)", status.Location)
+			@Setting("Language", status.Language)
+			<span style='color:#d4d4d4;'>PunkBuster: </span>@await Html.PartialAsync("_YesNoIcon", status.UsesPunkbuster)
+			<br>
+			<span style='color:#d4d4d4;'>Password: </span>@await Html.PartialAsync("_YesNoIcon", status.HasPassword)
+			<br>
+			@Setting("Content Check", status.ContentCheck)
+			@Setting("Mods without Content Check", string.Join(", ", status.UnpureMods))
+		</div>
+	</div>
+	<div class='container halfW serverSettings'>
+		<div class='textBox' style='line-height: 21px;'>
+			<span style='color:#d4d4d4;'>Auto Balance Teams: </span>@await Html.PartialAsync("_YesNoIcon", status.AutoBalanceTeams)
+			<br>
+			<span style='color:#d4d4d4;'>External View: </span>@await Html.PartialAsync("_YesNoIcon", status.ExternalView)
+			<br>
+			<span style='color:#d4d4d4;'>Allow Nose Cam: </span>@await Html.PartialAsync("_YesNoIcon", status.AllowNoseCam)
+			<br>
+			<span style='color:#d4d4d4;'>Free Camera: </span>@await Html.PartialAsync("_YesNoIcon", status.FreeCamera)
+			<br>
+			<span style='color:#d4d4d4;'>Hit Indicator: </span>@await Html.PartialAsync("_YesNoIcon", status.HitIndicator)
+			<br>
+			@Setting("Name Tag Distance", $"{status.NameTagDistance}m")
+			@Setting("Name Tag Distance Scope", $"{status.NameTagDistanceScope}m")
+			@Setting("Number of Rounds", status.NumberOfRounds)
+			@Setting("Ticket Ratio", $"{status.TicketRatio}%")
+			@Setting("Team Ratio (Axis:Allied)", $"{status.AxisTeamRatio}:{status.AlliedTeamRatio}")
+			@Setting("Spawn Delay", $"{status.SpawnDelay}s")
+			@Setting("Spawn Wave Time", $"{status.SpawnWaveTime}s")
+			@Setting("Game Start Delay", $"{status.GameStartDelay}s")
+			@Setting("Team Kill Mode", status.TkMode)
+			@Setting("Kickback", $"{status.KickBack}%")
+			@Setting("Kickback on Splash", $"{status.KickBackOnSplash}%")
+			@Setting("Soldier Friendly Fire", $"{status.SoldierFriendlyFire}%")
+			@Setting("Soldier Friendly Fire on Splash", $"{status.SoldierFriendlyFireOnSplash}%")
+			@Setting("Vehicle Friendly Fire", $"{status.VehicleFriendlyFire}%")
+			@Setting("Vehicle Friendly Fire on Splash", $"{status.VehicleFriendlyFireOnSplash}%")
+		</div>
+	</div>
+}
+else if (!Model.IsLive && Model.Players.Count > 0)
+{
+	@* A recorded round keeps the result and the scoreboard, not the server's settings. *@
+	<div class='container halfW serverSettings'>
+		<div class='textBox' style='line-height: 21px;'>
+			@if (Model.MapId is { } roundMapId)
+			{
+				<span style='color:#d4d4d4;'>Map: </span><a href='/Map/@roundMapId' class='urlLine'>@Model.MapNameFormatted</a>
+				<br>
+			}
+			else
+			{
+				@Setting("Map", Model.MapNameFormatted)
+			}
+			@Setting("Mod", Model.ModName)
+			@Setting("Tickets Team 1", Model.Tickets1)
+			@Setting("Tickets Team 2", Model.Tickets2)
+			@Setting("Round Time", Model.RoundTimeSeconds is { } seconds ? $"{seconds}s" : null)
+		</div>
+	</div>
+}
+
+@if (Model.IsLive)
+{
+	<div class='container'>
+		<div class='titleBox'>
+			Last @Model.NumberOfRoundsListed Rounds having players:
+		</div>
+	</div>
+	@foreach (var round in Model.Rounds)
+	{
+		@if (round.DaySeparator is not null)
+		{
+			<div class='container'>
+				<div class='listItemBoxSep'>
+					<div class='defaultColor'>@round.DaySeparator<span class="material-icons">expand_more</span></div>
+				</div>
+			</div>
+		}
+		else
+		{
+			<div class='container'>
+				<a href='/Server/@Model.Ip:@Model.GamePort/Round/@round.StartTime?.ToString("s")'>
+					<div class='listItemBox' id='roundList'>
+						<div class='defaultColor'>@round.StartTimeForDisplay</div>
+						<div>@round.MapName <div class="textItem rounded cb_dgray">@round.GameplayModeShort</div></div>
+						<div><span class='cf_default'>max #</span> @round.MaximumNumberOfPlayers</div>
+						<div>@if (round.BestPlayer is not null) {<span class="material-icons" style="font-size:16px;color:#C9B037;">star</span>@round.BestPlayer}</div>
+						<div>@round.Team1StartTickets:@round.Team2StartTickets</div>
+						<div style='@(round.WinningTeamNumber switch { 1 => "color: #D95454;", 2 => "color: #54AED9;", _ => null })'>@round.Team1EndTickets:@round.Team2EndTickets</div>
+					</div>
+				</a>
+			</div>
+		}
+	}
+}
+
+<script>
+var controlPointElements = document.getElementsByClassName("nameTag");
+
+function cpMouseover(event){
+	var targetElement = event.target || event.srcElement
+	targetElement.nextSibling.setAttribute("class", "relativeTooltip visible")
+}
+
+function cpMouseout(event){
+	var targetElement = event.target || event.srcElement
+	targetElement.nextSibling.setAttribute("class", "relativeTooltip")
+}
+
+for (var i = 0; i < controlPointElements.length; i++){
+	controlPointElements[i].addEventListener('mouseover', cpMouseover, false);
+	controlPointElements[i].addEventListener('mouseout', cpMouseout, false);
+}
+</script>

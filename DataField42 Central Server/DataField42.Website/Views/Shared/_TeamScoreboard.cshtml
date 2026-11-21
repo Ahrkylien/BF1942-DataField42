@@ -1,0 +1,55 @@
+@model TeamScoreboardViewModel
+<table class='playerList'>
+	<tr class='firstRow'>
+		<th class='columnSmall'></th>
+		<th>PLAYERNAME</th>
+		<th style='max-width:1px'></th>
+		<th><img class='imagec' src='/static/images/icons/score.png'></th>
+		<th><img class='imagec' src='/static/images/icons/kills.png'></th>
+		<th><img class='imagec' src='/static/images/icons/deaths.png'></th>
+		<th><img class='imagec' src='/static/images/icons/ping.png'></th>
+		<th></th>
+	</tr>
+	@foreach (var player in Model.Players)
+	{
+		<tr>
+			<td>@player.Place</td>
+			<td>
+				<span class='nameTag'>@player.Tag</span>@if (player.Tag != "") {<span class='relativeTooltip'>@player.ClanName</span>}@player.Name
+			</td>
+			<td style='max-width:4px;overflow:hidden;'></td>
+			<td>@player.Score</td>
+			<td>@player.Kills</td>
+			<td>@player.Deaths</td>
+			<td>@player.Ping</td>
+			<td style='padding:0px;width: 22px;'>
+				@switch (player.Place)
+				{
+					case 1:
+						<span class='material-icons' style='font-size:16px;color:#C9B037;'>star</span>
+						break;
+					case 2:
+						<span class='material-icons' style='font-size:16px;color:#D7D7D7;'>star</span>
+						break;
+					case 3:
+						<span class='material-icons' style='font-size:16px;color:#A77044;'>star</span>
+						break;
+				}
+			</td>
+		</tr>
+	}
+	@for (int i = 0; i < Model.Team.PlayerShortfall; i++)
+	{
+		<tr class='nonehov noplayer'><td style='color:rgba(255,255,255,0);'>.</td></tr>
+	}
+	<tr class='lastRow nonehov'>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td>@Model.Team.Score</td>
+		<td>@Model.Team.Kills</td>
+		<td>@Model.Team.Deaths</td>
+		<td>@Model.Team.Ping</td>
+		<td>@Model.Team.PlayerCount</td>
+	</tr>
+</table>

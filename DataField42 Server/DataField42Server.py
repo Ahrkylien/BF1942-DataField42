@@ -145,7 +145,7 @@ class ChecksumRepository:
     def __init__(self, filename: str):
         self.filename = filename
         self.records = self.load_records()
-        self.lock = threading.Lock()  # Lock for thread safety
+        self.lock = threading.RLock()  # Reentrant: add_record calls save_records while holding it
 
     def load_records(self):
         try:
@@ -192,7 +192,10 @@ class ChecksumRepositoryManager:
                 return checksum_from_repository
 
             with open(path, "rb") as file:
-                checksum = google_crc32c.value(file.read())
+                checksum_calculator = google_crc32c.Checksum()
+                for block in iter(lambda: file.read(1 << 20), b""):
+                    checksum_calculator.update(block)
+                checksum = int.from_bytes(checksum_calculator.digest(), 'big')
                 checksum = f"{(checksum & 0xFFFFFFFF):08X}"
                 self.repository.add_record(checksum, os.path.getsize(path), os.path.getmtime(path))
         return checksum
@@ -566,8 +569,9 @@ def download_files(communication: DataField42Communication, map_name: str, mod_n
 
 
 dataField42_server_version = Version("2.1.0.0")
+# dataField42_server must exist before the ChecksumRepositoryManager, whose watchdog thread reads it:
+dataField42_server = DataField42Server("")
 checksum_repository_manager = ChecksumRepositoryManager("ChecksumRepository.json")
 sync_rule_manager = SyncRuleManager("Synchronization rules.txt")
 
-dataField42_server = DataField42Server("")
 dataField42_server.start()

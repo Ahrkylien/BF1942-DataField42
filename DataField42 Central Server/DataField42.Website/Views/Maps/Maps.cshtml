@@ -1,0 +1,81 @@
+@model MapsPageViewModel
+<div class='container fullfW'>
+	<div class='titleBox'>Maps</div>
+</div>
+<div class='container fullfW'>
+	<div class='titleBox' style='color:#ab0909;'>This page is under construction</div>
+</div>
+<div style='clear: both;'></div>
+<div class='container'>
+	@await Html.PartialAsync("_PageNumbers", Model)
+	<div style='padding-top:10px;'>
+		<select name="mod" class="fse2 inline" onchange="selectChange(event)">
+			@foreach (var (folderName, fullName) in Model.Mods)
+			{
+				<option value="@folderName" selected="@(folderName == Model.SelectedModFolderName)">@fullName</option>
+			}
+		</select>
+		<input class='inline' name="map" placeholder="Map Name" type="text" value="@Model.MapNameFilter" onchange="inputChange(event)">
+		<select name="author" class="fse2 inline" onchange="selectChange(event)">
+			<option value="">
+			Author (none)
+			</option>
+			@foreach (var author in Model.Authors)
+			{
+				<option value="@author" selected="@(author == Model.AuthorFilter)">@author</option>
+			}
+		</select>
+	</div>
+	<div style='padding-top:10px;text-allign:center;'>
+		@{ bool firstMode = true; }
+		@foreach (var (label, selected) in Model.GameplayModes.Buttons)
+		{
+			<div class='mapGPM mapGPM_hoverable@(selected ? " mapGPM_selected" : "") inline' onclick="gpmClick(event)" style="@(firstMode ? "margin-left:0px;" : null)">@label</div>
+			firstMode = false;
+		}
+	</div>
+</div>
+@foreach (var map in Model.Maps)
+{
+	@await Html.PartialAsync("_MapBanner", map)
+}
+<div class='container'>
+	@await Html.PartialAsync("_PageNumbers", Model)
+</div>
+<script>
+function pageClick(e){
+	urlChange("page", e.target.innerHTML);
+}
+
+function gpmClick(e){
+	gpm = e.target.innerHTML.trim();
+	value = e.target.className == "mapGPM mapGPM_hoverable inline";
+	var params = new URLSearchParams(location.search);
+	param = params.get("gpm");
+	if(param == null){param = "Coop+CQ+CTF+TDM+Objective";}
+	gpms = param!="" ? param.split("+") : [];
+	if(gpms.includes(gpm) && !value){
+		gpms = gpms.filter(function(value, index, arr){return value != gpm;});
+	}else if(!gpms.includes(gpm) && value){
+		gpms.push(gpm);
+	}
+	gpms = gpms.join("+");
+	urlChange("gpm", gpms);
+}
+
+function inputChange(e){
+	urlChange(e.target.name, e.target.value);
+}
+
+function selectChange(e){
+	urlChange(e.target.name, e.target.value);
+}
+
+function urlChange(name, value){
+	var params = new URLSearchParams(location.search);
+	params.set(name, value);
+	if(value == ""){params.delete(name);}
+	if(name != "page"){params.delete("page");} //go to first page when from has been edited
+	window.location.search = params.toString();
+}
+</script>

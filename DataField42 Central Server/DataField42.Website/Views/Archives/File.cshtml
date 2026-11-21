@@ -1,0 +1,31 @@
+@model RfaFilePageViewModel
+<div class='container fullfW'>
+	<div class='titleBox' style='color:#ab0909;'>This page is under construction</div>
+</div>
+<div style='clear: both;'></div>
+<div class='container'>
+	<div class='titleBox'>
+		@Model.ArchivePath
+	</div>
+</div>
+<div class='container'>
+	<div class='titleBox'>
+		@Model.FilePath
+	</div>
+</div>
+<div class='container'>
+	@if (Model.HighlightedLines is not null)
+	{
+		<div class='textBox nowrap syntaxBox'>
+			@foreach (var line in Model.HighlightedLines)
+			{
+				@foreach (var part in line.Parts)
+				{<span class='@part.CssClass'>@Html.Raw(SyntaxText.ToHtml(part.Text))</span>}<br>
+			}
+		</div>
+	}
+	else
+	{
+		<div class='textBox pre'>@Model.Text</div>
+	}
+</div>

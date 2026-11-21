@@ -1,0 +1,18 @@
+@model RfaPageViewModel
+<div class='container fullfW'>
+	<div class='titleBox' style='color:#ab0909;'>This page is under construction</div>
+</div>
+<div style='clear: both;'></div>
+<div class='container'>
+	<div class='titleBox'>
+		@Model.Path
+	</div>
+</div>
+<div class='container'>
+	<div class='textBox'>
+		@foreach (var file in Model.Files)
+		{
+			<a href="/RFA/@Model.RfaId/@file"><div class='urlLine'>@file</div></a>
+		}
+	</div>
+</div>

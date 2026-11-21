@@ -1,0 +1,28 @@
+@model ScrapingPageViewModel
+<div class='container'>
+	<div class='titleBox'>Scraping <span class='subTitle'>@Model.MissingCount still to collect</span></div>
+</div>
+<div class='container'>
+	<table class=''>
+	@foreach (var listing in Model.Pages)
+	{
+		<tr style='@(listing.Status switch {
+			ScrapedPageStatus.Complete => "background:#003c02;",
+			ScrapedPageStatus.InCollectionWithoutReadme => "background:#5e3d00;",
+			ScrapedPageStatus.Duplicate => "background:#545e00;",
+			_ => null })'>
+			<td>@listing.Source</td>
+			<td>@listing.Title</td>
+			<td>@listing.FileName</td>
+			<td><a href='@listing.Link1'>L1</a></td>
+			<td><a href='@listing.Link2'>L2</a></td>
+			<td><a href='@listing.Link3'>L3</a></td>
+			<td>@listing.Date</td>
+			<td>@listing.FileSize</td>
+			<td>@listing.FileSizeOld</td>
+			<td>@listing.Downloads</td>
+			<td>@listing.OtherSource</td>
+		</tr>
+	}
+	</table>
+</div>

@@ -1,0 +1,165 @@
+@model FileTransferPageViewModel
+@{
+    string FormatSize(long bytes) => bytes switch
+    {
+        >= 1L << 30 => $"{bytes / (double)(1L << 30):0.##} GB",
+        >= 1L << 20 => $"{bytes / (double)(1L << 20):0.##} MB",
+        >= 1L << 10 => $"{bytes / (double)(1L << 10):0.##} kB",
+        _ => $"{bytes} B",
+    };
+}
+<div class='container'>
+	<div class='titleBox'>File transfer <span class='subTitle'>collection sync</span></div>
+</div>
+@if (Model.Message is not null)
+{
+	<div class='container fullW'><div class='textBox' style='color:#57a857;'>@Model.Message</div></div>
+}
+@if (Model.ErrorMessage is not null)
+{
+	<div class='container fullW'><div class='textBox' style='color:#ab0909;'>@Model.ErrorMessage</div></div>
+}
+
+<div class='container fullW'>
+	<div class='textBox'>
+		<div style='color:#8a8a8a;'>
+			The collection is sorted on a workstation and served from here, and the two are brought back
+			in line in five stages. Stages 1 and 2 run here; stages 3, 4 and 5 run on the workstation.
+		</div>
+		<br>
+		<div>1. This server lists every file it holds, with a checksum.</div>
+		<div style='color:#8a8a8a;'>2. This server applies the rules and unpacks the new files.</div>
+		<div style='color:#8a8a8a;'>3. The workstation lists its own files.</div>
+		<div style='color:#8a8a8a;'>4. The workstation compares the two lists into a set of rules.</div>
+		<div style='color:#8a8a8a;'>5. The workstation packs the files this server is missing.</div>
+		<br>
+		<a href='/Admin' class='btn' style='margin-left:0px;'>Back to admin</a>
+	</div>
+</div>
+
+<div class='container fullfW'>
+	<div class='titleBox'>Stage 1 &mdash; list this server's files</div>
+</div>
+<div style='clear: both;'></div>
+@if (Model.FileListJob is not null)
+{
+	@await Html.PartialAsync("_JobCard", new JobCardViewModel { Job = Model.FileListJob, ReturnTo = "/Admin/FileTransfer" })
+}
+<div class='container fullW' data-region="file-list">
+	<div class='textBox'>
+		@if (Model.ServerFileList is { } fileList)
+		{
+			<div>@fileList.Name &mdash; @FormatSize(fileList.Size), written @fileList.ModifiedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
+			<br>
+			<a href='/Admin/FileTransfer/ServerFileList' class='btn' style='margin-left:0px;'>Download the file list</a>
+		}
+		else
+		{
+			<div style='color:#8a8a8a;'>No file list yet. Run stage 1 above, then download it for the workstation.</div>
+		}
+	</div>
+</div>
+
+<div class='container fullfW'>
+	<div class='titleBox'>Stage 2 &mdash; apply what the workstation produced</div>
+</div>
+<div style='clear: both;'></div>
+<div class='container fullW'>
+	<div class='textBox'>
+		<form method="post" action="/Admin/FileTransfer/Upload" enctype="multipart/form-data">
+			@Html.AntiForgeryToken()
+			<div style='padding-bottom:10px;'>
+				<label style='color:#d4d4d4;'>Rules (rules.json)</label><br>
+				<input type="file" name="rules" accept=".json">
+				@if (Model.Rules is { } rules)
+				{
+					<span style='color:#8a8a8a;'> uploaded @rules.ModifiedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm"), @FormatSize(rules.Size)</span>
+				}
+			</div>
+			<div style='padding-bottom:10px;'>
+				<label style='color:#d4d4d4;'>New files (newFiles.zip)</label><br>
+				<input type="file" name="archive" accept=".zip">
+				@if (Model.Archive is { } archive)
+				{
+					<span style='color:#8a8a8a;'> uploaded @archive.ModifiedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm"), @FormatSize(archive.Size)</span>
+				}
+			</div>
+			<button class='btn' type="submit" style='margin-left:0px;'>Upload</button>
+		</form>
+	</div>
+</div>
+
+<div data-region="preview">
+@if (Model.Preview is { } preview)
+{
+	<div class='container fullW'>
+		<div class='textBox'>
+			<div style='font-weight: bold;font-size:20px;'>What this would do</div>
+			<br>
+			<div><span style='color:#d4d4d4;'>Delete: </span>@preview.DeleteCount</div>
+			<div><span style='color:#d4d4d4;'>Move: </span>@preview.MoveCount</div>
+			<div><span style='color:#d4d4d4;'>Copy: </span>@preview.CopyCount</div>
+			<div><span style='color:#d4d4d4;'>Add: </span>@preview.AddCount</div>
+			<div><span style='color:#d4d4d4;'>Change date: </span>@preview.ChangeDateCount</div>
+			@if (preview.UnknownCount > 0)
+			{
+				<div style='color:#ab0909;'>Rules of an unknown kind: @preview.UnknownCount (these will be skipped)</div>
+			}
+			<br>
+			<div><span style='color:#d4d4d4;'>Archive: </span>@TextFormatting.Count(preview.ArchiveEntryCount, "file"), @FormatSize(preview.ArchiveSize)</div>
+
+			@if (preview.MissingFromArchive.Count > 0)
+			{
+				<br>
+				<div style='color:#ab0909;'>@TextFormatting.Count(preview.MissingFromArchive.Count, "file") the rules add @(preview.MissingFromArchive.Count == 1 ? "is" : "are") not in the archive:</div>
+				<div class='pre' style='max-height:200px;overflow:auto;'>@string.Join('\n', preview.MissingFromArchive.Take(200))</div>
+			}
+			@if (preview.MissingSources.Count > 0)
+			{
+				<br>
+				<div style='color:#ab0909;'>@TextFormatting.Count(preview.MissingSources.Count, "file") the rules move or copy @(preview.MissingSources.Count == 1 ? "is" : "are") not there:</div>
+				<div class='pre' style='max-height:200px;overflow:auto;'>@string.Join('\n', preview.MissingSources.Take(200))</div>
+			}
+			@if (preview.OccupiedDestinations.Count > 0)
+			{
+				<br>
+				<div style='color:#ab0909;'>@TextFormatting.Count(preview.OccupiedDestinations.Count, "destination") already @(preview.OccupiedDestinations.Count == 1 ? "holds" : "hold") a file and will be left alone:</div>
+				<div class='pre' style='max-height:200px;overflow:auto;'>@string.Join('\n', preview.OccupiedDestinations.Take(200))</div>
+			}
+			@if (preview.HasWarnings)
+			{
+				<br>
+				<div style='color:#c9b037;'>
+					These warnings usually mean the rules were built against a different state of the
+					collection. Re-run stage 1 and rebuild them on the workstation before applying.
+				</div>
+			}
+		</div>
+	</div>
+
+	<div class='container fullW'>
+		<div class='textBox'>
+			<div style='font-weight: bold;font-size:20px;'>Every rule</div>
+			<div class='pre' style='max-height:400px;overflow:auto;'>@string.Join('\n', preview.Rules.Select(rule =>
+				rule.DestinationPath is not null
+					? $"{rule.RawKind}  {rule.Path}  ->  {rule.DestinationPath}"
+					: rule.ModifiedDate is { } date
+						? $"{rule.RawKind}  {rule.Path}  ({date:yyyy-MM-dd HH:mm})"
+						: $"{rule.RawKind}  {rule.Path}"))</div>
+		</div>
+	</div>
+}
+else
+{
+	<div class='container fullW'>
+		<div class='textBox' style='color:#8a8a8a;'>
+			Upload a rules file to see what applying it would do.
+		</div>
+	</div>
+}
+</div>
+@if (Model.Preview is not null && Model.ApplyJob is not null)
+{
+	@await Html.PartialAsync("_JobCard", new JobCardViewModel { Job = Model.ApplyJob, ReturnTo = "/Admin/FileTransfer" })
+}
+@await Html.PartialAsync("_JobPolling")

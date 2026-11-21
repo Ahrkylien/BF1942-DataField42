@@ -1,0 +1,58 @@
+@model JobRunsPageViewModel
+@{
+    string Color(string state) => state switch
+    {
+        "Succeeded" => "#57a857",
+        "Running" => "#57a857",
+        "Failed" => "#ab0909",
+        _ => "#c9b037",
+    };
+
+    string Duration(JobRunSummary run)
+    {
+        if (run.FinishedUtc is not { } finished)
+            return "";
+
+        var span = finished - run.StartedUtc;
+        return span.TotalHours >= 1 ? $"{(int)span.TotalHours}h {span.Minutes:00}m" : span.TotalMinutes >= 1 ? $"{(int)span.TotalMinutes}m {span.Seconds:00}s" : $"{(int)span.TotalSeconds}s";
+    }
+}
+<div class='container'>
+	<div class='titleBox'>@Model.JobName <span class='subTitle'>runs</span></div>
+</div>
+<div class='container fullW'>
+	<div class='textBox'>
+		<a href='/Admin' class='btn' style='margin-left:0px;'>Back to admin</a>
+		<div style='color:#8a8a8a;margin-top:10px;'>
+			Every run is kept, with its whole log, through restarts.
+		</div>
+	</div>
+</div>
+<div class='container fullW'>
+	<div class='textBox'>
+		@if (Model.Runs.Count == 0)
+		{
+			<div style='color:#8a8a8a;'>This job has not run yet.</div>
+		}
+		else
+		{
+			@foreach (var run in Model.Runs)
+			{
+				<details class='runLog' data-log-url='/Admin/Runs/@run.Id/Log?header=false' style='margin-bottom:6px;'>
+					<summary style='cursor:pointer;'>
+						@run.StartedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+						<span style='color:@Color(run.State);'>@run.State@(string.IsNullOrEmpty(run.Error) || run.State == "Interrupted" ? "" : $": {run.Error}")</span>
+						@if (Duration(run) != "") {<span style='color:#8a8a8a;'> — took @Duration(run)</span>}
+						@if (run.TotalCount > 0) {<span style='color:#8a8a8a;'> — @run.CompletedCount/@run.TotalCount</span>}
+						@if (!string.IsNullOrEmpty(run.Parameters)) {<span style='color:#8a8a8a;'> — @run.Parameters</span>}
+					</summary>
+					<div style='margin:6px 0 10px 18px;'>
+						<a href='/Admin/Runs/@run.Id/Log' target='_blank' class='urlLine'>Open as text</a>
+						<pre class='logBody' style='max-height:400px;overflow:auto;margin-top:6px;white-space:pre-wrap;'>Loading…</pre>
+					</div>
+				</details>
+			}
+		}
+	</div>
+</div>
+<script src="/static/js/admin-runs.js" defer></script>

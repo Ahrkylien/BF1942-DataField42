@@ -1,0 +1,145 @@
+@model MapDetailsViewModel
+@if (Model is not null)
+{
+	<div class='container fullfW'>
+		<div class='titleBox' style='color:#ab0909;'>This page is under construction</div>
+	</div>
+	<div style='clear: both;'></div>
+	<div class='container halfW mapW'>
+		<div class='titleBox'>
+			@Model.Name
+			@if (Model.AuthorName is not null)
+			{
+				<a href='/Maps?author=@Uri.EscapeDataString(Model.AuthorName)&mod=@Model.ModFolderName'><span class='subTitle'>@Model.AuthorName</span></a>
+			}
+		</div>
+
+		<div class='seperatorBox'></div>
+		<div class='ingamemapContainer'>
+			<img src='@Model.InGameMapUrl' alt='mini-map' class='imgBox'>
+			@if (Model.WorldHeight is not null)
+			{
+				<div class='mapLenth'>
+					<div class='mapLenthText'>@Model.WorldHeight m</div>
+					<div class='mapLenthBar1'></div>
+					<div class='mapLenthBar2'></div>
+				</div>
+			}
+			<div class='mapMenu' id='' onclick='showMenu()'><span class='material-icons' style='font-size: 24px;'>settings</span></div>
+			@foreach (var controlPoint in Model.ControlPoints)
+			{
+				<div class='mapItem controlPoint @(controlPoint.Uncapturable ? "controlPointBase" : "") team@(controlPoint.Team)' id='controlPoint@(controlPoint.Id)' onclick='getProperties(@controlPoint.Id)' style='left:@controlPoint.RelativeLeft.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture)%;top:@controlPoint.RelativeTop.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture)%;'></div>
+				<span class='tooltiptext' style='left:@controlPoint.RelativeLeft.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture)%;top:@controlPoint.RelativeTop.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture)%;'>
+					@TextFormatting.Title(controlPoint.Name)<br>
+					@if (controlPoint.Uncapturable)
+					{
+						<span style='color:#8a8a8a;'>Base</span>
+					}
+				</span>
+			}
+		</div>
+	</div>
+	<div class='container halfW mapW'>
+		<div class='textBox' style='line-height: 21px;'>
+			<span class='subtitle'>Game Modes:</span>
+			@if (Model.HasCoop) {<div class='textItem'>Coop</div>}@if (Model.HasConquest) {<div class='textItem'>CQ</div>}@if (Model.HasCaptureTheFlag) {<div class='textItem'>CTF</div>}@if (Model.HasTeamDeathmatch) {<div class='textItem'>TDM</div>}@if (Model.HasObjectiveMode) {<div class='textItem'>Objective</div>}
+			@if (Model.Tags.Count > 0)
+			{
+				<br><br><span class='subtitle'>Tags:</span>
+				@foreach (var tag in Model.Tags)
+				{
+					<div class='textItem textItem2' style='background:@tag.Color;'>@tag.Name</div>
+				}
+			}
+			<br><br><span class='subtitle'>RFA Files:</span>
+			@foreach (var rfa in Model.Rfas)
+			{
+				<br><a href="/RFA/@rfa.RfaId"><div class='textItem textItem3'>@rfa.FileName</div></a><div class='textItem textItem3b'>@rfa.Date</div>
+			}
+			@if (Model.ObjectSpawns.Count > 0)
+			{
+				<br><br><span class='subtitle'>Object Spawns:</span><br>
+				@foreach (var objectSpawn in Model.ObjectSpawns)
+				{
+					<div class='textItem textItem4'>@objectSpawn</div>
+				}
+			}
+			<br><br><span class='subtitle'>Mod:</span><br>
+			<div class='textItem textItem4'>@Model.ModFullName</div>
+			@if (Model.MapsFromOtherMods.Count > 0)
+			{
+				<br><br><span class='subtitle'>Same Map-name in other Mods:</span><br>
+				@foreach (var (mapId, modFullName) in Model.MapsFromOtherMods)
+				{
+					<a href="/Map/@mapId"><div class='textItem textItem4'>@modFullName</div></a>
+				}
+			}
+			@if (Model.IsAdmin)
+			{
+				@if (Model.BattleCraftPaths.Count > 0)
+				{
+					<br><br><span class='subtitle'>BattleCraft Level Paths:</span><br>
+					@foreach (var path in Model.BattleCraftPaths)
+					{
+						<div class='textItem textItem3'>@path.FullPath</div>
+						@if (!string.IsNullOrEmpty(path.ModFolder))
+						{
+							<div class='textItem textItem4'>@path.ModFolder</div>
+						}
+						@if (!string.IsNullOrEmpty(path.MapFolder))
+						{
+							<div class='textItem textItem4'>@path.MapFolder</div>
+						}
+					}
+				}
+				<br><br><span class='subtitle'>Game.MapID:</span><br>
+				<div class='textItem textItem4'>@Model.GameMapId</div>
+			}
+		</div>
+	</div>
+
+	@if (Model.MultiplayerBriefingObjectives is not null)
+	{
+		<div class='container halfW mapW'>
+			<div class='textBox pre'>@Model.MultiplayerBriefingObjectives</div>
+		</div>
+	}
+
+	@if (Model.ReadmeText is not null)
+	{
+		<div class='container fullW'>
+			<div class='textBox pre'>@Html.Raw(RemovedEmail.Highlight(Model.ReadmeText))</div>
+		</div>
+	}
+
+	@foreach (var imageUrl in Model.ImageUrls)
+	{
+		<div class='container fullW'>
+			<img src='@imageUrl' class='imgBox'>
+		</div>
+	}
+	<script>
+	var controlPointElements = document.getElementsByClassName("controlPoint");
+
+	function cpMouseover(event){
+		var targetElement = event.target || event.srcElement
+		targetElement.nextSibling.nextSibling.setAttribute("class", "tooltiptext visible")
+	}
+
+	function cpMouseout(event){
+		var targetElement = event.target || event.srcElement
+		targetElement.nextSibling.nextSibling.setAttribute("class", "tooltiptext")
+	}
+
+	for (var i = 0; i < controlPointElements.length; i++){
+		controlPointElements[i].addEventListener('mouseover', cpMouseover, false);
+		controlPointElements[i].addEventListener('mouseout', cpMouseout, false);
+	}
+	</script>
+}
+else
+{
+	<div class='container fullW'>
+		<div class='titleBox'>Can't find map</div>
+	</div>
+}

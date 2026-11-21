@@ -1,0 +1,46 @@
+@model IReadOnlyList<ModViewModel>
+<div class='container fullfW'>
+	<div class='titleBox'>Mods</div>
+</div>
+@for (int i = 0; i < Model.Count; i++)
+{
+	var mod = Model[i];
+	<div class='container modW'>
+		<div class='mapBox modBox'>
+			<a href="/Maps?mod=@mod.FolderName">
+				<div class='modName'>@mod.FullName</div>
+				<div class='modInnerBox'>
+					<div class='modShortName'>
+						@if (!string.Equals(mod.FolderName, mod.FullName, StringComparison.OrdinalIgnoreCase))
+						{
+							@mod.FolderName
+						}
+						<span class='modVersion'> @if (!string.IsNullOrEmpty(mod.Version)) {@mod.Version} else {@Html.Raw("&nbsp;")}</span>
+					</div>
+					<div class=''>@mod.MapCount maps</div>
+					@if (mod.Dependencies.Count > 0)
+					{
+						<div>Requires:
+							@foreach (var dependency in mod.Dependencies)
+							{
+								<div class='modTag'>@dependency</div>
+							}
+						</div>
+					}
+					else
+					{
+						<div>@Html.Raw("&nbsp;")</div>
+					}
+				</div>
+				@if (mod.LastUpdate is not null)
+				{
+					<div class='mapDate'>@mod.LastUpdate</div>
+				}
+			</a>
+		</div>
+	</div>
+	@if ((i + 1) % 2 == 0)
+	{
+		<div style='clear: both;'></div>
+	}
+}

@@ -1,0 +1,40 @@
+@model HomePageViewModel
+<div class='container fullW'>
+	<div class='textBox centerText'>
+		Welcome to this website hosted by the bf1942 master server manager and creator of DataField42.
+		<br>
+			Here you will find all kinds of information about bf1942.
+		<br>
+		<br>
+			Arkyliën
+	</div>
+</div>
+<div class='container'>
+	<div class='textBox centerText'>
+		DataField42 is created by Arkyliën. Please support the development via PayPal: @await Html.PartialAsync("_PayPal"), or here:
+		<iframe src="https://github.com/sponsors/Ahrkylien/card" title="Sponsor Ahrkylien" height="80px" width="100%" style="border: 0;"></iframe>
+	</div>
+</div>
+
+@await Html.PartialAsync("_LineGraph", Model.PlayerNumbers)
+
+<div class='container'>
+	<div class='tableBox fullW'>
+		<div style='margin: auto;width: 100%;text-align: center;font-size: 20px;color: #c1c1c1;'>
+		@Model.TotalPlayers <span style='color: #8a8a8a;'>players are online</span>
+		</div><br>
+		<table class='serverList'>
+		@foreach (var server in Model.Servers)
+		{
+			<tr class='pointer' onclick="document.location = 'Server/@(server.IsTracked ? "" : "FromQueryPort/")@server.Ip:@server.LinkPort';">
+				<td>@if (server.Status.HasPassword) {<span class='material-icons' style='font-size:14px;color:#c33c3c;'>lock</span>}</td>
+				<td>@server.Status.HostName</td>
+				<td>@server.Ip:@server.Status.HostPort</td>
+				<td>@server.PlayerCount/@server.Status.MaximumNumberOfPlayers@if (server.Status.ReservedSlots != 0) {@($"({server.Status.ReservedSlots})")}</td>
+				<td>@server.MapNameFormatted</td>
+				<td>@server.Status.GameId</td>
+			</tr>
+		}
+		</table>
+	</div>
+</div>

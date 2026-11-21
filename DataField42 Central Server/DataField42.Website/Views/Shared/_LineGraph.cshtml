@@ -1,0 +1,136 @@
+@model LineGraphViewModel
+<div class='container'>
+	<div style='    position: relative;
+    overflow: auto;
+    background: #090b12;
+    border: solid 2px #233050;
+	background: #090b12;
+	background: linear-gradient(0deg, rgba(9,11,18,0) 0%, rgba(9,11,18,1) 100%);
+    border-bottom: 0px;
+    padding: 10px;
+    max-height: 100%;
+    font-size: 18px;
+    color: #d4d4d4;'>
+		Number of Online Players
+	</div>
+</div>
+<div class='container'>
+	<div class='' style='position: relative;overflow: auto; border: solid 0x; max-height: 100%;text-align: left;'>
+		<canvas id="myChart" style="width:100%;height:300px"></canvas>
+	</div>
+</div>
+
+<script>
+function convertTZ(date, tzString, format) {
+    return (new Date(date)).toLocaleString("en-UK", {timeZone: tzString});
+}
+
+var timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+dataRaw = @Html.Raw(Model.SamplesJson)
+
+dataConverted = [];
+for (i in dataRaw){
+	// Prepend with NaN if its a 0 with a 0 before it
+	if (dataRaw[i][1] == 0 && i > 0 && dataRaw[i-1][1] == 0)
+		dataConverted.push({'x': convertTZ(dataRaw[i][0], timeZone), 'y': NaN});
+	dataConverted.push({'x': convertTZ(dataRaw[i][0], timeZone), 'y': dataRaw[i][1]});
+}
+
+var canvas = document.getElementById('myChart');
+var ctx = canvas.getContext('2d');
+var gradient = ctx.createLinearGradient(0, 0, 0, 300);
+
+gradient.addColorStop(0, 'rgba(173,235,93,.5)');
+gradient.addColorStop(.9, 'rgba(173,235,93,0)');
+
+const data = {
+  datasets: [
+    {
+      label: 'Number of Players',
+      data: dataConverted,
+      borderColor: 'rgba(149,76,234,1)',
+      borderColor: 'rgba(173,235,93,1)',
+      backgroundColor: gradient,
+      fill: true,
+      cubicInterpolationMode: 'monotone',
+      tension: 0.4,
+	  borderWidth: 2
+    }
+  ]
+};
+
+// One marker per map change, drawn as a labelled vertical line.
+const annotationsRaw = @Html.Raw(Model.AnnotationsJson);
+const annotations = annotationsRaw.map(function(annotation){
+	return {
+		type: 'line',
+		mode: "vertical",
+		borderColor: '#233050',
+		borderWidth: 2,
+		scaleID: 'x',
+		value: convertTZ(annotation.value, timeZone),
+		drawTime: 'beforeDatasetsDraw',
+		label: {
+			content: annotation.label,
+			display: true,
+			position: 'start',
+			backgroundColor: '#090b12',
+			font: {
+				size: 13,
+				style: 'normal',
+				weight: 'normal',
+			},
+			color: '#b400d5',
+			drawTime: 'afterDatasetsDraw',
+			borderRadius: 3,
+			padding: 0,
+			rotation: -90,
+		}
+	};
+});
+const config = {
+	type: 'line',
+	data: data,
+	options: {
+		responsive: true,
+		elements: {point: {radius: 0,}},
+		interaction: {
+			intersect: false,
+			mode: 'index',
+		},
+		plugins: {
+			annotation: {
+				annotations: annotations,
+			},
+			tooltip: {
+				displayColors: false,
+			},
+			legend: {
+				display: false,
+			},
+		},
+		scales: {
+			x: {
+				type: 'time',
+				time: {
+					parser: 'DD/MM/YYYY, HH:mm:SS',
+					timezone: 'Europe/Paris',
+				},
+				grid: {
+					display:false
+				},
+			},
+			y: {
+				suggestedMin: 0,
+				ticks: {
+					stepSize: 5,
+				},
+				grid: {
+					display:false
+				},
+			},
+		},
+	},
+};
+const myChart = new Chart(canvas, config);
+</script>

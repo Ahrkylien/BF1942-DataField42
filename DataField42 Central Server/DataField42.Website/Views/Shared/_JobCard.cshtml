@@ -1,0 +1,38 @@
+@model JobCardViewModel
+@{
+    var job = Model.Job;
+}
+<div class='container fullW'>
+	<div class='textBox' data-job="@job.JobId">
+		<div style='font-weight: bold;font-size:20px;'>@job.Name</div>
+		<div style='color:#8a8a8a;'>@job.Description</div>
+		<br>
+		<div class='jobProgress'>
+			<div class='jobState'>@await Html.PartialAsync("_JobState", job)</div>
+			<div class='jobBar' style='position:relative;width:100%;max-width:400px;background:#090b12;height:20px;border: solid 2px #233050;margin-top:6px;'>
+				<div class='jobBarFill' style='width:@((job.Percentage ?? 0).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%;background:#57a857;height:16px;transition:width .4s ease;'></div>
+			</div>
+		</div>
+		<br>
+		@* Works as an ordinary form without script, and is taken over by admin-jobs.js when there is
+		   one, which sends it with fetch and updates this card instead of reloading the page. *@
+		<form method="post" data-job-form action="/Admin/Jobs/@job.JobId/@(job.IsRunning ? "Cancel" : "Start")" style='display:inline-block;'>
+			@Html.AntiForgeryToken()
+			<input type="hidden" name="returnTo" value="@Model.ReturnTo">
+			@if (Model.TakesMod)
+			{
+				<select name="mod" class="fse2 inline" @(job.IsRunning ? "hidden" : null)>
+					<option value="">Every mod</option>
+					@foreach (var modFolderName in Model.ModFolderNames)
+					{
+						<option value="@modFolderName">@modFolderName</option>
+					}
+				</select>
+			}
+			<button class='btn' type="submit" style='margin-left:0px;'>@(job.IsRunning ? "Stop" : "Run")</button>
+		</form>
+		<span class='jobMessage' style='color:#ab0909;margin-left:10px;' hidden></span>
+		<a href='/Admin/Jobs/@job.JobId/Runs' class='urlLine' style='margin-left:10px;color:#8a8a8a;'>Earlier runs</a>
+		<div class='textBox pre jobLog' style='max-height:240px;overflow:auto;margin-top:10px;' @(job.Log.Count > 0 ? null : "hidden")>@string.Join('\n', job.Log)</div>
+	</div>
+</div>

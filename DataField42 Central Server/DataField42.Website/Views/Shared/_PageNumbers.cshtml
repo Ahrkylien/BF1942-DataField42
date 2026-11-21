@@ -1,0 +1,26 @@
+@model MapsPageViewModel
+<div class='fullW'>
+	<a href='?left'>
+		<div class='goBtn goLeft'>
+			<i class="material-icons" style='margin-top: 3px; font-size: 30px;'>arrow_back</i>
+		</div>
+	</a>
+	<div class='goPageBox'>
+		@foreach (var pageNumber in Model.PageNumbers)
+		{
+			@if (pageNumber > 0)
+			{
+				<div class='inline goBtn@(pageNumber == Model.ActivePage ? " goPage" : "")' onclick="@(pageNumber != Model.ActivePage ? "pageClick(event)" : null)">@pageNumber</div>
+			}
+			else
+			{
+				<div class='inline'>..</div>
+			}
+		}
+	</div>
+	<a href='?right'>
+		<div class='goBtn goRight'>
+			<i class="material-icons" style='margin-top: 3px; font-size: 30px;'>arrow_forward</i>
+		</div>
+	</a>
+</div>

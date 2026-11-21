@@ -1,0 +1,40 @@
+@model MapBannerViewModel
+<div class='container fullW'>
+	<div class='mapBox'>
+		<div class='mapName mapNameMob'>
+			@if (Model.ShowHasNoReadme) {<span style="color:#996868;">@Model.Name</span>} else {@Model.Name}
+			<a href='/Maps?author=@Uri.EscapeDataString(Model.AuthorName ?? "")&mod=@Model.ModFolderName'><div class='mapAuthMob'>@Model.AuthorName</div></a>
+		</div>
+		<div class='mapImgHolder'>
+			<img src='@Model.InGameMapUrl' alt='mini-map' class='mapImg'>
+		</div>
+		<div class='mapName'>@if (Model.ShowHasNoReadme) {<span style="color:#996868;">@Model.Name</span>} else {@Model.Name}</div>
+		<a href='/Maps?author=@Uri.EscapeDataString(Model.AuthorName ?? "")&mod=@Model.ModFolderName'><div class='mapAuth'>@Model.AuthorName</div></a>
+		<div class='mapTagBar'>
+		@foreach (var tag in Model.Tags)
+		{
+			<div class='mapTag' style='background:@tag.Color;'>@tag.Name</div>
+		}
+		</div>
+		@if (Model.MultiplayerBriefingObjectives is not null)
+		{
+			<div class='mapTxt pre'>@Model.MultiplayerBriefingObjectives</div>
+		}
+		else if (Model.ReadmeText is not null)
+		{
+			<div class='mapTxt pre'>@Html.Raw(RemovedEmail.Highlight(Model.ReadmeText))</div>
+		}
+		<div class='mapBtnBar'>
+			<div class='mapGPMBar'>
+				@if (Model.HasCoop) {<div class='mapGPM'>Coop</div>}
+				@if (Model.HasConquest) {<div class='mapGPM'>CQ</div>}
+				@if (Model.HasCaptureTheFlag) {<div class='mapGPM'>CTF</div>}
+				@if (Model.HasTeamDeathmatch) {<div class='mapGPM'>TDM</div>}
+				@if (Model.HasObjectiveMode) {<div class='mapGPM'>Objective</div>}
+			</div>
+			<a href='/Map/@Model.MapId'><div class='btn mapBtn'>Read More</div></a>
+			<a href='/Map/@Model.MapId/Download' target="_blank" rel="noopener noreferrer"><div class='btn mapBtn mapBtnDl'>Download</div></a>
+		</div>
+		<div class='mapDate'>@Html.Raw(Model.DateText)</div>
+	</div>
+</div>

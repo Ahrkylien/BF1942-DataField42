@@ -1,0 +1,24 @@
+@model ExtraPageViewModel
+<div class='container fullW'>
+	<div class='textBox centerText'>
+		<a href='AllCMD' class='btn'><span class=''>All Commands</span></a>
+		<a href='ObjectTemplate' class='btn'><span class=''>ObjectTemplate Commands</span></a>
+		<a href='GeometryTemplate' class='btn'><span class=''>GeometryTemplate Commands</span></a>
+		<a href='GC_Errors' class='btn'><span class=''>GC Errors</span></a>
+		<a href='MissingMaps' class='btn'><span class=''>Missing Maps</span></a>
+		<a href='ErrorList' class='btn'><span class=''>Error List</span></a>
+	</div>
+</div>
+<div class='container fullW'>
+	<div class='textBox centerText'>
+		@foreach (var filesystem in Model.Filesystems)
+		{
+			@filesystem.Name<text>: </text>@((filesystem.FractionUsed * 100).ToString("0.##"))<text> %</text><br>
+		}
+	</div>
+</div>
+
+@if (Model.PlayerNumbers is not null)
+{
+	@await Html.PartialAsync("_LineGraph", Model.PlayerNumbers)
+}

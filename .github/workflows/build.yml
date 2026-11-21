@@ -16,8 +16,5 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Restore
-        run: dotnet restore DataField42.sln -r win-x64
-
       - name: Build
-        run: dotnet build DataField42.sln --no-restore --configuration Release
+        run: dotnet build DataField42.slnx --configuration Release

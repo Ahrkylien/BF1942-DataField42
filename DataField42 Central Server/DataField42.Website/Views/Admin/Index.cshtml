@@ -1,0 +1,42 @@
+@model AdminPageViewModel
+@{
+    // The jobs that can be limited to a single mod, rather than running over the whole collection.
+    var jobsTakingAMod = new[] { "MapList", "MapInfo" };
+    var maintenanceJobs = Model.Jobs.Where(job => job.JobId is not ("ServerFileList" or "ApplyTransfer")).ToList();
+}
+<div class='container'>
+	<div class='titleBox'>Admin</div>
+</div>
+@if (Model.Message is not null)
+{
+	<div class='container fullW'><div class='textBox' style='color:#57a857;'>@Model.Message</div></div>
+}
+@if (Model.ErrorMessage is not null)
+{
+	<div class='container fullW'><div class='textBox' style='color:#ab0909;'>@Model.ErrorMessage</div></div>
+}
+<div class='container fullW'>
+	<div class='textBox'>
+		<a href='/Admin/FileTransfer' class='btn' style='margin-left:0px;'>File transfer</a>
+		<a href='/Admin/Update' class='btn'>Update</a>
+		<form method="post" action="/Logout" style='display:inline-block;'>
+			@Html.AntiForgeryToken()
+			<button class='btn' type="submit">Sign out</button>
+		</form>
+	</div>
+</div>
+<div class='container fullfW'>
+	<div class='titleBox'>Maintenance</div>
+</div>
+<div style='clear: both;'></div>
+@foreach (var job in maintenanceJobs)
+{
+	@await Html.PartialAsync("_JobCard", new JobCardViewModel
+	{
+		Job = job,
+		ReturnTo = "/Admin",
+		TakesMod = jobsTakingAMod.Contains(job.JobId),
+		ModFolderNames = Model.ModFolderNames,
+	})
+}
+@await Html.PartialAsync("_JobPolling")

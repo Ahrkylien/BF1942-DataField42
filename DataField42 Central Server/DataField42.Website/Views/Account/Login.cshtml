@@ -1,0 +1,35 @@
+@model LoginViewModel
+<div class='container'>
+	<div class='titleBox'>Sign in</div>
+</div>
+<div class='container'>
+	<div class='textBox'>
+		@if (Model.NeedsFirstAccount)
+		{
+			<div style='color:#ab0909;'>
+				There is no admin account yet. Create one on the server with:
+			</div>
+			<div class='pre' style='color:#c1c1c1;'>dotnet DataField42.Website.dll create-admin &lt;username&gt; &lt;password&gt;</div>
+			<br>
+		}
+		@if (Model.ErrorMessage is not null)
+		{
+			<div style='color:#ab0909;'>@Model.ErrorMessage</div>
+			<br>
+		}
+		@if (!Model.DatabaseUnavailable)
+		{
+		<form method="post" action="/Login">
+			@Html.AntiForgeryToken()
+			<input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl">
+			<div style='padding-bottom:10px;'>
+				<input name="UserName" placeholder="Username" type="text" autocomplete="username" value="@Model.UserName">
+			</div>
+			<div style='padding-bottom:10px;'>
+				<input name="Password" placeholder="Password" type="password" autocomplete="current-password">
+			</div>
+			<button class='btn' type="submit" style='margin-left:0px;'>Sign in</button>
+		</form>
+		}
+	</div>
+</div>

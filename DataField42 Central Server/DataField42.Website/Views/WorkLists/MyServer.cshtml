@@ -1,0 +1,16 @@
+@model MyServerPageViewModel
+<div class='container fullW'>
+	<div class='textBox'>
+		@foreach (var (groupKey, maps) in Model.MapGroups)
+		{
+			<div style='font-weight: bold;font-size:20px;'>@groupKey</div>
+			@foreach (var map in maps)
+			{
+				<div>
+					@map
+				</div>
+			}
+			<br>
+		}
+	</div>
+</div>

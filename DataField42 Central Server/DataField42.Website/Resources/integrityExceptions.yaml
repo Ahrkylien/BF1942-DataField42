@@ -1,0 +1,159 @@
+WrongGameMapId:
+  - Map: Aberdeen
+    Mod: bf1918 # bf1942
+    
+  - Map: AEF Training Map
+    Mod: bf1942 # B4DS
+  - Map: TheCanyon
+    Mod: bf1942 # bf1942_ici
+  - Map: Eternal Forest
+    Mod: bf1942 # Eternal_Forest
+  - Map: Kuril
+    Mod: bf1942 # Human_Wrath
+  - Map: ShelledOutCity
+    Mod: bf1942 # hydroracers2
+  - Map: Pilot Wings
+    Mod: bf1942 # interstate,                                           idk
+  - Map: Wonton Lake
+    Mod: bf1942 # Maptopia
+  - Map: PearlHarbor NineTeenFortyOne
+    Mod: bf1942 # MikeMod
+  - Map: Reich City
+    Mod: bf1942 # Reich_city
+  - Map: OceanOrgy
+    Mod: bf1942 # SubSandwich
+    
+  - Map: Aberdeen
+    Mod: BF2 # bf1942
+    
+  - Map: Aberdeen
+    Mod: bfheroes # BF1942
+    
+  - Map: Aberdeen
+    Mod: bfpro # BF1942
+    
+  - Map: cw operation night fire
+    Mod: DC2 # 21CW
+  - Map: cw road to baghdad k
+    Mod: DC2 # 21CW
+  - Map: Road To Basra
+    Mod: DC2 # BF1942
+  - Map: DCM Thunder Island Day2
+    Mod: DC2 # DC2l
+  - Map: DCM Al Nas
+    Mod: DC2 # DesertCombat
+  - Map: DC Liberation of Kuwait
+    Mod: DC2 # DesertCombat
+  - Map: DC Whiskey Mountain
+    Mod: DC2 # DesertCombat
+  - Map: DCM Al Nas Day2
+    Mod: DC2 # DesertCombat
+    
+  - Map: DC Compound
+    Mod: DC_Final # DesertCombat
+  - Map: DC Compound Day2
+    Mod: DC_Final # DesertCombat
+  - Map: Charlie coop
+    Mod: DC_Final # desertcombat
+  - Map: Rush Hour
+    Mod: DC_Final # DesertCombat
+  - Map: tech ops1 coop
+    Mod: DC_Final # desertcombat
+    
+  - Map: Island Too Far
+    Mod: DesertCombat # bf1942
+    
+  - Map: radio controlled cars
+    Mod: interstate # 
+  - Map: BOB stunts
+    Mod: interstate # BF1942
+    
+  - Map: Moottoritie
+    Mod: FinnWars # bf1942
+    
+  - Map: Operation Tempest
+    Mod: RCMappack # bf1942
+    
+  - Map: brissago
+    Mod: Aftermath # bf1942
+  - Map: R fricktal
+    Mod: Aftermath # bf1942
+  - Map: sciencelab
+    Mod: Aftermath # BF1942
+    
+# https://www.bf-games.net/forum/topic/49694-bf1942-mods/
+# DayatTheRaces 1324 for both bf1942 and actionbf
+# double check ID: 3264, name: 'Dr B Alaska', gameMapId: 'bf1942', Mod folderName: DesertCombat
+# check ID: 3266, name: 'Incoming storm', gameMapId: 'bf1942', Mod folderName: DesertCombat
+# maybe copy Operation Tempest?
+
+
+
+NoGameMapId:
+  - Map: Border War
+    Mod: bf1942
+  - Map: City Assault
+    Mod: bf1942
+  - Map: Bocage revisited
+    Mod: bf1942
+  - Map: Gold Beach
+    Mod: bf1942
+  - Map: NB Pearl Harbor
+    Mod: bf1942
+  - Map: NB BoB
+    Mod: bf1942
+  - Map: BerlinJeeps
+    Mod: bf1942
+  - Map: LCVP Berlin
+    Mod: bf1942
+  - Map: Hill112
+    Mod: bf1942
+  - Map: Gazala Racetrack
+    Mod: bf1942
+  - Map: Marshall island
+    Mod: bf1942
+  - Map: Africasun
+    Mod: bf1942
+  - Map: Sea Battle
+    Mod: bf1942
+  - Map: Pacific Sun
+    Mod: bf1942
+  - Map: Ender Forest
+    Mod: bf1942
+  - Map: The Great Berlin Flood
+    Mod: bf1942
+  - Map: Melks Iwo Jima
+    Mod: bf1942
+  - Map: Canyon Wars
+    Mod: bf1942
+  - Map: NB Berlin
+    Mod: bf1942
+  - Map: Prophecy Beach
+    Mod: bf1942
+  - Map: Mountain Battle
+    Mod: bf1942
+  - Map: Northway Park
+    Mod: bf1942
+  - Map: The Real Midway
+    Mod: bf1942
+  - Map: Lolled
+    Mod: bf1942
+  - Map: Battle of OooItis
+    Mod: bf1942
+  - Map: Belgian Village
+    Mod: bf1942
+  - Map: Black Forest Fortress
+    Mod: bf1942
+  - Map: Blitz Creek
+    Mod: bf1942
+  - Map: Symphony
+    Mod: bf1942
+  - Map: "Assault "
+    Mod: bf1942
+  - Map: Battle of Stirling
+    Mod: siege
+  - Map: Wormainit
+    Mod: silentheroes
+  - Map: Boat Rally
+    Mod: EoD # based on zip name and spawners
+# check eod of ID: 1580, name: 'Pacific Sun' Mod folderName: 'bf1942'
