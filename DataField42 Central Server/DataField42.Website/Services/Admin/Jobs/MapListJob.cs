@@ -73,7 +73,7 @@ public sealed class MapListJob(DataField42DbContext context, FileDatabase fileDa
         }
 
         var onDisk = Directory
-            .EnumerateFiles(levelsDirectory, "*.rfa", SearchOption.AllDirectories)
+            .EnumerateFiles(levelsDirectory, "*.rfa", new EnumerationOptions { RecurseSubdirectories = true, MatchCasing = MatchCasing.CaseInsensitive })
             .Select(path => (Path: path, Name: ParseArchiveName(path)))
             .ToList();
 

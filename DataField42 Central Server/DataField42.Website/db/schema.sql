@@ -125,7 +125,10 @@ CREATE TABLE IF NOT EXISTS `PlayerNumber` (
   `players` int(11) DEFAULT NULL,
   `playersRaw` int(11) DEFAULT NULL,
   PRIMARY KEY (`ID`),
-  KEY `idx_round` (`ID`,`roundID`)
+  KEY `idx_round` (`ID`,`roundID`),
+  KEY `idx_playernumber_round` (`roundID`,`ID`),
+  KEY `idx_playernumber_round_date` (`roundID`,`date`),
+  KEY `idx_playernumber_date` (`date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `RequestLog` (

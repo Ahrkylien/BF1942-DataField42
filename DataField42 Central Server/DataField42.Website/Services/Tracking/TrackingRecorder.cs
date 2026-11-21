@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using DataField42.Website.Data;
 using DataField42.Website.Data.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -14,15 +15,25 @@ namespace DataField42.Website.Services.Tracking;
 /// </remarks>
 public sealed class TrackingRecorder(DataField42DbContext context, TimeProvider timeProvider, ILogger<TrackingRecorder> logger)
 {
+    private static readonly TimeSpan SlowServerThreshold = TimeSpan.FromSeconds(1);
+
     public async Task RecordAsync(IReadOnlyList<TrackedServer> servers, CancellationToken cancellationToken)
     {
         DateTime now = timeProvider.GetLocalNow().DateTime;
+        var pass = Stopwatch.StartNew();
 
         foreach (var server in servers)
         {
+            var timer = Stopwatch.StartNew();
+
             try
             {
                 await RecordServerAsync(server, now, cancellationToken);
+
+                // A pass should take seconds. A server that takes longer than this names the query
+                // that is slow, which is how a missing index or a bad plan shows itself.
+                if (timer.Elapsed > SlowServerThreshold)
+                    logger.LogWarning("Recording {Ip}:{Port} took {Seconds:0.0} s", server.Ip, server.Current.HostPort, timer.Elapsed.TotalSeconds);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -39,6 +50,8 @@ public sealed class TrackingRecorder(DataField42DbContext context, TimeProvider 
             playersRaw: null,
             roundId: null,
             cancellationToken);
+
+        logger.LogInformation("Recorded {Count} servers in {Seconds:0.0} s", servers.Count, pass.Elapsed.TotalSeconds);
     }
 
     private async Task RecordServerAsync(TrackedServer tracked, DateTime now, CancellationToken cancellationToken)

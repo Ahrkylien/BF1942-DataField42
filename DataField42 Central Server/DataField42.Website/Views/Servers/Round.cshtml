@@ -40,7 +40,9 @@
 	</div>
 }
 
-@if (status is not null && Model.Team1 is not null && Model.Team2 is not null)
+@* A live page has the scoreboards when the server answered; a round out of the history has them
+   from what the tracker recorded, and has no live status at all. *@
+@if (Model.Team1 is not null && Model.Team2 is not null)
 {
 	<div class='serverTeams'>
 		@await Html.PartialAsync("_TeamScoreboard", new TeamScoreboardViewModel(Model.Team1, Model.Players.Where(player => player.Team == 1).ToList()))
@@ -50,7 +52,7 @@
 else
 {
 	<div class='container fullfW'>
-		<div class='titleBox'>Can't reach server</div>
+		<div class='titleBox'>@(Model.IsLive ? "Can't reach server" : "Round not found")</div>
 	</div>
 }
 
