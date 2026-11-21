@@ -41,7 +41,8 @@ public sealed class DirectoryFileSystem(string rootDirectory) : IBfFileSystem
             yield break;
 
         string pattern = extension is null ? "*" : "*" + extension;
-        foreach (var file in Directory.EnumerateFiles(dir, pattern, SearchOption.AllDirectories))
+        var options = new EnumerationOptions { RecurseSubdirectories = true, MatchCasing = MatchCasing.CaseInsensitive };
+        foreach (var file in Directory.EnumerateFiles(dir, pattern, options))
         {
             string rel = BfPath.Normalize(Path.GetRelativePath(_root, file));
             if (rel.StartsWith(BfPath.Normalize(pathPrefix), StringComparison.OrdinalIgnoreCase))

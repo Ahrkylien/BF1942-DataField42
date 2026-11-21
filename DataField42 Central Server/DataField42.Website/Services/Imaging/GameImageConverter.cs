@@ -85,16 +85,27 @@ public static class GameImageConverter
         return null;
     }
 
+    // The fill methods write into the bitmap's own pixel memory. SkiaSharp's SetPixel and GetPixel
+    // each cross into native code, which for a 512x512 minimap is a quarter of a million calls and
+    // about half a second per image; writing the bytes directly takes a few milliseconds. The
+    // bitmaps are Rgba8888, so a pixel is four bytes in the order red, green, blue, alpha.
+
     private static bool FillFromBgra32(SKBitmap bitmap, IImage decoded)
     {
-        var data = decoded.Data;
+        var source = decoded.Data;
+        var destination = bitmap.GetPixelSpan();
+        int destinationStride = bitmap.RowBytes;
+
         for (int y = 0; y < decoded.Height; y++)
         {
-            int row = y * decoded.Stride;
-            for (int x = 0; x < decoded.Width; x++)
+            int s = y * decoded.Stride;
+            int d = y * destinationStride;
+            for (int x = 0; x < decoded.Width; x++, s += 4, d += 4)
             {
-                int i = row + x * 4;
-                bitmap.SetPixel(x, y, new SKColor(data[i + 2], data[i + 1], data[i], data[i + 3]));
+                destination[d] = source[s + 2];
+                destination[d + 1] = source[s + 1];
+                destination[d + 2] = source[s];
+                destination[d + 3] = source[s + 3];
             }
         }
         return true;
@@ -102,14 +113,20 @@ public static class GameImageConverter
 
     private static bool FillFromBgr24(SKBitmap bitmap, IImage decoded)
     {
-        var data = decoded.Data;
+        var source = decoded.Data;
+        var destination = bitmap.GetPixelSpan();
+        int destinationStride = bitmap.RowBytes;
+
         for (int y = 0; y < decoded.Height; y++)
         {
-            int row = y * decoded.Stride;
-            for (int x = 0; x < decoded.Width; x++)
+            int s = y * decoded.Stride;
+            int d = y * destinationStride;
+            for (int x = 0; x < decoded.Width; x++, s += 3, d += 4)
             {
-                int i = row + x * 3;
-                bitmap.SetPixel(x, y, new SKColor(data[i + 2], data[i + 1], data[i]));
+                destination[d] = source[s + 2];
+                destination[d + 1] = source[s + 1];
+                destination[d + 2] = source[s];
+                destination[d + 3] = 255;
             }
         }
         return true;
@@ -117,19 +134,21 @@ public static class GameImageConverter
 
     private static bool FillFromRgba16(SKBitmap bitmap, IImage decoded)
     {
-        var data = decoded.Data;
+        var source = decoded.Data;
+        var destination = bitmap.GetPixelSpan();
+        int destinationStride = bitmap.RowBytes;
+
         for (int y = 0; y < decoded.Height; y++)
         {
-            int row = y * decoded.Stride;
-            for (int x = 0; x < decoded.Width; x++)
+            int s = y * decoded.Stride;
+            int d = y * destinationStride;
+            for (int x = 0; x < decoded.Width; x++, s += 2, d += 4)
             {
-                int i = row + x * 2;
-                int packed = data[i] | (data[i + 1] << 8);
-                bitmap.SetPixel(x, y, new SKColor(
-                    (byte)(((packed >> 8) & 0xF) * 17),
-                    (byte)(((packed >> 4) & 0xF) * 17),
-                    (byte)((packed & 0xF) * 17),
-                    (byte)(((packed >> 12) & 0xF) * 17)));
+                int packed = source[s] | (source[s + 1] << 8);
+                destination[d] = (byte)(((packed >> 8) & 0xF) * 17);
+                destination[d + 1] = (byte)(((packed >> 4) & 0xF) * 17);
+                destination[d + 2] = (byte)((packed & 0xF) * 17);
+                destination[d + 3] = (byte)(((packed >> 12) & 0xF) * 17);
             }
         }
         return true;
@@ -137,18 +156,21 @@ public static class GameImageConverter
 
     private static bool FillFromR5G6B5(SKBitmap bitmap, IImage decoded)
     {
-        var data = decoded.Data;
+        var source = decoded.Data;
+        var destination = bitmap.GetPixelSpan();
+        int destinationStride = bitmap.RowBytes;
+
         for (int y = 0; y < decoded.Height; y++)
         {
-            int row = y * decoded.Stride;
-            for (int x = 0; x < decoded.Width; x++)
+            int s = y * decoded.Stride;
+            int d = y * destinationStride;
+            for (int x = 0; x < decoded.Width; x++, s += 2, d += 4)
             {
-                int i = row + x * 2;
-                int packed = data[i] | (data[i + 1] << 8);
-                bitmap.SetPixel(x, y, new SKColor(
-                    (byte)(((packed >> 11) & 0x1F) * 255 / 31),
-                    (byte)(((packed >> 5) & 0x3F) * 255 / 63),
-                    (byte)((packed & 0x1F) * 255 / 31)));
+                int packed = source[s] | (source[s + 1] << 8);
+                destination[d] = (byte)(((packed >> 11) & 0x1F) * 255 / 31);
+                destination[d + 1] = (byte)(((packed >> 5) & 0x3F) * 255 / 63);
+                destination[d + 2] = (byte)((packed & 0x1F) * 255 / 31);
+                destination[d + 3] = 255;
             }
         }
         return true;
@@ -156,14 +178,21 @@ public static class GameImageConverter
 
     private static bool FillFromGray8(SKBitmap bitmap, IImage decoded)
     {
-        var data = decoded.Data;
+        var source = decoded.Data;
+        var destination = bitmap.GetPixelSpan();
+        int destinationStride = bitmap.RowBytes;
+
         for (int y = 0; y < decoded.Height; y++)
         {
-            int row = y * decoded.Stride;
-            for (int x = 0; x < decoded.Width; x++)
+            int s = y * decoded.Stride;
+            int d = y * destinationStride;
+            for (int x = 0; x < decoded.Width; x++, s++, d += 4)
             {
-                byte value = data[row + x];
-                bitmap.SetPixel(x, y, new SKColor(value, value, value));
+                byte value = source[s];
+                destination[d] = value;
+                destination[d + 1] = value;
+                destination[d + 2] = value;
+                destination[d + 3] = 255;
             }
         }
         return true;
@@ -174,6 +203,22 @@ public static class GameImageConverter
         if (bitmap.AlphaType == SKAlphaType.Opaque)
             return false;
 
+        // Both four-byte layouts keep alpha in the last byte, so the pixels can be scanned as bytes.
+        if (bitmap.ColorType is SKColorType.Rgba8888 or SKColorType.Bgra8888)
+        {
+            var pixels = bitmap.GetPixelSpan();
+            for (int y = 0; y < bitmap.Height; y++)
+            {
+                int end = y * bitmap.RowBytes + bitmap.Width * 4;
+                for (int i = y * bitmap.RowBytes + 3; i < end; i += 4)
+                    if (pixels[i] != 255)
+                        return true;
+            }
+
+            return false;
+        }
+
+        // Any other layout, which only a decoded screenshot can have, is read through Skia.
         for (int y = 0; y < bitmap.Height; y++)
             for (int x = 0; x < bitmap.Width; x++)
                 if (bitmap.GetPixel(x, y).Alpha != 255)

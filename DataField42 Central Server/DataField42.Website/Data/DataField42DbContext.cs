@@ -199,6 +199,9 @@ public class DataField42DbContext(DbContextOptions<DataField42DbContext> options
         playerNumber.Property(p => p.PlayersRaw).HasColumnName("playersRaw");
         playerNumber.HasOne(p => p.Round).WithMany(r => r.PlayerNumbers).HasForeignKey(p => p.RoundId).OnDelete(DeleteBehavior.NoAction);
         playerNumber.HasIndex(p => new { p.Id, p.RoundId }).HasDatabaseName("idx_round");
+        playerNumber.HasIndex(p => new { p.RoundId, p.Id }).HasDatabaseName("idx_playernumber_round");
+        playerNumber.HasIndex(p => new { p.RoundId, p.Date }).HasDatabaseName("idx_playernumber_round_date");
+        playerNumber.HasIndex(p => p.Date).HasDatabaseName("idx_playernumber_date");
     }
 
     private static void ConfigureRequestLog(ModelBuilder modelBuilder)
