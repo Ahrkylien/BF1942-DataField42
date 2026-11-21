@@ -1,0 +1,42 @@
+@{
+    bool hasChartJs = ViewData["HasChartJs"] as bool? ?? false;
+}
+<head>
+	<meta charset="UTF-8">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<title>@ViewData["Title"]</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
+	<link rel="stylesheet" href="/static/css/main.css">
+	<meta name="Description" content="tmp">
+	<meta name="author" content="Henk">
+	<meta http-equiv="Content-Language" content="NL">
+	<meta name="robots" content="follow, index">
+	<meta name="HandheldFriendly" content="True">
+	<meta name="theme-color" content="#0a1225">
+	<script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js'></script>
+	@if (hasChartJs)
+	{
+		<script src="https://cdn.jsdelivr.net/npm/chart.js@@4.3.0/dist/chart.umd.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/moment@@2.29.4/moment.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@@1.0.1"></script>
+		<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+	}
+	<!-- Matomo -->
+	<script>
+	  var _paq = window._paq = window._paq || [];
+	  /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+	  _paq.push(['trackPageView']);
+	  _paq.push(['enableLinkTracking']);
+	  (function() {
+		var u="//bf1942.eu:8000/matomo/";
+		_paq.push(['setTrackerUrl', u+'matomo.php']);
+		_paq.push(['setSiteId', '1']);
+		var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+		g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+	  })();
+	</script>
+	<!-- End Matomo Code -->
+</head>

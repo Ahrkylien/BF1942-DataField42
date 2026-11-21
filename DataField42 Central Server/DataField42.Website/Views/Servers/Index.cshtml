@@ -1,0 +1,43 @@
+@model ServersPageViewModel
+<div class='container'>
+	<div class='titleBox'>Servers</div>
+</div>
+<div style='margin: auto;width: 100%;text-align: center;font-size: 20px;color: #c1c1c1;'>
+	@Model.TotalPlayers<span style='color: #8a8a8a;'> players</span>
+	<br>
+	@Model.ServerCount<span style='color: #8a8a8a;'> servers</span>
+</div>
+<div class='container'>
+	<table class='serverList'>
+	@foreach (var server in Model.Rows)
+	{
+		@if (server is null)
+		{
+			<tr class='nonehov'><td>@Html.Raw("&nbsp;")</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+		}
+		else
+		{
+			<tr class='pointer@(server.PlayerCount != 0 ? " popu" : "")' onclick="document.location = 'Server/@(server.IsTracked ? "" : "FromQueryPort/")@server.Ip:@server.LinkPort';">
+				<td>@if (server.Status.HasPassword) {<span class='material-icons' style='font-size:14px;color:#c33c3c;'>lock</span>}</td>
+				<td>@server.Status.HostName</td>
+				<td>@server.Ip:@server.Status.HostPort</td>
+				<td>@server.PlayerCount/@server.Status.MaximumNumberOfPlayers@if (server.Status.ReservedSlots != 0) {@($"({server.Status.ReservedSlots})")}</td>
+				<td>@server.MapNameFormatted</td>
+				<td>@server.Status.GameId</td>
+				<td>@server.QueriedAgo</td>
+				@if (server.IsHeartbeatSource)
+				{
+					<td style='color:#57a857;text-align:right;'>
+						<span class='material-icons' style='font-size:14px'>favorite</span>
+						@server.HeartbeatAgo
+					</td>
+				}
+				else
+				{
+					<td style='color:#c33c3c;text-align:right;'>@server.Source</td>
+				}
+			</tr>
+		}
+	}
+	</table>
+</div>

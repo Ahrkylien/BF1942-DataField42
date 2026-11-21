@@ -1,0 +1,957 @@
+::-webkit-scrollbar {
+	width: 10px;
+    height: 10px;
+	background-color: #233050;
+}
+
+::-webkit-scrollbar-track {
+	background-color: #090b12;
+}
+ 
+::-webkit-scrollbar-thumb {
+	border-radius: 10px;
+	background-color: #233050;
+	min-height: 100px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: #89adf5; 
+}
+
+*, *:before, *:after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+	/* font-family:Source Sans Pro; */
+	font-family:monospace;
+}
+a{
+	text-decoration:none;
+	color: inherit;
+}
+input, textarea, button {
+	font-size: 13px;
+    float: left;
+    padding: 2px;
+    color: #d4d4d4;
+    background: #0a1225;
+    outline: none;
+    border: solid 2px #233050;
+}
+select, datalist {
+	font-size: 13px;
+    cursor: pointer;
+    background: #0a1225;
+    color: #d4d4d4;
+    outline: none;
+    border: solid 2px #233050;
+    padding: 1px;
+}
+
+body{
+	position:relative;
+	background: #0a1225;
+    color: #8a8a8a;
+    padding: 0px;
+    margin: 0px;
+    min-height: 100vh;
+	font-size: 13px;
+}
+table{
+    border-collapse: collapse;
+    margin: auto;
+	text-align:left;
+}
+td{
+	padding:2px;
+	word-break: break-word;
+}
+tr:hover{
+	background:#233050;
+}
+
+.material-icons{
+	vertical-align:middle;
+}
+.greenIcon{
+	font-size:19px;
+	color:#50cf66;
+}
+.redIcon{
+	font-size:19px;
+	color:#cf5050;
+}
+
+
+.content{
+	position:relative;
+	width:100%;
+	max-width:1000px;
+	margin:auto;
+    padding: 5px;
+}
+
+
+
+/* Header and Footer: */
+.header{
+	width:100%;
+	padding-bottom:6px;
+	position:fixed;
+	z-index:10;
+	background:#090b12;
+	overflow:hidden;
+	border-bottom: solid 2px #233050;
+	text-align: center;
+}
+.headerBehind{
+	width:100%;
+	height:56px;
+	position:relative;
+}
+footer{
+	position: absolute;
+    bottom: 0px;
+    width: 100%;
+}
+.footer{
+	position: absolute;
+    bottom: 10px;
+    text-align: center;
+    width: 100%;
+}
+.footerBehind{
+	margin-bottom: 10px;
+    width: 100%;
+    height: 34px;
+}
+.menuitems{
+    margin: auto;
+	display: inline-block;
+}
+
+
+
+
+/* spans: */
+.hiddenText{
+    color: #b9b9b9;
+    background: #233050;
+}
+.relativeTooltip{
+    white-space: nowrap;
+    visibility: hidden;
+    width: auto;
+    background-color: #233050;
+    color: #d4d4d4;
+    text-align: center;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    margin-top: 16px;
+    margin-left: -5px;
+    border: solid 2px #586993;
+}
+
+
+
+
+
+/* containers and boxes: */
+
+.container{
+	float: left;
+	width:100%;
+	padding:5px;
+	text-align: center;
+}
+.titleBox{
+	position:relative;
+    overflow: auto;
+	background:#090b12;
+    border: solid 2px #233050;
+    padding: 10px;
+	max-height:100%;
+	font-size:30px;
+	color: #d4d4d4;
+}
+.subtitleBox{
+	position:relative;
+    overflow: auto;
+	background:#090b12;
+    border: solid 2px #233050;
+    padding: 10px;
+	max-height:100%;
+	font-size:22px;
+}
+.textBox{
+	position:relative;
+    overflow: auto;
+	background:#090b12;
+    border: solid 2px #233050;
+    padding: 10px;
+	max-height:100%;
+	text-align:left;
+}
+.imgBox{
+	position:relative;
+    overflow: auto;
+	background:#090b12;
+    border: solid 2px #233050;
+	width:100%;
+	text-align:left;
+	vertical-align: middle;
+}
+.tableBox{
+	position:relative;
+    overflow: auto;
+	background:#090b12;
+    border: solid 2px #233050;
+    padding: 10px;
+	max-height:100%;
+}
+.mapBox{
+	position:relative;
+    overflow: auto;
+	background:#090b12;
+    border: solid 2px #233050;
+	max-height:100%;
+}
+.listItemBox{
+    position: relative;
+    overflow: auto;
+    background: #1b1e2a;
+    border: solid 2px #233050;
+    padding: 5px 10px;
+    text-align: left;
+    border-radius: 10px;
+    height: 30px;
+    overflow: hidden;
+}
+.listItemBox:hover{
+    background: #233050;
+}
+.listItemBox>div{
+    color: #d4d4d4;
+    float: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+	min-height:5px;
+	padding-left: 5px;
+}
+.listItemBox>div:nth-child(1){
+	padding-left: 0px;
+}
+.listItemBox>div.defaultColor{
+	color: #8a8a8a;
+}
+.listItemBoxSep{
+    position: relative;
+    overflow: auto;
+	text-align: center;
+    overflow: hidden;
+}
+.seperatorBox{
+	position:relative;
+	width:100%;
+	height:10px;
+}
+
+
+/* span styles: */
+.subTitle{
+    color: #2b97c1;
+    font-size: 13px;
+    display: block;
+}
+
+
+
+
+
+
+
+
+/* buttons: */
+.btn {
+	width:auto;
+	float:left;
+	margin-top: 10px;
+	margin-left: 22px;
+	background: #0a1225;
+	border: solid 2px #233050;
+	color: #d4d4d4;
+	font-size: 20px;
+	padding: 4px 20px 4px 20px;
+	text-decoration: none;
+	cursor:pointer;
+}
+.btnselected {
+	-webkit-box-shadow: 0 0 41px #3387af;
+	-moz-box-shadow: 0 0 41px #3387af;
+	box-shadow: 0 0 41px #3387af;
+	color:#ffffff;
+}
+.btn:hover {
+	background: #233050;
+	transition: all .1s ease-in-out;
+}
+
+
+
+
+
+
+
+
+
+
+/* map list: */
+.goBtn{
+    width: 40px;
+    height: 40px;
+    background: #090b12;
+    text-align: center;
+    border: solid 2px #233050;
+    line-height: 36px;
+	text-align: center;
+	font-size: 22px;
+	color:#d4d4d4;
+	cursor:pointer;
+}
+.goBtn:hover {
+	background: #233050;
+	transition: all .1s ease-in-out;
+}
+.goLeft{
+    position: absolute;
+    left: 0px;
+    top: 0px;
+}
+.goRight{
+    position: absolute;
+    right: 0px;
+    top: 0px;
+}
+.goPageBox{
+    height: 40px;
+    line-height: 40px;
+	text-align: center;
+}
+.goPage{
+	background:#233050;
+	cursor:default;
+}
+
+
+
+
+/* map banner: */
+.mapImgHolder{
+    height: 300px;
+    width: 300px;
+	float: left;
+}
+.mapImg{
+	float: left;
+    max-height: 300px;
+    max-width: 300px;
+}
+.mapName{
+	color: #d4d4d4;
+	font-size: 30px;
+	float: left;
+    padding: 20px 10px 10px 10px;
+	width: calc(100% - 300px);
+}
+.mapNameMob{
+	display:none;
+    width: 100%;
+}
+.mapAuth{
+    color: #2b97c1;
+    font-size: 11px; 
+    width: calc(100% - 300px);
+    top: 53px;
+    right: 0px;
+    position: absolute;
+}
+.mapAuthMob{
+    color: #2b97c1;
+    font-size: 11px; 
+	display:none;
+}
+.mapTxt{
+	float: left;
+    padding: 10px;
+	width: calc(100% - 300px);
+	max-height: 178px;
+	overflow-y: scroll;
+	text-align:left;
+}
+.mapBtnBar{
+    padding: 0px 10px 10px 0px;
+    width: calc(100% - 300px);
+    position: absolute;
+    bottom: 0px;
+	right: 0px;
+}
+.mapBtn{
+    float: right;
+	margin-top:0px;
+}
+.mapDate{
+    color: #727272;
+    font-size: 12px;
+    top: 10px;
+    right: 10px;
+    position: absolute;
+}
+.mapTagBar{
+    width: calc(100% - 300px);
+}
+.mapTag{
+    background: #505050;
+    color: #d4d4d4;
+    font-size: 12px;
+    float: left;
+    border-radius: 3px;
+    margin-left: 10px;
+    padding: 2px 5px;
+}
+.mapGPMBar{
+	position: absolute;
+    bottom: 0px;
+    padding: 10px 0px;
+}
+.mapGPM{
+    background: #505050;
+    color: #d4d4d4;
+    font-size: 12px;
+    float: left;
+    border-radius: 3px;
+    margin-left: 10px;
+    padding: 2px 5px;
+}
+.mapGPM_selected{
+	background:#57735c;
+}
+.mapGPM_hoverable:hover{
+    background: #233050;
+	transition: all .1s ease-in-out;
+	cursor:pointer;
+}
+
+span.subtitle{
+	color: #d4d4d4;
+}
+
+
+
+/* map: */
+.ingamemapContainer{
+	position: relative;
+}
+.mapItem{
+    width: 6px;
+    height: 6px;
+    background: #ffffff73;
+    margin: -3px;
+    position: absolute;
+    border-radius: 1000px;
+	/* cursor:pointer; */
+}
+.mapItem:hover{
+	background:white;
+}
+.controlPoint{
+    width: 30px;
+    height: 30px;
+    margin: -15px;
+    opacity: 0.5;
+	border: 3px solid white;
+}
+.controlPointBase{
+    width: 40px;
+    height: 40px;
+    margin: -20px;
+	border: 0px;
+}
+div.team1{
+	background:red;
+}
+div.team1:hover{
+	background:white;
+}
+div.team2{
+	background:blue;
+}
+div.team2:hover{
+	background:white;
+}
+.mapLenth{
+	position:absolute;
+	-webkit-transform: rotate(-90deg);
+    transform: rotate(-90deg);
+	width:calc(100% - 4px);
+	height:2px;
+	background:#8a8a8a;
+	top:calc(50% - 1px);
+	left:calc(-50% - 15px);
+}
+.mapLenthBar1{
+	position: absolute;
+    height: 18px;
+    width: 2px;
+    background: #8a8a8a;
+    top: -8px;
+    left: 0px;
+}
+.mapLenthBar2{
+	position: absolute;
+    height: 18px;
+    width: 2px;
+    background: #8a8a8a;
+    top: -8px;
+    right: 0px;
+}
+.mapLenthText{
+    position: relative;
+    top: -17px;
+}
+.mapMenu{
+    position: absolute;
+    width: 37px;
+    opacity: 0.5;
+    color: white;
+    font-size: 33px;
+    top: 4px;
+    right: 3px;
+    height: 33px;
+    cursor: pointer;
+}
+.mapMenu:hover{
+	opacity: 1;
+}
+.tooltiptext{
+	white-space: nowrap;
+	visibility: hidden;
+	width: auto;
+	background-color: #090b12;
+	color: #d4d4d4;
+	text-align: center;
+	padding: 5px;
+	position: absolute;
+	z-index: 1;
+	margin-top: 14px;
+	margin-left: 15px;
+    border: solid 2px #233050;
+}
+.visible{
+	visibility: visible;
+}
+.textItem{
+	background: #735757;
+    color: #d4d4d4;
+    padding: 0px 7px;
+    padding-bottom: 1px;
+	margin-right: 5px;
+	line-height: 15px;
+	display: inline-block;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+}
+.textItem, .rounded{
+	border-radius: 3px;
+}
+/* .textItemFirst, .textItem:nth-child(1){ */
+	/* margin-left: 0px; */
+	/* background: red; */
+/* } */
+.textItem2{
+	background: #735757;
+}
+.textItem3{
+	background: #595773;
+}
+.textItem3:hover{
+	background: #8f8cb7;
+}
+.textItem3b{
+	background:#735773;;
+}
+.textItem4{
+	background: #57735c;
+}
+.textItem5{
+	background: #595773;
+}
+.textItem5b{
+	background: #735773;
+}
+
+
+/* rfa: */
+.urlLine:hover{
+	background: #233050;
+	color: #d4d4d4;
+}
+
+/* mod list: */
+.modW{
+	width:50%;
+}
+.modBox{
+	cursor: pointer;
+}
+.modBox:hover{
+	background: #233050;
+	transition: all .1s ease-in-out;
+}
+.modName{
+	color: #d4d4d4;
+	font-size: 30px;
+	float: left;
+    padding: 10px;
+    padding-bottom: 0px;
+	width: 100%;
+}
+.modShortName{
+    padding-bottom: 10px;
+}
+.modInnerBox{
+    padding-bottom: 10px;
+}
+.modVersion{
+	color: #d4d4d4;
+}
+.modTag{
+    background: #505050;
+    color: #d4d4d4;
+    font-size: 12px;
+    display:inline-block;
+    border-radius: 3px;
+    margin-left: 10px;
+    padding: 2px 5px;
+}
+
+
+
+
+
+
+
+/* server list: */
+.serverList{
+  width:100%;
+}
+.popu{
+	color:#c1c1c1;
+	text-shadow: 0 0 21px #00e7ff;
+}
+.nonehov{
+	cursor:auto;
+}
+.nonehov:hover{
+	background:#ffffff00;
+}
+
+
+
+
+
+
+/* server: */
+.serverTeams{
+    width: 100%;
+    padding: 5px;
+    float: left;
+}
+.playerList{
+    float: left;
+    width: calc(50% - 5px);
+    color: #D95454;
+    background: #090b12;
+    border: solid 2px #233050;
+}
+.playerList:nth-child(2){
+	color: #54AED9;
+	margin-left:10px;
+}
+.firstRow{
+	background:#233050;
+	color: #d4d4d4;
+}
+.lastRow{
+	background: #090b12;
+    border: 2px #233050 solid;
+	color: #d4d4d4;
+}
+.columnSmall{
+	width:30px;
+}
+.imagec{
+	display: inline-block;
+}
+.imagec2{
+    height: 14px;
+    display: inline-block;
+}
+.nameTag{
+	font-weight:bold;
+	color:#d4d4d4;
+}
+#roundList>div:nth-child(1){
+	width:40px;
+}
+#roundList>div:nth-child(2){
+	width:calc(30% - 40px);
+}
+#roundList>div:nth-child(3){
+	width:20%;
+}
+#roundList>div:nth-child(4){
+	width:30%;
+}
+#roundList>div:nth-child(5){
+	width:10%;
+	text-align:right;
+}
+#roundList>div:nth-child(6){
+	width:10%;
+	text-align:right;
+}
+
+
+
+
+/* syntax highlight: */
+.syntaxBox span:hover{
+	background:#1b2136;
+}
+.cmdClassName{
+	color:#7188c1;
+	font-weight:bold;
+}
+.cmdDot{
+	color:#6076ab;
+	font-weight:bold;
+}
+.cmdMethod{
+	color:#516db3;
+}
+.cmdArgument{
+	color:#CC9393;
+}
+.cmdNumber{
+	color:#8CD0D3;
+}
+.cmdOperator{
+	color:#DFC47D;
+}
+.cmdLogicalOperator{
+	color:#9F9D6D;
+}
+.cmdComment{
+	color:#7F9F7F;
+	font-style:italic;
+}
+.cmdVariable{
+	color:#d4d4d4;
+}
+.cmdCommand{
+	color:#CEDF99;
+}
+
+
+
+/* Overwrite classes: */
+.pointer{
+	cursor:pointer;
+}
+.centerText{
+	text-align:center;
+}
+.fullW{
+	width:100%;
+	max-width:none;
+}
+.halfW{
+	width:50%;
+}
+.inline{
+	display: inline-block;
+	float:none;
+}
+.pre{
+	white-space: break-spaces;
+	word-wrap: break-word;
+}
+.nowrap{
+	white-space: nowrap
+}
+
+.cb_dgray{
+	background: #484848;
+}
+.cf_default{
+	color: #8a8a8a;
+}
+
+
+
+
+
+@media screen and (max-width: 1000px) {
+.content{
+	overflow:hidden;
+}
+
+.mapLenth{
+	display:none;
+}
+}
+
+@media screen and (max-width: 850px) {
+.modW{
+	width:100%;
+}
+}
+
+@media screen and (max-width: 800px) {
+.mapW{
+	width:100%;
+}
+.mapImgHolder{
+    width: 100%;
+    height: unset;
+}
+.mapImg{
+	max-height: none;
+    max-width: none;
+    width: 100%;
+}
+.mapName{
+    display:none;
+	padding:10px;
+}
+.mapNameMob{
+	display:block;
+}
+.mapAuth{
+	display:none;
+}
+.mapAuthMob{
+    display:block;
+}
+.mapDate{
+    top:43px;
+    top:3px;
+}
+.mapTagBar{
+    width: 100%;
+}
+.mapTxt{
+    display: none;
+}
+.mapBtnBar{
+    width: 100%;
+	position:relative;
+	overflow:auto;
+	padding:10px;
+}
+.mapGPMBar{
+	width: 100%;
+	float: left;
+	position: initial;
+	padding-top:0px;
+}
+.mapGPM{
+	float: none;
+	display: inline-block;
+}
+.mapGPM:nth-child(1){
+    margin-left: 0px;
+}
+.mapBtn{
+	float:right;
+	margin: 0px
+}
+.mapBtnDl{
+	position: absolute;
+    left: 10px;
+    bottom: 10px;
+}
+
+.serverList tr{
+	border-top: solid 2px #233050;
+}
+.serverList tr:nth-child(1){
+	border-top:none;
+}
+.serverList .nonehov{
+	display:none;
+}
+.serverList td:nth-child(3){
+	display:none;
+}
+.serverList td:nth-child(n + 6){
+	display:none;
+}
+.serverList td:nth-child(5){
+	text-align: right;
+}
+}
+
+@media screen and (max-width: 700px) {
+.playerList:nth-child(2){
+    margin-top: 10px;
+    margin-left: 0px;
+}
+.playerList{
+    width: 100%;
+}
+.playerList .noplayer{
+	display:none;
+}
+#roundList>div:nth-child(5){
+	display:none;
+}
+#roundList>div:nth-child(6){
+	width:20%;
+}
+}
+
+@media screen and (max-width: 630px) {
+.serverSettings{
+	width: 100%;
+}
+#roundList>div:nth-child(2){
+	width:calc(60% - 40px);
+}
+#roundList>div:nth-child(4){
+	display:none;
+}
+#roundList>div:nth-child(6){
+	width:20%;
+}
+}
+
+@media screen and (max-width: 470px) {
+#menu .btn{
+    float: left;
+    margin-top: 10px;
+    margin-left: 10px;
+    font-size: 16px;
+    padding: 2px 10px;
+}
+.headerBehind{
+    height: 48px;
+}
+}
+
+
+
+
+

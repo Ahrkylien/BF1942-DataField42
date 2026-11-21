@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>DataField42.Website</RootNamespace>
+    <UserSecretsId>datafield42-website</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.23" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.23" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+    <!-- Pinned ahead of what Pomelo asks for, which is a version with a published advisory. -->
+    <PackageReference Include="MySqlConnector" Version="2.6.2" />
+    <!-- CRC-32C, the checksum the file transfer compares files by. -->
+    <PackageReference Include="Crc32.NET" Version="1.2.0" />
+    <!-- DDS and TGA decoding, and encoding to something a browser can show. -->
+    <PackageReference Include="Pfim" Version="0.11.3" />
+    <PackageReference Include="SkiaSharp" Version="3.119.1" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1" />
+    <PackageReference Include="YamlDotNet" Version="18.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Read from the content root at run time, so they have to travel with the published app. -->
+    <Content Include="db\schema.sql" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Resources\**\*" Exclude="Resources\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- JSON is content by default, so this only adds the copy. -->
+    <Content Update="Resources\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\BF1942.Core\BF1942.Core.csproj" />
+    <ProjectReference Include="..\..\BF1942.FileSystem\BF1942.FileSystem.csproj" />
+  </ItemGroup>
+
+</Project>

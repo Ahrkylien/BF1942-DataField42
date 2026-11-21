@@ -1,0 +1,20 @@
+@model ToDoFilesPageViewModel
+<div class='container fullW'>
+	<div class='textBox'>
+		@foreach (var folder in Model.Folders)
+		{
+			<div style='font-weight: bold;font-size:20px;color:@folder.Color;'>@folder.Name</div>
+			@foreach (var file in folder.Files)
+			{
+				<div>
+					@file.Name <span style="color:gray;">@file.Crc</span> <span style="color:gray;">@file.Size</span> <span style="color:#ce00ff;">@file.Modified</span>
+					@foreach (var linked in file.LinkedFiles)
+					{
+						<span style="color:white;">@linked.Path</span> <span style="color:@folder.Color;">@linked.Crc</span> <span style="color:@folder.Color;">@linked.Size</span> <span style="color:@linked.DateColor;">@linked.Modified</span>
+					}
+				</div>
+			}
+			<br>
+		}
+	</div>
+</div>

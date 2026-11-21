@@ -29,3 +29,7 @@ For the clients to be able to reach the server you will need to open port 28901 
 The minimal version of python is 3.10. The only dependency that you need to manually download is google_crc32c:\
 pip3 install google-crc32c\
 https://pypi.org/project/google-crc32c/
+
+## License
+This repository is licensed under the GPL-3.0-or-later, see [LICENSE](LICENSE), except `DF.Settings` and
+`DF.Watchable`, which are MIT licensed, see their `LICENSE` files.

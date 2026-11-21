@@ -1,0 +1,20 @@
+@model MissingMapsPageViewModel
+<div class='container fullW'>
+	<div class='textBox'>
+		@foreach (var (mod, maps) in Model.MapsPerMod)
+		{
+			<div style='font-weight: bold;font-size:20px;'>@mod</div>
+			@foreach (var map in maps)
+			{
+				<div>
+					@map.Name
+					@foreach (var serverId in map.ServerIds)
+					{
+						<a href="/Server/FromID/@serverId"><span style="color:#ce00ff;"> @serverId</span></a>
+					}
+				</div>
+			}
+			<br>
+		}
+	</div>
+</div>

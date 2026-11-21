@@ -1,0 +1,33 @@
+﻿@{
+    string ActiveClass(string page) => string.Equals(ViewData["ActiveNav"] as string, page, StringComparison.OrdinalIgnoreCase) ? " btnselected" : "";
+}
+<!DOCTYPE html>
+<html>
+@await Html.PartialAsync("_Head")
+	<body>
+		<header>
+			<div class='header' id='head'>
+				<div class='menuitems' id='menu'>
+					<a href="/" class=''><div class='btn@(ActiveClass("Home"))' style='margin-left:0px;'>Home</div></a>
+					<a href="/Mods" class=''><div class='btn@(ActiveClass("Mods"))'>Mods</div></a>
+					<a href="/Maps" class=''><div class='btn@(ActiveClass("Maps"))'>Maps</div></a>
+					<a href="/Servers" class=''><div class='btn@(ActiveClass("Servers"))'>Servers</div></a>
+					@if (User.Identity?.IsAuthenticated == true)
+					{
+						<a href="/Admin" class=''><div class='btn@(ActiveClass("Admin"))'>Admin</div></a>
+					}
+				</div>
+			</div>
+		</header>
+		<script>
+
+		</script>
+		<div class='content'>
+			<div class='headerBehind'></div>
+			@RenderBody()
+			<div style='clear: both;'></div>
+		</div>
+		@await Html.PartialAsync("_Footer")
+		@await RenderSectionAsync("Scripts", required: false)
+	</body>
+</html>

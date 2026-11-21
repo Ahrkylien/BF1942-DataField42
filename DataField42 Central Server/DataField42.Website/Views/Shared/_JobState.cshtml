@@ -1,0 +1,34 @@
+@model JobStatus
+@if (Model.IsRunning)
+{
+	<span style='color:#57a857;'>Running</span>
+	@if (Model.Step is not null) {<text> — </text>@Model.Step}
+	@if (Model.TotalCount > 0)
+	{
+		<text> — </text>@Model.CompletedCount<text>/</text>@Model.TotalCount
+		<text> (</text>@((Model.Percentage ?? 0).ToString("0"))<text>%)</text>
+	}
+}
+else
+{
+	switch (Model.State)
+	{
+		case JobState.Idle:
+			<span style='color:#8a8a8a;'>Never run</span>
+			break;
+		case JobState.Succeeded:
+			<span style='color:#57a857;'>Finished</span>
+			<text> at </text>@Model.FinishedUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+			break;
+		case JobState.Cancelled:
+			<span style='color:#c9b037;'>Stopped</span>
+			<text> at </text>@Model.FinishedUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+			break;
+		case JobState.Failed:
+			<span style='color:#ab0909;'>Failed</span><text>: </text>@Model.Error
+			break;
+		case JobState.Interrupted:
+			<span style='color:#c9b037;'>Interrupted</span><text>: </text>@Model.Error
+			break;
+	}
+}

@@ -1,0 +1,65 @@
+@model UpdatePageViewModel
+@{
+	var deployed = Model.Status.Deployed;
+}
+<div class='container'>
+	<div class='titleBox'>Update</div>
+</div>
+<div class='container fullW'>
+	<div class='textBox'>
+		<a href='/Admin' class='btn' style='margin-left:0px;'>Back to admin</a>
+	</div>
+</div>
+@if (!Model.IsAvailable)
+{
+	<div class='container fullW'>
+		<div class='textBox' style='color:#8a8a8a;'>
+			This installation cannot update itself. Updating from here needs a server installed with
+			<code>setup-server.sh</code>, which sets up what runs the update.
+		</div>
+	</div>
+	return;
+}
+<div class='container fullW' data-update
+	 data-status-url='/Admin/Update/Status' data-check-url='/Admin/Update/Check' data-start-url='/Admin/Update/Start'>
+	<div class='textBox'>
+		<div style='font-weight:bold;font-size:20px;'>Running version</div>
+		<div id='deployed' style='margin-top:4px;'>
+			@if (deployed is null)
+			{
+				<span style='color:#8a8a8a;'>Unknown</span>
+			}
+			else
+			{
+				<span>@(deployed.Branch ?? "unknown branch") at <span style='font-family:monospace;'>@deployed.ShortCommit</span></span>
+			}
+		</div>
+		<br>
+		<form id='updateForm' method='post' onsubmit='return false;'>
+			@Html.AntiForgeryToken()
+			<select name='branch' id='branch' class='fse2 inline'>
+				@foreach (var branch in Model.Branches)
+				{
+					<option value='@branch' selected='@(branch == Model.SelectedBranch)'>@branch</option>
+				}
+				@if (Model.Branches.Count == 0)
+				{
+					<option value='@Model.SelectedBranch'>@Model.SelectedBranch</option>
+				}
+			</select>
+			<button type='button' class='btn' id='checkButton'>Check for updates</button>
+			<button type='button' class='btn' id='updateButton'>Update</button>
+		</form>
+		<div id='updateMessage' style='margin-top:10px;'></div>
+		<div id='commits' style='margin-top:10px;'></div>
+	</div>
+</div>
+<div class='container fullW'>
+	<div class='textBox'>
+		<div style='font-weight:bold;font-size:20px;'>Last update</div>
+		<div id='updateState' style='margin-top:4px;' data-state='@Model.Status.State'
+			 data-changed='@(Model.Status.ChangedUtc?.ToString("o"))'></div>
+		<pre id='updateLog' style='max-height:400px;overflow:auto;margin-top:6px;white-space:pre-wrap;'>@Model.Status.Log</pre>
+	</div>
+</div>
+<script src='/static/js/admin-update.js' defer></script>

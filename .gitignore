@@ -6,3 +6,9 @@
 *.user
 
 **/nasm.exe
+
+# Per-developer settings that are not secret, such as where the game files are kept.
+appsettings.Local.json
+
+# Map images the "Analyse maps" job generates at run time.
+DataField42 Central Server/DataField42.Website/wwwroot/images/ingamemaps/

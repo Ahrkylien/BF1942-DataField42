@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BF1942.Core\BF1942.Core.csproj" />
     <ProjectReference Include="..\DF.Watchable\DF.Watchable.csproj" />
   </ItemGroup>
 
