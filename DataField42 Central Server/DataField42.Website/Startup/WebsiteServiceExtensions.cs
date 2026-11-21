@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using DataField42.Website.Services;
 using DataField42.Website.Services.ServerQuery;
+using DataField42.Website.Services.Tracking;
 
 namespace DataField42.Website.Startup;
 
@@ -17,6 +18,11 @@ public static class WebsiteServiceExtensions
 
         services.AddMemoryCache();
         services.AddHttpClient<MasterServerClient>(client => client.Timeout = TimeSpan.FromSeconds(10));
+
+        // The servers tracker, which records round history from the master server.
+        services.AddHttpClient<TrackerFeedReader>(client => client.Timeout = TimeSpan.FromSeconds(30));
+        services.AddScoped<TrackingRecorder>();
+        services.AddHostedService<ServerTrackerService>();
 
         services.AddSingleton<ClanTagService>();
         services.AddSingleton<ReferencePageStore>();

@@ -259,6 +259,29 @@ dotnet DataField42.Website.dll create-admin <username> <password>
 
 The same command changes an existing account's password, which also signs out its open sessions.
 
+## Servers tracker
+
+The round history and the player counts behind `/Servers`, the round pages and the graphs are
+recorded by a background service in the site, `ServerTrackerService`. It always runs, so only one
+instance may point at a database: two would both write the same history.
+
+Every minute it reads the master server's list, which carries for each server its latest status, when
+its current round started, and the status its last finished round ended with. From that it records:
+
+- **Servers**, found by address and game port, added when first seen.
+- **Rounds**, found by server and start time, added when first seen, with the map, mod, mode, starting
+  tickets and start delay. A round is marked as having had players once anyone is on it.
+- **Player numbers** per round, and a total over all servers. A number that has not changed since the
+  last two samples moves the latest sample forward instead of adding a row, so a quiet server costs two
+  rows, the first and the latest, and the two still say when the number held.
+- **The end of a round**, once, when the master server reports it finished: end time, tickets, the
+  winner (the team with more tickets, or a draw), the scoreboard, the most players, and the average
+  number of players weighted by how long each count held.
+
+Times are stored in the local time of the machine, as the history always was, so keep the server's time
+zone the same when moving the tracker. The one minute and the five-second retry, when the master server
+cannot be read, are fixed in the code; a failure on one server skips that server for that pass and nothing else.
+
 ## Admin jobs
 
 Each job runs in the background and reports its progress. Starting and stopping a job, and watching
