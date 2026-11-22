@@ -89,7 +89,7 @@ public static class InitDatabaseCommand
         string quotedName = $"`{databaseName.Replace("`", "``")}`";
 
         await using var command = connection.CreateCommand();
-        command.CommandText = $"CREATE DATABASE IF NOT EXISTS {quotedName} CHARACTER SET utf8mb4";
+        command.CommandText = $"CREATE DATABASE IF NOT EXISTS {quotedName} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
         await command.ExecuteNonQueryAsync();
 
         Console.WriteLine($"Database '{databaseName}' exists.");

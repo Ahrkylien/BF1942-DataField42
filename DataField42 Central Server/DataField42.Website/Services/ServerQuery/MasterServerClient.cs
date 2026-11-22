@@ -99,6 +99,7 @@ public sealed class MasterServerClient(
         return new MasterServerEntry
         {
             Ip = ip,
+            ReportedPlayerCount = GetInt(queryElement, "numplayers") is { } reported and >= 0 ? (uint)reported : null,
             QueryPort = GetInt(element, "queryPort"),
             QueriedAt = GetTimestamp(element, "query_timestamp"),
             HeartbeatAt = GetTimestamp(element, "heartbeat_timestamp"),

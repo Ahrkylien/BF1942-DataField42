@@ -20,7 +20,7 @@ public static class AdminSchema
           `securityStamp` int(11) NOT NULL DEFAULT 0,
           PRIMARY KEY (`ID`),
           UNIQUE KEY `IX_AdminUser_userName` (`userName`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         """;
 
     private const string CreateAdminJobRun = """
@@ -38,7 +38,7 @@ public static class AdminSchema
           `log` longtext NOT NULL,
           PRIMARY KEY (`ID`),
           KEY `IX_AdminJobRun_job` (`jobId`,`startedUtc`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         """;
 
     public static async Task EnsureCreatedAsync(DataField42DbContext context, CancellationToken cancellationToken = default)

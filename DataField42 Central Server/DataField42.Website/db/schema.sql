@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS `Author` (
   `ID` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `Mod` (
   `ID` int(11) NOT NULL AUTO_INCREMENT,
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `Mod` (
   `authorID` int(11) DEFAULT NULL,
   `modDependencies` varchar(8000) DEFAULT NULL,
   PRIMARY KEY (`ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `Map` (
   `ID` int(11) NOT NULL AUTO_INCREMENT,
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `Map` (
   `dateOldestRFA` datetime DEFAULT NULL,
   `dateNewestRFA` datetime DEFAULT NULL,
   PRIMARY KEY (`ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- `path` is compared case-sensitively, because the server the files live on is case-sensitive
 -- and two archives whose names differ only in case are two different files.
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS `RFA` (
   `date` datetime DEFAULT NULL,
   `battleCraftLevelPath` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `Tag` (
   `ID` int(11) NOT NULL AUTO_INCREMENT,
@@ -74,14 +74,14 @@ CREATE TABLE IF NOT EXISTS `Tag` (
   `color` varchar(255) DEFAULT NULL,
   `colorHover` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `TagLink` (
   `ID` int(11) NOT NULL AUTO_INCREMENT,
   `mapID` int(11) DEFAULT NULL,
   `tagID` int(11) DEFAULT NULL,
   PRIMARY KEY (`ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `Server` (
   `ID` int(11) NOT NULL AUTO_INCREMENT,
@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS `Server` (
   `queryPort` int(11) DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `Round` (
   `ID` int(11) NOT NULL AUTO_INCREMENT,
@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS `Round` (
   `hasHadPlayers` int(1) DEFAULT 0,
   PRIMARY KEY (`ID`),
   KEY `idx_server_round` (`serverID`,`startTime`,`winningTeamNumber`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `PlayerNumber` (
   `ID` int(11) NOT NULL AUTO_INCREMENT,
@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS `PlayerNumber` (
   KEY `idx_playernumber_round` (`roundID`,`ID`),
   KEY `idx_playernumber_round_date` (`roundID`,`date`),
   KEY `idx_playernumber_date` (`date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `RequestLog` (
   `ID` int(11) NOT NULL AUTO_INCREMENT,
@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS `RequestLog` (
   `field5` varchar(255) DEFAULT NULL,
   `field6` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Every map/mod combination servers have been seen playing.
 CREATE OR REPLACE VIEW `MapDistinct` AS

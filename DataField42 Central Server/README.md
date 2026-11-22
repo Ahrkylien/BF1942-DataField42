@@ -16,6 +16,8 @@ and the servers tracker. It is mapped explicitly in `Data/DataField42DbContext.c
 migrations for it: nothing here may rename a column those tools also write. The two tables this
 application owns, `AdminUser` and `AdminJobRun`, are created on startup if they are missing.
 
+The database and its tables use `utf8mb4_unicode_ci`, set explicitly so that sort order does not depend on the server version.
+
 ## Configuration
 
 Settings come from several places, and a later one overrides an earlier one. In Development all of

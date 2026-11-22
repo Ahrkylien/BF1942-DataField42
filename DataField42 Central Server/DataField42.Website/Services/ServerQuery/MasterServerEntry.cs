@@ -24,5 +24,12 @@ public sealed class MasterServerEntry
     /// </summary>
     public string? Source { get; init; }
 
+    /// <summary>
+    /// The number of players the master server reports, which is the number to show. The scoreboard
+    /// it publishes can hold fewer players than that, or none, for a server that does not send it
+    /// in full, so <see cref="Status"/> only knows as many players as the scoreboard lists.
+    /// </summary>
+    public uint? ReportedPlayerCount { get; init; }
+
     public required Bf1942QueryResult Status { get; init; }
 }

@@ -40,7 +40,7 @@ public sealed class ServerListService(
             {
                 Ip = entry.Ip,
                 Status = entry.Status,
-                PlayerCount = CorrectPlayerCount(entry.Ip, entry.Status.NumberOfPlayers),
+                PlayerCount = CorrectPlayerCount(entry.Ip, entry.ReportedPlayerCount ?? entry.Status.NumberOfPlayers),
                 IsTracked = match is not null,
                 LinkPort = (match is not null ? (int)entry.Status.HostPort : entry.QueryPort) ?? 0,
                 QueriedAgo = entry.QueriedAt is { } queriedAt ? TextFormatting.Duration((now - queriedAt).TotalSeconds) : null,
