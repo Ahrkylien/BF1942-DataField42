@@ -236,7 +236,7 @@ if [[ $db_server == localhost || $db_server == 127.0.0.1 ]]; then
     systemctl enable --now mariadb >/dev/null 2>&1
     # The settings file is the source of truth: the account gets the password written there.
     mysql <<EOF
-CREATE DATABASE IF NOT EXISTS \`$db_name\` CHARACTER SET utf8mb4;
+CREATE DATABASE IF NOT EXISTS \`$db_name\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS '$db_user'@'localhost' IDENTIFIED BY '$db_password';
 CREATE USER IF NOT EXISTS '$db_user'@'127.0.0.1' IDENTIFIED BY '$db_password';
 ALTER USER '$db_user'@'localhost' IDENTIFIED BY '$db_password';

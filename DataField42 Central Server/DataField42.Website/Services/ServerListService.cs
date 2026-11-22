@@ -20,7 +20,9 @@ public sealed class ServerListService(
     private readonly WebsiteOptions _options = options.Value;
 
     /// <summary>
-    /// Every listed server, in the order the master server gave them.
+    /// Every listed server, the most players first and, among servers with as many, in the order the
+    /// master server gave them. The master sorts by the count it reports, which can be behind what
+    /// the server's own scoreboard shows.
     /// </summary>
     public async Task<List<ServerListEntryViewModel>> GetServersAsync(CancellationToken cancellationToken = default)
     {
@@ -40,7 +42,7 @@ public sealed class ServerListService(
             {
                 Ip = entry.Ip,
                 Status = entry.Status,
-                PlayerCount = CorrectPlayerCount(entry.Ip, entry.Status.NumberOfPlayers),
+                PlayerCount = CorrectPlayerCount(entry.Ip, Math.Max(entry.ReportedPlayerCount ?? 0, entry.Status.NumberOfPlayers)),
                 IsTracked = match is not null,
                 LinkPort = (match is not null ? (int)entry.Status.HostPort : entry.QueryPort) ?? 0,
                 QueriedAgo = entry.QueriedAt is { } queriedAt ? TextFormatting.Duration((now - queriedAt).TotalSeconds) : null,
@@ -50,7 +52,7 @@ public sealed class ServerListService(
             });
         }
 
-        return entries;
+        return [.. entries.OrderByDescending(entry => entry.PlayerCount)];
     }
 
     /// <summary>

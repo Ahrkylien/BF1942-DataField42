@@ -16,6 +16,8 @@ and the servers tracker. It is mapped explicitly in `Data/DataField42DbContext.c
 migrations for it: nothing here may rename a column those tools also write. The two tables this
 application owns, `AdminUser` and `AdminJobRun`, are created on startup if they are missing.
 
+The database and its tables use `utf8mb4_unicode_ci`, set explicitly so that sort order does not depend on the server version.
+
 ## Configuration
 
 Settings come from several places, and a later one overrides an earlier one. In Development all of
@@ -314,23 +316,13 @@ player names.
 
 ## File transfer
 
-The collection is sorted on a workstation and served from here, and the two are brought back in line
-in five stages. Only genuinely new files are ever transferred: a map that was renamed or moved is
-renamed or moved in place.
+The collection is sorted on a workstation and served from here. Stage 1 here lists this server's files
+with CRC-32C checksums. The workstation compares that list with its own into a set of rules and packs
+the files this server is missing, and stage 2 here uploads, reviews and applies them. Only new files
+are transferred: a renamed or moved map is renamed or moved in place.
 
-1. **Here.** List every file this server holds, with a CRC-32C checksum, and download that list.
-2. **Here.** Upload the rules and the archive the workstation produced, review the preview, and apply.
-3. **Workstation.** List its own files.
-4. **Workstation.** Compare the two lists into a set of rules.
-5. **Workstation.** Pack the files this server is missing.
-
-The preview reports what the rules would delete, move, copy, add and re-date, and warns when the
-rules do not match what is on disk -- a file the rules add that is not in the archive, a source that
-is not where the rules expect it, or a destination that is already occupied. Those warnings mean the
-rules were built against a different state of the collection; re-run stage 1 and rebuild them.
-
-The file list is JSON and the rules are a text file; the workstation's stage 3 to 5 tooling reads
-and writes the same formats.
+The review checks the rules in order and Apply stays disabled while there are errors. The file list is
+JSON and the rules are a text file, the same formats the workstation's tooling reads.
 
 ## Pages that need a login
 
