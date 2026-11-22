@@ -129,13 +129,12 @@ public class DataField42Communication : TcpCommunicationBase
     public void SendBytes(byte[] data)
     {
         _sessionIsUsed = true;
-        sendInt(data.Length);
-        _stream.Write(data);
+        _messages.SendMessage(data);
     }
 
-    public void SendString(string message) => SendBytes(System.Text.Encoding.ASCII.GetBytes(message));
+    public void SendString(string message) => SendBytes(System.Text.Encoding.UTF8.GetBytes(message));
 
-    public void SendAcknowledgement() => SendString("ok");
+    public void SendAcknowledgement() => SendString(DataField42MessageStream.Acknowledgement);
 }
 
 public class TcpCommunicationBase : IDisposable
@@ -146,6 +145,7 @@ public class TcpCommunicationBase : IDisposable
     protected int _port;
     protected TcpClient _client;
     protected NetworkStream _stream;
+    protected DataField42MessageStream _messages;
     protected readonly ILogger _logger;
 
     private const int _timeOutInitialConnect = 1000; // ms
@@ -163,12 +163,14 @@ public class TcpCommunicationBase : IDisposable
 
     [MemberNotNull(nameof(_client))]
     [MemberNotNull(nameof(_stream))]
+    [MemberNotNull(nameof(_messages))]
     private void _connect()
     {
         _client = new TcpClient();
         if (!_client.ConnectAsync(_domainNameOrIp, _port).Wait(_timeOutInitialConnect))
             throw new TimeoutException($"Server {_domainNameOrIp}:{_port} doesn't respond in {_timeOutInitialConnect} ms");
         _stream = _client.GetStream();
+        _messages = new DataField42MessageStream(_stream);
     }
 
     protected void RenewConnection()
@@ -185,51 +187,14 @@ public class TcpCommunicationBase : IDisposable
         return (numberOfBytes, buffer);
     }
 
-    protected async Task<byte[]> receiveBytes(int length, TimeSpan? timeoutTime = null, CancellationToken cancellationToken = default)
-    {
-        if (timeoutTime == null)
-            timeoutTime = TimeSpan.FromSeconds(10);
+    protected Task<byte[]> receiveBytes(int length, TimeSpan? timeoutTime = null, CancellationToken cancellationToken = default) =>
+        _messages.ReceiveBytes(length, timeoutTime, cancellationToken);
 
-        // TODO: remove double timout (custom and buildin)
-        int bytesRead = 0;
-        var buffer = new byte[length];
+    protected Task<int> receiveDataLength(TimeSpan? timeoutTime = null, CancellationToken cancellationToken = default) =>
+        _messages.ReceiveDataLength(timeoutTime, cancellationToken);
 
-        var stopWatch = new Stopwatch();
-        stopWatch.Start();
-
-        while (bytesRead < length)
-        {
-            int bytesReadThisIteration = await _stream.ReadAsync(buffer.AsMemory(bytesRead, length - bytesRead));
-
-            bytesRead += bytesReadThisIteration;
-
-            if (bytesReadThisIteration != 0)
-                stopWatch.Restart();
-
-            if (stopWatch.Elapsed > timeoutTime)
-                throw new TimeoutException($"Can't receive data in time ({timeoutTime?.TotalSeconds} seconds)");
-        }
-        return buffer;
-    }
-
-    protected async Task<int> receiveDataLength(TimeSpan? timeoutTime = null, CancellationToken cancellationToken = default)
-    {
-        if (timeoutTime == null)
-            timeoutTime = TimeSpan.FromSeconds(10);
-        var data = await receiveBytes(4, timeoutTime, cancellationToken);
-        return BitConverter.ToInt32(data);
-    }
-
-    protected async Task<string> receiveString(int length, CancellationToken cancellationToken = default)
-    {
-        var data = await receiveBytes(length, cancellationToken: cancellationToken);
-        return System.Text.Encoding.ASCII.GetString(data, 0, length);
-    }
-
-    protected void sendInt(int value)
-    {
-        _stream.Write(BitConverter.GetBytes(value));
-    }
+    protected Task<string> receiveString(int length, CancellationToken cancellationToken = default) =>
+        _messages.ReceiveString(length, cancellationToken: cancellationToken);
 
     public void Dispose()
     {

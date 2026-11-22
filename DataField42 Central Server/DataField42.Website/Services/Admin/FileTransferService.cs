@@ -1,5 +1,4 @@
 using System.IO.Compression;
-using Force.Crc32;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 using DataField42.Website.Configuration;
@@ -19,7 +18,7 @@ namespace DataField42.Website.Services.Admin;
 /// Doing it this way means the bulk of the collection is never transferred: a map that was only
 /// renamed or moved is renamed or moved in place, and only genuinely new files are uploaded.
 /// </summary>
-public sealed class FileTransferService(IOptions<WebsiteOptions> options, ILogger<FileTransferService> logger)
+public sealed class FileTransferService(IOptions<WebsiteOptions> options, ChecksumRepository checksums, ILogger<FileTransferService> logger)
 {
     /// <summary>
     /// The file list this server produces in stage 1 and the workstation compares against.
@@ -36,8 +35,6 @@ public sealed class FileTransferService(IOptions<WebsiteOptions> options, ILogge
     /// </summary>
     public const string ArchiveName = "newFiles.zip";
 
-    private const int ChecksumBufferSize = 1 << 20;
-
     private readonly WebsiteOptions _options = options.Value;
 
     public string WorkingDirectory => _options.FileTransferDirectory;
@@ -48,11 +45,11 @@ public sealed class FileTransferService(IOptions<WebsiteOptions> options, ILogge
 
     public string ArchivePath => Path.Combine(WorkingDirectory, ArchiveName);
 
-    public FileInfo? ServerFileListInfo => ToFileInfo(ServerFileListPath);
+    public System.IO.FileInfo? ServerFileListInfo => ToFileInfo(ServerFileListPath);
 
-    public FileInfo? RulesInfo => ToFileInfo(RulesPath);
+    public System.IO.FileInfo? RulesInfo => ToFileInfo(RulesPath);
 
-    public FileInfo? ArchiveInfo => ToFileInfo(ArchivePath);
+    public System.IO.FileInfo? ArchiveInfo => ToFileInfo(ArchivePath);
 
     /// <summary>
     /// Stage 1: walks the mods directory and writes the file list the workstation compares
@@ -77,10 +74,10 @@ public sealed class FileTransferService(IOptions<WebsiteOptions> options, ILogge
             string relativePath = Path.GetRelativePath(modsDirectory, path);
             var folder = root.GetOrAddFolder(Path.GetDirectoryName(relativePath));
 
-            var info = new FileInfo(path);
+            var info = new System.IO.FileInfo(path);
             folder.Files.Add(new FileTreeFile(
                 info.Name,
-                ComputeChecksum(path),
+                await checksums.GetAsync(path, cancellationToken),
                 info.Length,
                 ToUnixSeconds(info.LastWriteTime)));
 
@@ -463,7 +460,7 @@ public sealed class FileTransferService(IOptions<WebsiteOptions> options, ILogge
                     .Where(entry => !entry.FullName.EndsWith('/') && !entry.FullName.EndsWith('\\'))
                     .Select(entry => entry.FullName.Replace('\\', '/'))
                     .ToHashSet(StringComparer.Ordinal),
-                new FileInfo(ArchivePath).Length);
+                new System.IO.FileInfo(ArchivePath).Length);
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException)
         {
@@ -472,25 +469,7 @@ public sealed class FileTransferService(IOptions<WebsiteOptions> options, ILogge
         }
     }
 
-    /// <summary>
-    /// The CRC-32C of a file, as the eight uppercase hex digits the file lists are written with.
-    /// Read in chunks rather than whole: the collection holds archives of several hundred
-    /// megabytes.
-    /// </summary>
-    private static string ComputeChecksum(string path)
-    {
-        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, ChecksumBufferSize, FileOptions.SequentialScan);
-        var buffer = new byte[ChecksumBufferSize];
-
-        uint crc = 0;
-        int read;
-        while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
-            crc = Crc32CAlgorithm.Append(crc, buffer, 0, read);
-
-        return $"{crc:X8}";
-    }
-
-    private static FileInfo? ToFileInfo(string path) => File.Exists(path) ? new FileInfo(path) : null;
+    private static System.IO.FileInfo? ToFileInfo(string path) => File.Exists(path) ? new System.IO.FileInfo(path) : null;
 
     private static long ToUnixSeconds(DateTime value) => new DateTimeOffset(value).ToUnixTimeSeconds();
 

@@ -27,6 +27,11 @@ public sealed class MapInfoJob(
 
     private readonly Dictionary<string, LexiconFile> _lexiconsByMod = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// How many of a map's script errors are listed; an old map can have hundreds.
+    /// </summary>
+    private const int MaxScriptErrorsLogged = 5;
+
     public string JobId => "MapInfo";
 
     public string Name => "Analyse maps";
@@ -112,6 +117,15 @@ public sealed class MapInfoJob(
         var lexicon = ReadLexicon(map.Mod, dependencyMods);
 
         var analysis = LevelAnalyzer.Analyze(archivePaths, modDirectory, mapNameRaw);
+
+        foreach (var (archivePath, reason) in analysis.UnreadableArchives)
+            jobContext.Log($"WARNING: {archivePath} could not be read and is left out of the analysis: {reason}");
+
+        foreach (var error in analysis.Errors.Take(MaxScriptErrorsLogged))
+            jobContext.Log($"WARNING: {mapNameRaw}: {error.Path}:{error.LineNumber}: {error.Message}");
+
+        if (analysis.Errors.Count > MaxScriptErrorsLogged)
+            jobContext.Log($"WARNING: {mapNameRaw}: and {analysis.Errors.Count - MaxScriptErrorsLogged} more script errors");
 
         foreach (var archivePath in analysis.MismatchedArchiveNames)
             jobContext.Log($"WARNING: {archivePath} does not contain a level folder called {mapNameRaw}");

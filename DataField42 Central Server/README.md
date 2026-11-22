@@ -284,6 +284,34 @@ Times are stored in the local time of the machine, as the history always was, so
 zone the same when moving the tracker. The one minute and the five-second retry, when the master server
 cannot be read, are fixed in the code; a failure on one server skips that server for that pass and nothing else.
 
+## Client server
+
+The DataField42 clients, and the DataField42 server scripts on game servers, talk to this site on TCP
+port 28901, which has to be open to them. The site listens there itself, always, and answers:
+
+- **handshake**: which version the client is, and that there is no other server to use.
+- **update**, **updateFile**, **updateServer**: the updater and the latest `DataField42.exe`, read from
+  `client files/<version>/updater.exe` and `client files/latest/DataField42.exe` in the data folder, and
+  the server script, which is part of the site and kept in memory, so it always matches the site's
+  commit and its version is read from the script. The client version is the version of this release. A
+  first-generation client is sent `client files/2.0.0.0/updater.exe`.
+- **heartbeatServer**: a server says it is there and is told the server version. The servers heard from
+  in the last three minutes are in `heartbeat_records.json`, in the file transfer folder.
+- **download map mod ...**: the files a client needs to play a map. They come from the database, as the
+  mod and every mod it lists in `game.addModPath` know them: the map's recommended client archives, the
+  mod's base files and its Bink videos. The client says which it wants and is sent those. Each request is
+  recorded in `RequestLog`. The files are described with the client's own `FileInfo`, so a file the client
+  would refuse, such as a video with a space in its name, is left out and logged instead of failing the
+  download.
+
+The port is open to anyone, so a request is at most 4 KB, a client that falls silent for a minute is
+dropped (a client choosing what to download may take 15 minutes), and at most 500 connections are
+served at once, 20 per address. Heartbeats are only noted if the version they report looks like one.
+
+Checksums are CRC-32C, remembered in `checksums.tsv` in the file transfer folder for as long as a file's
+size and date do not change, which is also what makes the file transfer's stage 1 quick the second time.
+If the port cannot be opened the site starts without it and logs why.
+
 ## Admin jobs
 
 Each job runs in the background and reports its progress. Starting and stopping a job, and watching

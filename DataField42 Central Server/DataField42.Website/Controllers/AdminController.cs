@@ -207,7 +207,7 @@ public sealed class AdminController(
     private bool WantsJson =>
         Request.Headers.Accept.Any(value => value?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true);
 
-    private static UploadedFileViewModel? ToViewModel(FileInfo? info) =>
+    private static UploadedFileViewModel? ToViewModel(System.IO.FileInfo? info) =>
         info is null ? null : new UploadedFileViewModel(info.Name, info.Length, info.LastWriteTimeUtc);
 
     private string GetSafeReturnUrl(string? returnTo) =>
