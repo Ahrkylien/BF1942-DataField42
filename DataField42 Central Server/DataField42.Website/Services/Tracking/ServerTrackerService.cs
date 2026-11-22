@@ -46,14 +46,7 @@ public sealed class ServerTrackerService(
                 wait = RetryInterval;
             }
 
-            try
-            {
-                await Task.Delay(wait, stoppingToken);
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
+            await Task.Delay(wait, stoppingToken);
         }
     }
 }

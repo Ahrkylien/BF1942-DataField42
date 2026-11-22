@@ -190,7 +190,14 @@ public sealed class JobRunner(IServiceScopeFactory scopeFactory, JobRunStore sto
             // Stopped before the last write, so a periodic save cannot land after it and put a
             // finished run back to running.
             await stopSaving.CancelAsync();
-            await saving;
+            try
+            {
+                await saving;
+            }
+            catch (OperationCanceledException) when (stopSaving.IsCancellationRequested)
+            {
+                // Cancelled just above, to stop the saving.
+            }
 
             if (runId is { } finishedId)
                 await store.SaveAsync(finishedId, execution.Snapshot());
@@ -201,15 +208,8 @@ public sealed class JobRunner(IServiceScopeFactory scopeFactory, JobRunStore sto
     {
         using var timer = new PeriodicTimer(SaveInterval);
 
-        try
-        {
-            while (await timer.WaitForNextTickAsync(stop))
-                await store.SaveAsync(runId, execution.Snapshot());
-        }
-        catch (OperationCanceledException)
-        {
-            // The job has ended; its final state is written by whoever stopped this.
-        }
+        while (await timer.WaitForNextTickAsync(stop))
+            await store.SaveAsync(runId, execution.Snapshot());
     }
 
     /// <summary>

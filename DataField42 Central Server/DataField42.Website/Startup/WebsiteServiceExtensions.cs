@@ -1,7 +1,11 @@
 using System.Text.Json.Serialization;
+using DataField42.Website.Configuration;
 using DataField42.Website.Services;
+using DataField42.Website.Services.ClientServer;
 using DataField42.Website.Services.ServerQuery;
 using DataField42.Website.Services.Tracking;
+
+using Microsoft.Extensions.Options;
 
 namespace DataField42.Website.Startup;
 
@@ -18,6 +22,15 @@ public static class WebsiteServiceExtensions
 
         services.AddMemoryCache();
         services.AddHttpClient<MasterServerClient>(client => client.Timeout = TimeSpan.FromSeconds(10));
+
+        // The DataField42 clients and servers, which connect on a port of their own.
+        services.AddSingleton(provider => new ChecksumRepository(Path.Combine(provider.GetRequiredService<IOptions<WebsiteOptions>>().Value.FileTransferDirectory, "checksums.tsv")));
+        services.AddSingleton<HeartbeatRegistry>();
+        services.AddSingleton<ReleaseFiles>();
+        services.AddScoped<ClientFileSelector>();
+        services.AddScoped<DownloadHandler>();
+        services.AddScoped<ClientRequestHandler>();
+        services.AddHostedService<ClientServerHost>();
 
         // The servers tracker, which records round history from the master server.
         services.AddHttpClient<TrackerFeedReader>(client => client.Timeout = TimeSpan.FromSeconds(30));

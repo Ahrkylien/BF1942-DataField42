@@ -52,7 +52,8 @@ public sealed class MasterServerClient(
 
             return servers;
         }
-        catch (Exception ex) when (ex is HttpRequestException or JsonException or TaskCanceledException)
+        catch (Exception ex) when (ex is HttpRequestException or JsonException
+            || ex is TaskCanceledException && !cancellationToken.IsCancellationRequested)
         {
             logger.LogWarning(ex, "Could not read the server list from {Url}", _options.MasterServerUrl);
             return [];

@@ -60,7 +60,8 @@ public sealed class DiskSpaceReader(ILogger<DiskSpaceReader> logger)
 
             return output.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         }
-        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or OperationCanceledException or InvalidOperationException)
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException
+            || ex is OperationCanceledException && !cancellationToken.IsCancellationRequested)
         {
             logger.LogDebug(ex, "Could not read filesystem usage; df is unavailable on this host");
             return [];

@@ -67,6 +67,15 @@ public class FileInfo
         ParseArguments(mod, relativePath, crc32, size, lastModifiedTimestamp, fast);
     }
 
+    /// <summary>
+    /// A file as a server describes it. The same checks are made as for a file received from a server,
+    /// so a file the client would refuse is refused here.
+    /// </summary>
+    public FileInfo(string mod, string filePath, string checksum, long size, long lastModifiedTimestamp)
+    {
+        ParseArguments(mod, filePath, checksum, size.ToString(), lastModifiedTimestamp.ToString(), checkSafety: true);
+    }
+
     public FileInfo(IEnumerable<string> spaceSeperatedString)
     {
         ParseArguments(spaceSeperatedString.ElementAt(0), spaceSeperatedString.ElementAt(1), spaceSeperatedString.ElementAt(2), spaceSeperatedString.ElementAt(3), spaceSeperatedString.ElementAt(4), checkSafety: true);
@@ -83,7 +92,7 @@ public class FileInfo
         Size = fast ? 0 : ulong.Parse(size);
         LastModifiedTimestamp = fast ? 0 : ulong.Parse(lastModifiedTimestamp);
 
-        if (checkSafety && !Regex.IsMatch(Mod, $"^[{AllowableChars}]*$"))
+        if (checkSafety && !IsSafeName(Mod))
             throw new Exception($"Mod name contains illegal characters: {Mod}");
 
         //TODO Parse/validate Crc32 & Size & LastModifiedTimestamp, except if fast
@@ -125,7 +134,6 @@ public class FileInfo
             throw new Exception($"Can't determine file type: {filePathLower}");
 
         var fileExtensionLower = Path.GetExtension(fileName).ToLower();
-        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
 
         switch (FileType)
         {
@@ -145,9 +153,27 @@ public class FileInfo
                 break;
         }
 
-        if (checkSafety && !Regex.IsMatch(fileNameWithoutExtension, $"^[{AllowableChars}]*$"))
-            throw new Exception($"File name contains illegal characters: {filePath}");
+        // The path is written to disk below a folder of the game, so every folder and the file's name
+        // must be a plain name: no "..", and no separators other than the slashes between the names.
+        if (checkSafety)
+        {
+            var names = fileName.Split('/');
+            var lastName = names[^1];
+            var extensionStart = lastName.LastIndexOf('.');
+            var stem = extensionStart < 0 ? lastName : lastName[..extensionStart];
+
+            if (!names[..^1].Append(stem).All(IsSafeName))
+                throw new Exception($"File path contains illegal characters: {filePath}");
+        }
     }
+
+    private static bool IsSafeName(string name) => Regex.IsMatch(name, $@"^[{AllowableChars}]+\z");
+
+    /// <summary>
+    /// The line the protocol describes a file with: <c>mod "path" checksum size modified</c>. The other
+    /// side's <see cref="FileInfo(IEnumerable{string})"/> reads it.
+    /// </summary>
+    public string ToProtocolString() => $"{Mod} \"{FilePath}\" {Checksum} {Size} {LastModifiedTimestamp}";
 
     public override string ToString() => $"{Mod} \"{FilePath}\" {Checksum} {Size.ToReadableFileSize()} {LastModifiedTimestamp}";
 

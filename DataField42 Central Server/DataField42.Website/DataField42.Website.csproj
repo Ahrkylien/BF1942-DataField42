@@ -32,8 +32,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The DataField42 server script, which game servers update themselves from, kept in memory by the site. -->
+    <EmbeddedResource Include="..\..\DataField42 Server\DataField42Server.py" LogicalName="DataField42Server.py" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\BF1942.Core\BF1942.Core.csproj" />
     <ProjectReference Include="..\..\BF1942.FileSystem\BF1942.FileSystem.csproj" />
+    <ProjectReference Include="..\..\DataField42.Core\DataField42.Core.csproj" />
   </ItemGroup>
 
 </Project>
