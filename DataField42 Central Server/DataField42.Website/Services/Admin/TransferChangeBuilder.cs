@@ -15,7 +15,7 @@ public static class TransferChangeBuilder
     private const string TemporaryFolder = "tmp";
 
     /// <summary>
-    /// The changes the rules make, ordered by path, with what <paramref name="issues"/> says about
+    /// The changes the rules make, ordered by path (see <see cref="TransferPathComparer"/>), with what <paramref name="issues"/> says about
     /// each and, where a rule sets a date, the date the file has now. A file in the archive that no
     /// rule adds is a change of its own.
     /// </summary>
@@ -92,7 +92,7 @@ public static class TransferChangeBuilder
                     draft.NewDate is null ? null : lastWrite(draft.SourcePath ?? draft.Path),
                     [.. draft.Rules.SelectMany(index => ruleIssues[index]).OrderByDescending(issue => issue.Severity)]))
                 .Concat(archiveIssues.Select(issue => new TransferChange(TransferChangeKind.Added, issue.Path, null, null, null, [issue])))
-                .OrderBy(change => change.Path, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(change => change.Path, TransferPathComparer.Instance)
                 .ThenBy(change => change.Kind),
         ];
 
