@@ -15,6 +15,12 @@ public sealed class JobCardViewModel
     /// <summary>
     /// Whether this job can be limited to one mod.
     /// </summary>
+    /// <summary>
+    /// Why the job cannot be started right now, shown beside a disabled button. A job that is
+    /// running can still be stopped.
+    /// </summary>
+    public string? BlockedReason { get; init; }
+
     public bool TakesMod { get; init; }
 
     public IReadOnlyList<string> ModFolderNames { get; init; } = [];

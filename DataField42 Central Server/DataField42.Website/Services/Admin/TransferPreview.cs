@@ -1,11 +1,22 @@
 namespace DataField42.Website.Services.Admin;
 
 /// <summary>
-/// What an uploaded rule set would do, for review before it is applied.
+/// What applying the uploaded rules would do, and what is wrong with them.
 /// </summary>
 public sealed class TransferPreview
 {
     public required IReadOnlyList<TransferRule> Rules { get; init; }
+
+    /// <summary>
+    /// Everything found wrong or doubtful, errors first. Empty for a rule set that has already been
+    /// applied, since it can no longer be checked against the collection it was built for.
+    /// </summary>
+    public IReadOnlyList<TransferIssue> Issues { get; init; } = [];
+
+    /// <summary>
+    /// When these rules were applied, or <see langword="null"/> if they have not been.
+    /// </summary>
+    public DateTime? AppliedUtc { get; init; }
 
     public int DeleteCount => Rules.Count(rule => rule.Kind == TransferRuleKind.Delete);
 
@@ -19,28 +30,25 @@ public sealed class TransferPreview
 
     public int UnknownCount => Rules.Count(rule => rule.Kind == TransferRuleKind.Unknown);
 
-    /// <summary>
-    /// Files the rules add that the uploaded archive does not contain, which would leave the
-    /// collection short of those files.
-    /// </summary>
-    public IReadOnlyList<string> MissingFromArchive { get; init; } = [];
+    public int ErrorCount => Issues.Count(issue => issue.Severity == TransferIssueSeverity.Error);
+
+    public int WarningCount => Issues.Count(issue => issue.Severity == TransferIssueSeverity.Warning);
+
+    public bool HasErrors => ErrorCount > 0;
+
+    public bool IsApplied => AppliedUtc is not null;
 
     /// <summary>
-    /// Files the rules move or copy that are not where the rules expect them, which would leave
-    /// the collection short of those files.
+    /// Whether the rules may be applied: there are some, they have no errors, and they have not been
+    /// applied already.
     /// </summary>
-    public IReadOnlyList<string> MissingSources { get; init; } = [];
-
-    /// <summary>
-    /// Destinations that already hold a file, which the apply step refuses to overwrite.
-    /// </summary>
-    public IReadOnlyList<string> OccupiedDestinations { get; init; } = [];
-
-    public bool HasWarnings => MissingFromArchive.Count > 0 || MissingSources.Count > 0 || OccupiedDestinations.Count > 0 || UnknownCount > 0;
+    public bool CanApply => Rules.Count > 0 && !HasErrors && !IsApplied;
 
     public DateTime UploadedUtc { get; init; }
 
     public long ArchiveSize { get; init; }
 
     public int ArchiveEntryCount { get; init; }
+
+    public bool ArchiveUploaded { get; init; }
 }

@@ -117,56 +117,71 @@ public sealed class FileTransferService(IOptions<WebsiteOptions> options, ILogge
     }
 
     /// <summary>
-    /// Reads the uploaded rules and checks them against what is actually on disk and in the
-    /// uploaded archive, so a rule set built against a different state of the collection is
-    /// caught before it is applied rather than halfway through.
+    /// Reads the uploaded rules and checks them against the collection and the uploaded archive, so a
+    /// rule set built against a different state of the collection is caught before it is applied
+    /// rather than halfway through. <see langword="null"/> when no rules have been uploaded.
     /// </summary>
     public async Task<TransferPreview?> PreviewAsync(CancellationToken cancellationToken)
     {
         if (!File.Exists(RulesPath))
             return null;
 
-        var rules = await ReadRulesAsync(cancellationToken);
-        var archiveEntries = ReadArchiveEntries();
+        var archiveInfo = ArchiveInfo;
+        var archive = ReadArchive();
+        DateTime? appliedUtc = GetAppliedUtc();
 
-        var missingFromArchive = new List<string>();
-        var missingSources = new List<string>();
-        var occupiedDestinations = new List<string>();
-
-        string modsDirectory = _options.ModsDirectory;
-
-        foreach (var rule in rules)
+        List<TransferRule> rules;
+        try
         {
-            switch (rule.Kind)
+            rules = await ReadRulesAsync(cancellationToken);
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException)
+        {
+            return new TransferPreview
             {
-                case TransferRuleKind.Add:
-                    if (archiveEntries is not null && !archiveEntries.Contains(rule.Path))
-                        missingFromArchive.Add(rule.Path);
-                    break;
-
-                case TransferRuleKind.Move:
-                case TransferRuleKind.Copy:
-                    if (!File.Exists(Path.Combine(modsDirectory, rule.Path)))
-                        missingSources.Add(rule.Path);
-                    if (rule.DestinationPath is { } destination && File.Exists(Path.Combine(modsDirectory, destination)))
-                        occupiedDestinations.Add(destination);
-                    break;
-            }
+                Rules = [],
+                Issues = [new TransferIssue(TransferIssueSeverity.Error, null, RulesName, $"The rules cannot be read: {ex.Message}")],
+                UploadedUtc = RulesInfo?.LastWriteTimeUtc ?? DateTime.UtcNow,
+                ArchiveSize = archiveInfo?.Length ?? 0,
+                ArchiveEntryCount = archive.Entries.Count,
+                ArchiveUploaded = archive.IsUploaded,
+            };
         }
 
-        var archiveInfo = ArchiveInfo;
+        // Rules that have been applied cannot be checked again: the collection has moved on, and
+        // they would all look wrong.
+        var issues = appliedUtc is null
+            ? TransferValidator.Validate(rules, _options.ModsDirectory, path => File.Exists(Path.Combine(_options.ModsDirectory, path)), archive)
+            : [];
 
         return new TransferPreview
         {
             Rules = rules,
-            MissingFromArchive = missingFromArchive,
-            MissingSources = missingSources,
-            OccupiedDestinations = occupiedDestinations,
+            Issues = [.. issues.OrderByDescending(issue => issue.Severity).ThenBy(issue => issue.RuleIndex ?? int.MaxValue)],
+            AppliedUtc = appliedUtc,
             UploadedUtc = RulesInfo?.LastWriteTimeUtc ?? DateTime.UtcNow,
             ArchiveSize = archiveInfo?.Length ?? 0,
-            ArchiveEntryCount = archiveEntries?.Count ?? 0,
+            ArchiveEntryCount = archive.Entries.Count,
+            ArchiveUploaded = archive.IsUploaded,
         };
     }
+
+    /// <summary>
+    /// When the uploaded rules were applied, or <see langword="null"/> if they have not been. The
+    /// record is a file written when an apply finishes; uploading anything afterwards makes it older
+    /// than the upload, which is what starts the next transfer from the beginning.
+    /// </summary>
+    private DateTime? GetAppliedUtc()
+    {
+        var marker = ToFileInfo(AppliedMarkerPath);
+        if (marker is null)
+            return null;
+
+        var newestUpload = new[] { RulesInfo?.LastWriteTimeUtc, ArchiveInfo?.LastWriteTimeUtc }.Max();
+        return newestUpload is null || marker.LastWriteTimeUtc >= newestUpload ? marker.LastWriteTimeUtc : null;
+    }
+
+    private string AppliedMarkerPath => Path.Combine(WorkingDirectory, "applied.txt");
 
     /// <summary>
     /// Stage 2: applies the uploaded rules and unpacks the uploaded archive.
@@ -177,9 +192,17 @@ public sealed class FileTransferService(IOptions<WebsiteOptions> options, ILogge
     /// </summary>
     public async Task ApplyAsync(JobContext jobContext, CancellationToken cancellationToken)
     {
-        var rules = await ReadRulesAsync(cancellationToken);
-        if (rules.Count == 0)
+        // The same check the preview shows, run again: what is applied is what was last checked, and
+        // nothing is changed unless the rules are free of errors.
+        var plan = await PreviewAsync(cancellationToken);
+        if (plan is null || plan.Rules.Count == 0 && !plan.HasErrors)
             throw new InvalidOperationException("There are no rules to apply. Upload a rules file first.");
+        if (plan.IsApplied)
+            throw new InvalidOperationException("These rules were applied already. Upload new ones.");
+        if (plan.HasErrors)
+            throw new InvalidOperationException($"The rules have {TextFormatting.Count(plan.ErrorCount, "error")}. Nothing was applied; review them on the file transfer page.");
+
+        var rules = plan.Rules;
 
         string modsDirectory = _options.ModsDirectory;
 
@@ -222,6 +245,7 @@ public sealed class FileTransferService(IOptions<WebsiteOptions> options, ILogge
         foreach (var rule in rules.Where(rule => rule.Kind == TransferRuleKind.Add && rule.ModifiedDate.HasValue))
             TrySetLastWriteTime(Path.Combine(modsDirectory, rule.Path), rule.ModifiedDate!.Value, jobContext);
 
+        await File.WriteAllTextAsync(AppliedMarkerPath, DateTime.UtcNow.ToString("O"), cancellationToken);
         jobContext.Log("Done.");
     }
 
@@ -380,39 +404,42 @@ public sealed class FileTransferService(IOptions<WebsiteOptions> options, ILogge
         if (document.RootElement.ValueKind != JsonValueKind.Array)
             throw new InvalidOperationException($"'{RulesName}' does not contain a list of rules.");
 
-        var rules = new List<TransferRule>();
-        foreach (var element in document.RootElement.EnumerateArray())
-            if (ParseRule(element) is { } rule)
-                rules.Add(rule);
-
-        return rules;
+        return [.. document.RootElement.EnumerateArray().Select(ParseRule)];
     }
 
     /// <summary>
     /// Parses one rule. Paths are written as lists of path segments, which keeps them free of any
     /// question about which separator the two sides use.
     /// </summary>
-    private static TransferRule? ParseRule(JsonElement element)
+    private static TransferRule ParseRule(JsonElement element)
     {
-        if (element.ValueKind != JsonValueKind.Array || element.GetArrayLength() < 2)
-            return null;
+        // Something that is not a rule at all is kept as an unknown one, so that it is reported
+        // rather than silently left out.
+        TransferRule NotARule()
+        {
+            string text = element.GetRawText();
+            return new TransferRule(TransferRuleKind.Unknown, text.Length > 120 ? text[..120] + "..." : text, null, null) { RawKind = "not a rule" };
+        }
+
+        if (element.ValueKind != JsonValueKind.Array || element.GetArrayLength() < 2 || element[0].ValueKind != JsonValueKind.String)
+            return NotARule();
 
         string rawKind = element[0].GetString() ?? "";
         string? path = ReadPath(element[1]);
         if (path is null)
-            return null;
+            return NotARule();
+
+        // A part a rule is missing reads as nothing, and is reported for that rule by the check, which
+        // says what is missing rather than that the whole rule is not understood.
+        T? Part<T>(int position, Func<JsonElement, T?> read) => element.GetArrayLength() > position ? read(element[position]) : default;
 
         return rawKind switch
         {
             "delete" => new TransferRule(TransferRuleKind.Delete, path, null, null) { RawKind = rawKind },
-            "move" when element.GetArrayLength() >= 3 =>
-                new TransferRule(TransferRuleKind.Move, path, ReadPath(element[2]), null) { RawKind = rawKind },
-            "copy" when element.GetArrayLength() >= 3 =>
-                new TransferRule(TransferRuleKind.Copy, path, ReadPath(element[2]), null) { RawKind = rawKind },
-            "change modified date" when element.GetArrayLength() >= 3 =>
-                new TransferRule(TransferRuleKind.ChangeModifiedDate, path, null, ReadDate(element[2])) { RawKind = rawKind },
-            "add" when element.GetArrayLength() >= 3 =>
-                new TransferRule(TransferRuleKind.Add, path, null, ReadDate(element[2])) { RawKind = rawKind },
+            "move" => new TransferRule(TransferRuleKind.Move, path, Part(2, ReadPath), null) { RawKind = rawKind },
+            "copy" => new TransferRule(TransferRuleKind.Copy, path, Part(2, ReadPath), null) { RawKind = rawKind },
+            "change modified date" => new TransferRule(TransferRuleKind.ChangeModifiedDate, path, null, Part(2, ReadDate)) { RawKind = rawKind },
+            "add" => new TransferRule(TransferRuleKind.Add, path, null, Part(2, ReadDate)) { RawKind = rawKind },
             _ => new TransferRule(TransferRuleKind.Unknown, path, null, null) { RawKind = rawKind },
         };
     }
@@ -432,22 +459,28 @@ public sealed class FileTransferService(IOptions<WebsiteOptions> options, ILogge
             : null;
 
     /// <summary>
-    /// The paths inside the uploaded archive, or null when there is no archive to look in.
+    /// What the uploaded archive holds, or that it is not there or cannot be read.
     /// </summary>
-    private HashSet<string>? ReadArchiveEntries()
+    private TransferArchive ReadArchive()
     {
         if (!File.Exists(ArchivePath))
-            return null;
+            return TransferArchive.NotUploaded;
 
         try
         {
             using var archive = ZipFile.OpenRead(ArchivePath);
-            return [.. archive.Entries.Select(entry => entry.FullName.Replace('\\', '/'))];
+            return new TransferArchive(
+                true,
+                null,
+                archive.Entries
+                    .Where(entry => !entry.FullName.EndsWith('/') && !entry.FullName.EndsWith('\\'))
+                    .Select(entry => entry.FullName.Replace('\\', '/'))
+                    .ToHashSet(StringComparer.Ordinal));
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException)
         {
             logger.LogWarning(ex, "Could not read the uploaded archive");
-            return null;
+            return new TransferArchive(true, ex.Message, new HashSet<string>());
         }
     }
 

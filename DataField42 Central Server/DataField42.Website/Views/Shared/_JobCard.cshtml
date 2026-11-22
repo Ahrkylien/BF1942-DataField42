@@ -29,8 +29,12 @@
 					}
 				</select>
 			}
-			<button class='btn' type="submit" style='margin-left:0px;'>@(job.IsRunning ? "Stop" : "Run")</button>
+			<button class='btn' type="submit" style='margin-left:0px;' @(Model.BlockedReason is not null && !job.IsRunning ? "disabled" : null)>@(job.IsRunning ? "Stop" : "Run")</button>
 		</form>
+		@if (Model.BlockedReason is not null)
+		{
+			<span style='color:#c9b037;margin-left:10px;'>@Model.BlockedReason</span>
+		}
 		<span class='jobMessage' style='color:#ab0909;margin-left:10px;' hidden></span>
 		<a href='/Admin/Jobs/@job.JobId/Runs' class='urlLine' style='margin-left:10px;color:#8a8a8a;'>Earlier runs</a>
 		<div class='textBox pre jobLog' style='max-height:240px;overflow:auto;margin-top:10px;' @(job.Log.Count > 0 ? null : "hidden")>@string.Join('\n', job.Log)</div>
