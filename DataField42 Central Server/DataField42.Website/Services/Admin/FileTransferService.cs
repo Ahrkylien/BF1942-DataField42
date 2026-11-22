@@ -126,43 +126,33 @@ public sealed class FileTransferService(IOptions<WebsiteOptions> options, ILogge
         if (!File.Exists(RulesPath))
             return null;
 
-        var archiveInfo = ArchiveInfo;
         var archive = ReadArchive();
         DateTime? appliedUtc = GetAppliedUtc();
+        var rules = new List<TransferRule>();
+        var issues = new List<TransferIssue>();
 
-        List<TransferRule> rules;
         try
         {
             rules = await ReadRulesAsync(cancellationToken);
+
+            // Rules that have been applied cannot be checked again: the collection has moved on, and
+            // they would all look wrong.
+            if (appliedUtc is null)
+                issues.AddRange(TransferValidator.Validate(rules, _options.ModsDirectory, path => File.Exists(Path.Combine(_options.ModsDirectory, path)), archive));
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException)
         {
-            return new TransferPreview
-            {
-                Rules = [],
-                Issues = [new TransferIssue(TransferIssueSeverity.Error, null, RulesName, $"The rules cannot be read: {ex.Message}")],
-                UploadedUtc = RulesInfo?.LastWriteTimeUtc ?? DateTime.UtcNow,
-                ArchiveSize = archiveInfo?.Length ?? 0,
-                ArchiveEntryCount = archive.Entries.Count,
-                ArchiveUploaded = archive.IsUploaded,
-            };
+            issues.Add(new TransferIssue(TransferIssueSeverity.Error, null, "", $"The rules cannot be read: {ex.Message}"));
         }
-
-        // Rules that have been applied cannot be checked again: the collection has moved on, and
-        // they would all look wrong.
-        var issues = appliedUtc is null
-            ? TransferValidator.Validate(rules, _options.ModsDirectory, path => File.Exists(Path.Combine(_options.ModsDirectory, path)), archive)
-            : [];
 
         return new TransferPreview
         {
             Rules = rules,
-            Issues = [.. issues.OrderByDescending(issue => issue.Severity).ThenBy(issue => issue.RuleIndex ?? int.MaxValue)],
+            Archive = archive,
+            Issues = issues,
             AppliedUtc = appliedUtc,
             UploadedUtc = RulesInfo?.LastWriteTimeUtc ?? DateTime.UtcNow,
-            ArchiveSize = archiveInfo?.Length ?? 0,
-            ArchiveEntryCount = archive.Entries.Count,
-            ArchiveUploaded = archive.IsUploaded,
+            LastWrite = path => ToFileInfo(Path.Combine(_options.ModsDirectory, path))?.LastWriteTime,
         };
     }
 
@@ -192,15 +182,12 @@ public sealed class FileTransferService(IOptions<WebsiteOptions> options, ILogge
     /// </summary>
     public async Task ApplyAsync(JobContext jobContext, CancellationToken cancellationToken)
     {
-        // The same check the preview shows, run again: what is applied is what was last checked, and
-        // nothing is changed unless the rules are free of errors.
-        var plan = await PreviewAsync(cancellationToken);
-        if (plan is null || plan.Rules.Count == 0 && !plan.HasErrors)
-            throw new InvalidOperationException("There are no rules to apply. Upload a rules file first.");
-        if (plan.IsApplied)
-            throw new InvalidOperationException("These rules were applied already. Upload new ones.");
-        if (plan.HasErrors)
-            throw new InvalidOperationException($"The rules have {TextFormatting.Count(plan.ErrorCount, "error")}. Nothing was applied; review them on the file transfer page.");
+        // The same check the preview shows, run again: nothing is changed unless the rules are free of
+        // errors, whatever asked for them to be applied.
+        var plan = await PreviewAsync(cancellationToken)
+            ?? throw new InvalidOperationException("There are no rules to apply. Upload a rules file first.");
+        if (plan.BlockedReason is { } reason)
+            throw new InvalidOperationException(reason);
 
         var rules = plan.Rules;
 
@@ -475,7 +462,8 @@ public sealed class FileTransferService(IOptions<WebsiteOptions> options, ILogge
                 archive.Entries
                     .Where(entry => !entry.FullName.EndsWith('/') && !entry.FullName.EndsWith('\\'))
                     .Select(entry => entry.FullName.Replace('\\', '/'))
-                    .ToHashSet(StringComparer.Ordinal));
+                    .ToHashSet(StringComparer.Ordinal),
+                new FileInfo(ArchivePath).Length);
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException)
         {

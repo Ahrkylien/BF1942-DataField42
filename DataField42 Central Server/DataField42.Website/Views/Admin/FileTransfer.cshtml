@@ -1,75 +1,26 @@
 @model FileTransferPageViewModel
-@{
-    const int MaxRowsPerGroup = 500;
-    const int MaxIssuesPerSeverity = 200;
-
-    var preview = Model.Preview;
-
-    string FormatSize(long bytes) => bytes switch
-    {
-        >= 1L << 30 => $"{bytes / (double)(1L << 30):0.##} GB",
-        >= 1L << 20 => $"{bytes / (double)(1L << 20):0.##} MB",
-        >= 1L << 10 => $"{bytes / (double)(1L << 10):0.##} kB",
-        _ => $"{bytes} B",
-    };
-
-    string Stamp(DateTime utc) => utc.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
-
-    const string Green = "#57a857";
-    const string Yellow = "#c9b037";
-    const string Red = "#ab0909";
-    const string Grey = "#8a8a8a";
-
-    // Where each step of the transfer stands: a mark, a colour, and a few words.
-    (string Mark, string Color, string Text) FileListStep() =>
-        Model.ServerFileList is { } list ? ("&#10003;", Green, $"Written {Stamp(list.ModifiedUtc)}") : ("1", Yellow, "To do");
-
-    (string Mark, string Color, string Text) UploadStep() =>
-        Model.Rules is { } rules
-            ? ("&#10003;", Green, Model.Archive is null ? $"Rules {Stamp(rules.ModifiedUtc)}, no archive" : $"Rules and archive, {Stamp(rules.ModifiedUtc)}")
-            : ("2", Yellow, "To do");
-
-    (string Mark, string Color, string Text) ReviewStep() =>
-        preview is null ? ("3", Grey, "Waiting for the upload")
-        : preview.IsApplied ? ("&#10003;", Green, "Applied")
-        : preview.HasErrors ? ("&#10007;", Red, TextFormatting.Count(preview.ErrorCount, "error"))
-        : preview.WarningCount > 0 ? ("&#9888;", Yellow, TextFormatting.Count(preview.WarningCount, "warning"))
-        : ("&#10003;", Green, "No problems");
-
-    (string Mark, string Color, string Text) ApplyStep() =>
-        preview is null ? ("4", Grey, "Waiting for the upload")
-        : preview.IsApplied ? ("&#10003;", Green, $"Applied {Stamp(preview.AppliedUtc!.Value)}")
-        : preview.HasErrors ? ("&#10007;", Red, "Blocked")
-        : ("4", Yellow, "Ready to apply");
-
-    string KindLabel(TransferRuleKind kind) => kind switch
-    {
-        TransferRuleKind.Delete => "Delete",
-        TransferRuleKind.Move => "Move",
-        TransferRuleKind.Copy => "Copy",
-        TransferRuleKind.Add => "Add",
-        TransferRuleKind.ChangeModifiedDate => "Change date",
-        _ => "Not understood",
-    };
-
-    string KindColor(TransferRuleKind kind) => kind switch
-    {
-        TransferRuleKind.Delete => Red,
-        TransferRuleKind.Move => Yellow,
-        TransferRuleKind.Copy => "#6e9bd1",
-        TransferRuleKind.Add => Green,
-        TransferRuleKind.ChangeModifiedDate => Grey,
-        _ => Red,
-    };
-
-    var kinds = new[]
-    {
-        TransferRuleKind.Delete, TransferRuleKind.Move, TransferRuleKind.Copy,
-        TransferRuleKind.Add, TransferRuleKind.ChangeModifiedDate, TransferRuleKind.Unknown,
-    };
-
-    var steps = new[] { ("List this server's files", FileListStep()), ("Upload what the workstation made", UploadStep()), ("Review the changes", ReviewStep()), ("Apply", ApplyStep()) };
-}
+<style>
+	.ft-steps { display:flex; flex-wrap:wrap; gap:10px; }
+	.ft-step { flex:1 1 200px; border:solid 2px var(--c); background:#090b12; padding:8px 10px; color:var(--c); }
+	.ft-step-title { font-size:20px; line-height:24px; }
+	.ft-step-title span { color:#d4d4d4; font-size:16px; }
+	.ft-tiles { display:flex; flex-wrap:wrap; gap:10px; margin:12px 0; }
+	.ft-tile { min-width:120px; border:solid 2px #233050; border-top:solid 4px var(--c); background:#090b12; padding:6px 12px; }
+	.ft-tile b { display:block; font-size:28px; line-height:32px; font-weight:normal; color:var(--c); }
+	.ft-tile.empty { opacity:.55; --c:#233050; }
+	.ft-tile.empty b { color:#8a8a8a; }
+	.ft-table { width:100%; border-collapse:collapse; table-layout:fixed; }
+	.ft-table th { text-align:left; font-weight:normal; color:#6b7a99; font-size:13px; padding:0 8px 4px 8px; border-bottom:solid 1px #233050; }
+	.ft-table td { padding:1px 8px; vertical-align:top; overflow-wrap:anywhere; }
+	.ft-table tr:hover td { background:#0c1322; }
+	.ft-table tr.ft-error td { background:#1a0b10; }
+	.ft-table tr.ft-warning td { background:#1a160a; }
+	.ft-badge { display:inline-block; width:20px; text-align:center; border:solid 1px var(--c); margin-right:6px; }
+	.ft-folder { color:#6b7a99; }
+	.ft-name { color:#e6e6e6; }
+	.ft-struck { text-decoration:line-through; }
+	.ft-dim { color:#8a8a8a; font-size:14px; }
+</style>
 <div class='container'>
 	<div class='titleBox'>File transfer <span class='subTitle'>collection sync</span></div>
 </div>
@@ -84,20 +35,14 @@
 
 <div class='container fullW'>
 	<div class='textBox'>
-		<div style='color:#8a8a8a;'>
-			The collection is sorted on a workstation and served from here, and the two are brought back
-			in line in five stages. Stages 1 and 2 run here; stages 3, 4 and 5 run on the workstation, between
-			the steps below: it lists its own files, compares them with the list from step 1 into a set
-			of rules, and packs the files this server is missing.
-		</div>
-		<br>
-		<div data-region="pipeline" style='display:flex;flex-wrap:wrap;gap:10px;'>
-			@for (int i = 0; i < steps.Length; i++)
+		<div style='color:#8a8a8a;margin-bottom:10px;'>Stages 3 to 5 run on the workstation, between steps 1 and 2.</div>
+		<div class='ft-steps' data-region="pipeline">
+			@for (int i = 0; i < Model.Steps.Count; i++)
 			{
-				var (title, state) = steps[i];
-				<div style='flex:1 1 200px;border:solid 2px @(state.Color == Grey ? "#233050" : state.Color);background:#090b12;padding:8px 10px;'>
-					<div style='color:@state.Color;font-size:20px;line-height:24px;'>@Html.Raw(state.Mark)&nbsp;<span style='color:#d4d4d4;font-size:16px;'>@(i + 1). @title</span></div>
-					<div style='color:@state.Color;font-size:14px;'>@Html.Raw(state.Text)</div>
+				var step = Model.Steps[i];
+				<div class='ft-step' style='--c:@(step.Color == TransferDisplay.Grey ? "#233050" : step.Color);'>
+					<div class='ft-step-title'>@step.Mark <span>@(i + 1). @step.Title</span></div>
+					<div style='font-size:14px;'>@step.Text</div>
 				</div>
 			}
 		</div>
@@ -116,13 +61,13 @@
 	<div class='textBox'>
 		@if (Model.ServerFileList is { } fileList)
 		{
-			<div>@fileList.Name &mdash; @FormatSize(fileList.Size), written @Stamp(fileList.ModifiedUtc)</div>
+			<div>@fileList.Name &mdash; @TextFormatting.Size(fileList.Size), written @TextFormatting.Stamp(fileList.ModifiedUtc)</div>
 			<br>
 			<a href='/Admin/FileTransfer/ServerFileList' class='btn' style='margin-left:0px;'>Download the file list</a>
 		}
 		else
 		{
-			<div style='color:#8a8a8a;'>No file list yet. Run step 1 above, then download it for the workstation.</div>
+			<div style='color:#8a8a8a;'>No file list yet.</div>
 		}
 	</div>
 </div>
@@ -135,24 +80,18 @@
 	<div class='textBox'>
 		<form method="post" action="/Admin/FileTransfer/Upload" enctype="multipart/form-data">
 			@Html.AntiForgeryToken()
-			<div style='padding-bottom:10px;'>
-				<label style='color:#d4d4d4;'>Rules (rules.json)</label><br>
-				<input type="file" name="rules" accept=".json">
-				@if (Model.Rules is { } rules)
-				{
-					<span style='color:#8a8a8a;'> uploaded @Stamp(rules.ModifiedUtc), @FormatSize(rules.Size)</span>
-				}
-			</div>
-			<div style='padding-bottom:10px;'>
-				<label style='color:#d4d4d4;'>New files (newFiles.zip)</label><br>
-				<input type="file" name="archive" accept=".zip">
-				@if (Model.Archive is { } archive)
-				{
-					<span style='color:#8a8a8a;'> uploaded @Stamp(archive.ModifiedUtc), @FormatSize(archive.Size)</span>
-				}
-			</div>
+			@foreach (var (label, field, accept, file) in new[] { ("Rules (rules.json)", "rules", ".json", Model.Rules), ("New files (newFiles.zip)", "archive", ".zip", Model.Archive) })
+			{
+				<div style='padding-bottom:10px;'>
+					<label style='color:#d4d4d4;'>@label</label><br>
+					<input type="file" name="@field" accept="@accept">
+					@if (file is not null)
+					{
+						<span style='color:#8a8a8a;'> uploaded @TextFormatting.Stamp(file.ModifiedUtc), @TextFormatting.Size(file.Size)</span>
+					}
+				</div>
+			}
 			<button class='btn' type="submit" style='margin-left:0px;'>Upload</button>
-			<span style='color:#8a8a8a;margin-left:10px;'>Nothing is changed by uploading. The rules are checked in the next step.</span>
 		</form>
 	</div>
 </div>
@@ -162,169 +101,13 @@
 </div>
 <div style='clear: both;'></div>
 <div data-region="review">
-@if (preview is null)
+@if (Model.Preview is { } preview)
 {
-	<div class='container fullW'>
-		<div class='textBox' style='color:#8a8a8a;'>
-			Upload a rules file to see what applying it would do, and whether it can be applied.
-		</div>
-	</div>
+	@await Html.PartialAsync("_TransferReview", preview)
 }
 else
 {
-	var issueByRule = preview.Issues
-		.Where(issue => issue.RuleIndex is not null)
-		.GroupBy(issue => issue.RuleIndex!.Value)
-		.ToDictionary(group => group.Key, group => group.OrderByDescending(issue => issue.Severity).First());
-
-	string KindOf(TransferIssue issue) => issue.RuleIndex is { } index && index < preview.Rules.Count ? preview.Rules[index].RawKind : "archive";
-
-	void RenderIssues(string heading, string color, TransferIssueSeverity severity)
-	{
-		var found = preview.Issues.Where(issue => issue.Severity == severity).ToList();
-		if (found.Count == 0)
-			return;
-
-		<div class='container fullW' style='border-color:@color;'>
-			<div class='textBox'>
-				<div style='font-weight:bold;font-size:20px;color:@color;'>@heading <span style='font-size:16px;'>(@found.Count)</span></div>
-				<table style='margin-top:6px;'>
-					@foreach (var issue in found.Take(MaxIssuesPerSeverity))
-					{
-						<tr>
-							<td style='color:#8a8a8a;padding-right:12px;white-space:nowrap;'>@(issue.RuleIndex is { } number ? $"rule {number + 1}" : "")</td>
-							<td style='color:#8a8a8a;padding-right:12px;white-space:nowrap;'>@KindOf(issue)</td>
-							<td style='padding-right:12px;word-break:break-all;'>@issue.Path</td>
-							<td style='color:@color;'>@issue.Message</td>
-						</tr>
-					}
-				</table>
-				@if (found.Count > MaxIssuesPerSeverity)
-				{
-					<div style='color:#8a8a8a;margin-top:6px;'>...and @(found.Count - MaxIssuesPerSeverity) more.</div>
-				}
-			</div>
-		</div>
-	}
-
-	@* The verdict first, so it is the first thing read. *@
-	<div class='container fullW'>
-		<div class='textBox'>
-			@if (preview.IsApplied)
-			{
-				<div style='font-weight:bold;font-size:20px;color:#57a857;'>These rules were applied on @Stamp(preview.AppliedUtc!.Value).</div>
-				<div style='color:#8a8a8a;'>Upload a new rules file to start the next transfer. What was applied is listed below.</div>
-			}
-			else if (preview.HasErrors)
-			{
-				<div style='font-weight:bold;font-size:20px;color:#ab0909;'>@TextFormatting.Count(preview.ErrorCount, "error") to fix. These rules cannot be applied.</div>
-				<div style='color:#8a8a8a;'>
-					An error means a rule would fail or do harm, usually because the rules were built against a different
-					state of the collection. Run step 1 again, rebuild the rules on the workstation, and upload them.
-				</div>
-			}
-			else if (preview.WarningCount > 0)
-			{
-				<div style='font-weight:bold;font-size:20px;color:#c9b037;'>Can be applied, with @TextFormatting.Count(preview.WarningCount, "warning").</div>
-				<div style='color:#8a8a8a;'>Warnings do not stop the transfer; read them first.</div>
-			}
-			else
-			{
-				<div style='font-weight:bold;font-size:20px;color:#57a857;'>No problems found. Every rule can be carried out.</div>
-			}
-			<br>
-			<div style='display:flex;flex-wrap:wrap;gap:10px;'>
-				@foreach (var kind in kinds)
-				{
-					int count = preview.Rules.Count(rule => rule.Kind == kind);
-					if (count == 0 && kind == TransferRuleKind.Unknown)
-					{
-						continue;
-					}
-
-					<div style='min-width:110px;border:solid 2px #233050;background:#090b12;padding:6px 12px;'>
-						<div style='font-size:24px;line-height:28px;color:@(count == 0 ? Grey : KindColor(kind));'>@count</div>
-						<div style='color:#8a8a8a;'>@KindLabel(kind)</div>
-					</div>
-				}
-			</div>
-			<br>
-			<div style='color:#8a8a8a;'>
-				<span style='color:#d4d4d4;'>Rules:</span> @TextFormatting.Count(preview.Rules.Count, "rule"), uploaded @Stamp(preview.UploadedUtc).
-				<span style='color:#d4d4d4;'>Archive:</span>
-				@if (preview.ArchiveUploaded)
-				{
-					<text>@TextFormatting.Count(preview.ArchiveEntryCount, "file"), @FormatSize(preview.ArchiveSize)</text>
-				}
-				else
-				{
-					<text>none uploaded</text>
-				}
-			</div>
-		</div>
-	</div>
-
-	RenderIssues("Errors", Red, TransferIssueSeverity.Error);
-	RenderIssues("Warnings", Yellow, TransferIssueSeverity.Warning);
-
-	<div class='container fullW'>
-		<div class='textBox'>
-			<div style='font-weight:bold;font-size:20px;'>The changes</div>
-			<div style='color:#8a8a8a;margin-bottom:6px;'>In the order they are applied, grouped by what they do. Rows with a problem are marked and groups that have one start open.</div>
-			@foreach (var kind in kinds)
-			{
-				var indexed = preview.Rules
-					.Select((rule, index) => (Rule: rule, Index: index))
-					.Where(item => item.Rule.Kind == kind)
-					.ToList();
-				if (indexed.Count == 0)
-				{
-					continue;
-				}
-
-				bool hasProblem = indexed.Any(item => issueByRule.ContainsKey(item.Index));
-				<details style='margin-bottom:4px;' @(hasProblem ? "open" : null)>
-					<summary style='cursor:pointer;'>
-						<span style='color:@KindColor(kind);font-weight:bold;'>@KindLabel(kind)</span>
-						<span style='color:#8a8a8a;'> &mdash; @TextFormatting.Count(indexed.Count, "file")</span>
-						@if (hasProblem)
-						{
-							<span style='color:#ab0909;'> &mdash; @TextFormatting.Count(indexed.Count(item => issueByRule.ContainsKey(item.Index)), "problem")</span>
-						}
-					</summary>
-					<table style='margin:6px 0 10px 18px;'>
-						@foreach (var (rule, index) in indexed.Take(MaxRowsPerGroup))
-						{
-							issueByRule.TryGetValue(index, out var issue);
-							<tr title='@issue?.Message'>
-								<td style='width:22px;color:@(issue?.Severity == TransferIssueSeverity.Error ? Red : Yellow);'>@Html.Raw(issue is null ? "" : issue.Severity == TransferIssueSeverity.Error ? "&#10007;" : "&#9888;")</td>
-								<td style='padding-right:12px;color:#8a8a8a;white-space:nowrap;'>@(index + 1)</td>
-								<td style='word-break:break-all;'>
-									@rule.Path
-									@if (rule.DestinationPath is not null)
-									{
-										<span style='color:#8a8a8a;'> &rarr; </span>@rule.DestinationPath
-									}
-									@if (rule.ModifiedDate is { } date)
-									{
-										<span style='color:#8a8a8a;'> (@date.ToString("yyyy-MM-dd HH:mm"))</span>
-									}
-									@if (issue is not null)
-									{
-										<div style='color:@(issue.Severity == TransferIssueSeverity.Error ? Red : Yellow);font-size:14px;'>@issue.Message</div>
-									}
-								</td>
-							</tr>
-						}
-					</table>
-					@if (indexed.Count > MaxRowsPerGroup)
-					{
-						<div style='color:#8a8a8a;margin:0 0 10px 18px;'>...and @(indexed.Count - MaxRowsPerGroup) more, all of them in rules.json.</div>
-					}
-				</details>
-			}
-		</div>
-	</div>
+	<div class='container fullW'><div class='textBox' style='color:#8a8a8a;'>Upload a rules file first.</div></div>
 }
 </div>
 
@@ -333,22 +116,13 @@ else
 </div>
 <div style='clear: both;'></div>
 <div data-region="apply">
-@if (preview is not null && Model.ApplyJob is not null)
+@if (Model.Preview is { } applyPreview && Model.ApplyJob is not null)
 {
-	string? blockedReason = preview.IsApplied ? "These rules were applied already. Upload new ones."
-		: preview.HasErrors ? $"Blocked: fix the {TextFormatting.Count(preview.ErrorCount, "error")} in step 3 first."
-		: preview.Rules.Count == 0 ? "There are no rules to apply."
-		: null;
-
-	@await Html.PartialAsync("_JobCard", new JobCardViewModel { Job = Model.ApplyJob, ReturnTo = "/Admin/FileTransfer", BlockedReason = blockedReason })
+	@await Html.PartialAsync("_JobCard", new JobCardViewModel { Job = Model.ApplyJob, ReturnTo = "/Admin/FileTransfer", BlockedReason = applyPreview.BlockedReason })
 }
 else
 {
-	<div class='container fullW'>
-		<div class='textBox' style='color:#8a8a8a;'>
-			Applying unlocks once rules have been uploaded and checked.
-		</div>
-	</div>
+	<div class='container fullW'><div class='textBox' style='color:#8a8a8a;'>Upload a rules file first.</div></div>
 }
 </div>
 @await Html.PartialAsync("_JobPolling")

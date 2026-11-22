@@ -86,6 +86,22 @@ public static partial class TextFormatting
     }
 
     /// <summary>
+    /// A size in bytes as <c>1.5 MB</c>.
+    /// </summary>
+    public static string Size(long bytes) => bytes switch
+    {
+        >= 1L << 30 => $"{bytes / (double)(1L << 30):0.##} GB",
+        >= 1L << 20 => $"{bytes / (double)(1L << 20):0.##} MB",
+        >= 1L << 10 => $"{bytes / (double)(1L << 10):0.##} kB",
+        _ => $"{bytes} B",
+    };
+
+    /// <summary>
+    /// A UTC time as local date and time, to the minute.
+    /// </summary>
+    public static string Stamp(DateTime utc) => utc.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+
+    /// <summary>
     /// The short name of a gameplay mode, as the round list shows it.
     /// </summary>
     public static string GameplayModeShort(string? gameplayMode) => gameplayMode?.ToLowerInvariant() switch

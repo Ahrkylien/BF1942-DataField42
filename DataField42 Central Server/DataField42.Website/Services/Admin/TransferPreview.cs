@@ -5,11 +5,15 @@ namespace DataField42.Website.Services.Admin;
 /// </summary>
 public sealed class TransferPreview
 {
+    private IReadOnlyList<TransferChange>? _changes;
+
     public required IReadOnlyList<TransferRule> Rules { get; init; }
 
+    public required TransferArchive Archive { get; init; }
+
     /// <summary>
-    /// Everything found wrong or doubtful, errors first. Empty for a rule set that has already been
-    /// applied, since it can no longer be checked against the collection it was built for.
+    /// Everything found wrong or doubtful. Empty for a rule set that has already been applied, since
+    /// it can no longer be checked against the collection it was built for.
     /// </summary>
     public IReadOnlyList<TransferIssue> Issues { get; init; } = [];
 
@@ -18,37 +22,35 @@ public sealed class TransferPreview
     /// </summary>
     public DateTime? AppliedUtc { get; init; }
 
-    public int DeleteCount => Rules.Count(rule => rule.Kind == TransferRuleKind.Delete);
+    public DateTime UploadedUtc { get; init; }
 
-    public int MoveCount => Rules.Count(rule => rule.Kind == TransferRuleKind.Move);
+    /// <summary>
+    /// The modification date of a file in the collection, or <see langword="null"/> if it is not there.
+    /// </summary>
+    public Func<string, DateTime?> LastWrite { get; init; } = _ => null;
 
-    public int CopyCount => Rules.Count(rule => rule.Kind == TransferRuleKind.Copy);
+    /// <summary>
+    /// The rules read as one change per file, ordered by path, each with its own findings.
+    /// </summary>
+    public IReadOnlyList<TransferChange> Changes => _changes ??= TransferChangeBuilder.Build(Rules, Issues, LastWrite);
 
-    public int AddCount => Rules.Count(rule => rule.Kind == TransferRuleKind.Add);
-
-    public int ChangeDateCount => Rules.Count(rule => rule.Kind == TransferRuleKind.ChangeModifiedDate);
-
-    public int UnknownCount => Rules.Count(rule => rule.Kind == TransferRuleKind.Unknown);
+    /// <summary>
+    /// The findings about the uploads as a whole, which belong to no file.
+    /// </summary>
+    public IEnumerable<TransferIssue> UploadIssues => Issues.Where(issue => issue.RuleIndex is null && issue.Path.Length == 0);
 
     public int ErrorCount => Issues.Count(issue => issue.Severity == TransferIssueSeverity.Error);
 
     public int WarningCount => Issues.Count(issue => issue.Severity == TransferIssueSeverity.Warning);
 
-    public bool HasErrors => ErrorCount > 0;
-
     public bool IsApplied => AppliedUtc is not null;
 
     /// <summary>
-    /// Whether the rules may be applied: there are some, they have no errors, and they have not been
-    /// applied already.
+    /// Why the rules cannot be applied, or <see langword="null"/> when they can.
     /// </summary>
-    public bool CanApply => Rules.Count > 0 && !HasErrors && !IsApplied;
-
-    public DateTime UploadedUtc { get; init; }
-
-    public long ArchiveSize { get; init; }
-
-    public int ArchiveEntryCount { get; init; }
-
-    public bool ArchiveUploaded { get; init; }
+    public string? BlockedReason =>
+        IsApplied ? "These rules were applied already. Upload new ones."
+        : ErrorCount > 0 ? $"Blocked: fix the {TextFormatting.Count(ErrorCount, "error")} in step 3 first."
+        : Rules.Count == 0 ? "There are no rules to apply."
+        : null;
 }
