@@ -3,6 +3,34 @@
     // The jobs that can be limited to a single mod, rather than running over the whole collection.
     var jobsTakingAMod = new[] { "MapList", "MapInfo" };
     var maintenanceJobs = Model.Jobs.Where(job => job.JobId is not ("ServerFileList" or "ApplyTransfer")).ToList();
+
+    (string Title, (string Url, string Name, string Description)[] Pages)[] OtherPages =
+    [
+        ("Admin",
+        [
+            ("/Admin/FileTransfer", "File transfer", "Sync the collection with the workstation"),
+            ("/Admin/Update", "Update", "Deploy the latest version from GitHub"),
+        ]),
+        ("Work lists",
+        [
+            ("/Scraping", "Scraping", "Maps still to be collected, from scraped pages"),
+            ("/ToDoFiles", "To do files", "Files still to be sorted"),
+            ("/MyServer", "My server", "Map activity of the private server"),
+        ]),
+        ("Reports",
+        [
+            ("/ErrorList", "Error list", "Integrity findings in the collection"),
+            ("/MissingMaps", "Missing maps", "Maps servers play that the collection does not have"),
+            ("/Extra", "Extra", "Player statistics and disk space"),
+        ]),
+        ("Reference",
+        [
+            ("/AllCMD", "All commands", "Every console command"),
+            ("/ObjectTemplate", "Object templates", "ObjectTemplate commands"),
+            ("/GeometryTemplate", "Geometry templates", "GeometryTemplate commands"),
+            ("/GC_Errors", "GC errors", "GC error codes"),
+        ]),
+    ];
 }
 <div class='container'>
 	<div class='titleBox'>Admin</div>
@@ -17,11 +45,24 @@
 }
 <div class='container fullW'>
 	<div class='textBox'>
-		<a href='/Admin/FileTransfer' class='btn' style='margin-left:0px;'>File transfer</a>
-		<a href='/Admin/Update' class='btn'>Update</a>
-		<form method="post" action="/Logout" style='display:inline-block;'>
+		<div style='font-weight:bold;font-size:20px;'>Pages</div>
+		<div style='color:#8a8a8a;'>Everything that is not in the top bar.</div>
+		<table style='margin-top:6px;'>
+			@foreach (var (title, pages) in OtherPages)
+			{
+				<tr><td colspan='2' style='color:#d4d4d4;padding-top:8px;'>@title</td></tr>
+				@foreach (var (url, name, description) in pages)
+				{
+					<tr>
+						<td style='padding-right:20px;white-space:nowrap;'><a href='@url' class='urlLine'>@name</a></td>
+						<td style='color:#8a8a8a;'>@description</td>
+					</tr>
+				}
+			}
+		</table>
+		<form method="post" action="/Logout" style='margin-top:12px;'>
 			@Html.AntiForgeryToken()
-			<button class='btn' type="submit">Sign out</button>
+			<button class='btn' type="submit" style='margin-left:0px;'>Sign out</button>
 		</form>
 	</div>
 </div>

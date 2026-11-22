@@ -1,0 +1,77 @@
+@using static DataField42.Website.Models.TransferDisplay
+@model TransferPreview
+@{
+    const int MaxRows = 2000;
+    const string DateFormat = "yyyy-MM-dd HH:mm:ss";
+
+    var (verdict, verdictColor) =
+        Model.AppliedUtc is { } applied ? ($"Applied {TextFormatting.Stamp(applied)}", Green)
+        : Model.ErrorCount > 0 ? (TextFormatting.Count(Model.ErrorCount, "error"), Red)
+        : Model.WarningCount > 0 ? ($"Can be applied, with {TextFormatting.Count(Model.WarningCount, "warning")}", Yellow)
+        : ("No problems", Green);
+}
+<div class='container fullW'>
+	<div class='textBox'>
+		<div style='font-weight:bold;font-size:20px;color:@verdictColor;'>@verdict</div>
+		@foreach (var issue in Model.UploadIssues)
+		{
+			<div style='color:@(issue.Severity == TransferIssueSeverity.Error ? Red : Yellow);'>@(issue.Severity == TransferIssueSeverity.Error ? "✗" : "⚠") @issue.Message</div>
+		}
+		<div class='ft-tiles'>
+			@foreach (var kind in Kinds)
+			{
+				int count = Model.Changes.Count(change => change.Kind == kind);
+				if (count == 0 && kind == TransferChangeKind.NotUnderstood)
+				{
+					continue;
+				}
+
+				<div class='ft-tile@(count == 0 ? " empty" : "")' style='--c:@Style(kind).Color;'><b>@count</b>@Style(kind).Label</div>
+			}
+		</div>
+		<div style='color:#8a8a8a;margin-bottom:12px;'>
+			@TextFormatting.Count(Model.Rules.Count, "rule"), uploaded @TextFormatting.Stamp(Model.UploadedUtc).
+			Archive: @(Model.Archive.IsUploaded ? $"{TextFormatting.Count(Model.Archive.Entries.Count, "file")}, {TextFormatting.Size(Model.Archive.Size)}" : "none")
+		</div>
+		<table class='ft-table'>
+			<colgroup><col style='width:26px;'><col style='width:132px;'><col><col style='width:340px;'></colgroup>
+			<tr><th></th><th>Change</th><th>File</th><th>Date</th></tr>
+			@foreach (var change in Model.Changes.Take(MaxRows))
+			{
+				var style = Style(change.Kind);
+				var worst = change.Issues.FirstOrDefault()?.Severity;
+
+				<tr class='@(worst is null ? "" : worst == TransferIssueSeverity.Error ? "ft-error" : "ft-warning")'>
+					<td style='color:@(worst == TransferIssueSeverity.Error ? Red : Yellow);'>@(worst is null ? "" : worst == TransferIssueSeverity.Error ? "✗" : "⚠")</td>
+					<td style='white-space:nowrap;color:@style.Color;--c:@style.Color;'><span class='ft-badge'>@style.Letter</span>@style.Label</td>
+					<td>
+						@if (change.SourcePath is not null)
+						{
+							@Path(change.SourcePath, strike: change.Kind == TransferChangeKind.Moved)
+							<span style='color:@style.Color;'> &rarr; </span>
+						}
+						@Path(change.Path, strike: change.Kind == TransferChangeKind.Deleted)
+						@foreach (var issue in change.Issues)
+						{
+							<div style='color:@(issue.Severity == TransferIssueSeverity.Error ? Red : Yellow);font-size:14px;'>@issue.Message</div>
+						}
+					</td>
+					<td style='white-space:nowrap;'>
+						@if (change.NewDate is { } newDate)
+						{
+							if (change.OldDate is { } oldDate)
+							{
+								<span class='ft-folder'>@oldDate.ToString(DateFormat)</span><span style='color:@style.Color;'> &rarr; </span>
+							}
+							<span class='ft-name'>@newDate.ToString(DateFormat)</span>
+						}
+					</td>
+				</tr>
+			}
+		</table>
+		@if (Model.Changes.Count > MaxRows)
+		{
+			<div style='color:#8a8a8a;margin-top:6px;'>...and @(Model.Changes.Count - MaxRows) more files, all of them in rules.json.</div>
+		}
+	</div>
+</div>

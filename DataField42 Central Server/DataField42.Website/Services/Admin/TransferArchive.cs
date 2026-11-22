@@ -6,7 +6,8 @@ namespace DataField42.Website.Services.Admin;
 /// <param name="IsUploaded">Whether an archive was uploaded at all.</param>
 /// <param name="Problem">Why an uploaded archive could not be read, or <see langword="null"/> if it could.</param>
 /// <param name="Entries">The files inside, as paths with forward slashes. Folders are not listed.</param>
-public sealed record TransferArchive(bool IsUploaded, string? Problem, IReadOnlySet<string> Entries)
+/// <param name="Size">The size of the archive file, in bytes.</param>
+public sealed record TransferArchive(bool IsUploaded, string? Problem, IReadOnlySet<string> Entries, long Size = 0)
 {
     public static TransferArchive NotUploaded { get; } = new(false, null, new HashSet<string>());
 
