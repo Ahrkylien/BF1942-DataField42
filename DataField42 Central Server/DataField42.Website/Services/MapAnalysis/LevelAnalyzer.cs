@@ -23,6 +23,7 @@ public static class LevelAnalyzer
     {
         var layers = new List<IBfFileSystem>();
         var mismatchedArchiveNames = new List<string>();
+        var unreadableArchives = new List<(string Path, string Reason)>();
 
         foreach (var archivePath in archivePaths)
         {
@@ -33,6 +34,7 @@ public static class LevelAnalyzer
             }
             catch (Exception ex) when (ex is IOException or InvalidDataException or ArgumentOutOfRangeException)
             {
+                unreadableArchives.Add((archivePath, ex.Message));
                 continue;
             }
 
@@ -92,6 +94,7 @@ public static class LevelAnalyzer
             GameplayModes = modes,
             Errors = errors,
             MismatchedArchiveNames = mismatchedArchiveNames,
+            UnreadableArchives = unreadableArchives,
         };
     }
 

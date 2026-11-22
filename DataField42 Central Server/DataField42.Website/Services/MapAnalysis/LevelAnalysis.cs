@@ -23,4 +23,10 @@ public sealed class LevelAnalysis
     /// filed under -- almost always a repackaged map that was never renamed internally.
     /// </summary>
     public required IReadOnlyList<string> MismatchedArchiveNames { get; init; }
+
+    /// <summary>
+    /// Archives that could not be opened, with why: a damaged or cut-off file. The level is read
+    /// without them.
+    /// </summary>
+    public required IReadOnlyList<(string Path, string Reason)> UnreadableArchives { get; init; }
 }
