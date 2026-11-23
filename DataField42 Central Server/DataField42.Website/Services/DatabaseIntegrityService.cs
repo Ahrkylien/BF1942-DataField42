@@ -19,13 +19,18 @@ public sealed class DatabaseIntegrityService(DataField42DbContext context, IWebH
     {
         var exceptions = ReadExceptions();
 
+        // What the analysis finds out about a map can only be judged for a map it has run for.
+        var maps = await ReadMapsAsync(cancellationToken);
+        var analysed = maps.Where(map => map.IsAnalysed).ToList();
+
         return
         [
             new("Double Maps in same Mod", await FindDuplicateMapsAsync(cancellationToken)),
             new("Maps without Mod", await FindMapsWithoutModAsync(cancellationToken)),
-            new("Wrong game.mapID (not the same as the mod folderName)", await FindWrongGameMapIdAsync(exceptions, cancellationToken)),
-            new("No game.mapID", await FindMissingGameMapIdAsync(exceptions, cancellationToken)),
-            new("No gameplaymode at all", await FindMapsWithoutGameplayModeAsync(cancellationToken)),
+            new("Not analysed", [.. maps.Where(map => !map.IsAnalysed).Select(map => map.Line)]),
+            new("Wrong game.mapID (not the same as the mod folderName)", FindWrongGameMapId(analysed, exceptions)),
+            new("No game.mapID", FindMissingGameMapId(analysed, exceptions)),
+            new("No gameplaymode at all", [.. analysed.Where(map => !map.HasGameplayMode).Select(map => map.Line)]),
             new("Double RFAs in Map", await FindDuplicateRfasAsync(cancellationToken)),
             new("Map without (base) RFA", await FindMapsWithoutBaseRfaAsync(cancellationToken)),
             new("RFA without Map", await FindOrphanedRfasAsync(cancellationToken)),
@@ -59,58 +64,46 @@ public sealed class DatabaseIntegrityService(DataField42DbContext context, IWebH
     }
 
     /// <summary>
-    /// A map whose own <c>init.con</c> names a different mod than the one it is filed under,
-    /// which means it was copied between mods without being updated and will not load.
+    /// Every map with what the analysis recorded for it. The analysed maps are a few thousand, so the
+    /// checks on them are made here and not in the database.
     /// </summary>
-    private async Task<List<string>> FindWrongGameMapIdAsync(IntegrityExceptions exceptions, CancellationToken cancellationToken)
-    {
-        var maps = await context.Maps
+    private async Task<List<MapAnalysis>> ReadMapsAsync(CancellationToken cancellationToken) =>
+        await context.Maps
             .AsNoTracking()
-            .Where(map => map.Mod != null && map.Mod.FolderName != map.GameMapId)
-            .OrderBy(map => map.Mod!.FolderName)
-            .ThenBy(map => map.GameMapId)
-            .Select(map => new { map.Id, map.Name, map.GameMapId, ModFolderName = map.Mod!.FolderName })
+            .Select(map => new MapAnalysis(
+                map.Id,
+                map.Name,
+                map.Mod != null ? map.Mod.FolderName : null,
+                map.GameMapId,
+                map.GpmConquest,
+                map.GpmCaptureTheFlag,
+                map.GpmTeamDeathmatch,
+                map.GpmCoop,
+                map.GpmObjectiveMode))
             .ToListAsync(cancellationToken);
-
-        return
-        [
-            .. maps
-                .Where(m => !exceptions.IsAllowed("WrongGameMapId", m.Name, m.ModFolderName))
-                .Select(m => $"ID: {m.Id}, name: '{m.Name}', gameMapId: '{m.GameMapId}', Mod folderName: {m.ModFolderName}")
-        ];
-    }
-
-    private async Task<List<string>> FindMissingGameMapIdAsync(IntegrityExceptions exceptions, CancellationToken cancellationToken)
-    {
-        var maps = await context.Maps
-            .AsNoTracking()
-            .Where(map => map.GameMapId == null)
-            .Select(map => new { map.Id, map.Name, ModFolderName = map.Mod != null ? map.Mod.FolderName : null })
-            .ToListAsync(cancellationToken);
-
-        return
-        [
-            .. maps
-                .Where(m => !exceptions.IsAllowed("NoGameMapId", m.Name, m.ModFolderName))
-                .Select(m => $"ID: {m.Id}, name: '{m.Name}' Mod folderName: '{m.ModFolderName}'")
-        ];
-    }
 
     /// <summary>
-    /// A map with no gameplay mode cannot be played at all, so the analysis either has not run
-    /// for it or its archives are incomplete.
+    /// A map whose own <c>init.con</c> names a different mod than the one it is filed under,
+    /// which means it was copied between mods without being updated and will not load. A map that
+    /// names no mod at all is reported as having no game.mapID instead.
     /// </summary>
-    private async Task<List<string>> FindMapsWithoutGameplayModeAsync(CancellationToken cancellationToken)
-    {
-        var maps = await context.Maps
-            .AsNoTracking()
-            .Where(map => map.GpmConquest != 1 && map.GpmCaptureTheFlag != 1 && map.GpmTeamDeathmatch != 1
-                && map.GpmCoop != 1 && map.GpmObjectiveMode != 1)
-            .Select(map => new { map.Id, map.Name, ModFolderName = map.Mod != null ? map.Mod.FolderName : null })
-            .ToListAsync(cancellationToken);
+    private static List<string> FindWrongGameMapId(List<MapAnalysis> maps, IntegrityExceptions exceptions) =>
+    [
+        .. maps
+            .Where(map => map.ModFolderName is not null && map.GameMapId is not null
+                && !string.Equals(map.ModFolderName, map.GameMapId, StringComparison.OrdinalIgnoreCase)
+                && !exceptions.IsAllowed("WrongGameMapId", map.Name, map.ModFolderName))
+            .OrderBy(map => map.ModFolderName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(map => map.GameMapId, StringComparer.OrdinalIgnoreCase)
+            .Select(map => $"ID: {map.Id}, name: '{map.Name}', gameMapId: '{map.GameMapId}', Mod folderName: {map.ModFolderName}")
+    ];
 
-        return [.. maps.Select(m => $"ID: {m.Id}, name: '{m.Name}' Mod folderName: '{m.ModFolderName}'")];
-    }
+    private static List<string> FindMissingGameMapId(List<MapAnalysis> maps, IntegrityExceptions exceptions) =>
+    [
+        .. maps
+            .Where(map => map.GameMapId is null && !exceptions.IsAllowed("NoGameMapId", map.Name, map.ModFolderName))
+            .Select(map => map.Line)
+    ];
 
     /// <summary>
     /// Two archives claiming the same patch number of the same map: only one of them will load.
@@ -179,6 +172,32 @@ public sealed class DatabaseIntegrityService(DataField42DbContext context, IWebH
             logger.LogWarning(ex, "Could not read integrity exceptions from {Path}", path);
             return IntegrityExceptions.None;
         }
+    }
+
+    /// <summary>
+    /// A map as far as the integrity checks care: what it is filed under, and what the analysis made of it.
+    /// </summary>
+    /// <remarks>
+    /// The analysis fills in the game id and all five gameplay modes together, so a missing mode
+    /// means it has not run for the map.
+    /// </remarks>
+    private sealed record MapAnalysis(
+        int Id,
+        string? Name,
+        string? ModFolderName,
+        string? GameMapId,
+        int? Conquest,
+        int? CaptureTheFlag,
+        int? TeamDeathmatch,
+        int? Coop,
+        int? ObjectiveMode)
+    {
+        public bool IsAnalysed => Conquest is not null && CaptureTheFlag is not null && TeamDeathmatch is not null
+            && Coop is not null && ObjectiveMode is not null;
+
+        public bool HasGameplayMode => Conquest == 1 || CaptureTheFlag == 1 || TeamDeathmatch == 1 || Coop == 1 || ObjectiveMode == 1;
+
+        public string Line => $"ID: {Id}, name: '{Name}' Mod folderName: '{ModFolderName}'";
     }
 
     /// <summary>

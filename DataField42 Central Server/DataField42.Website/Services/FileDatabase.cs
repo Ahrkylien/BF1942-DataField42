@@ -35,14 +35,19 @@ public sealed class FileDatabase(IOptions<WebsiteOptions> options, IWebHostEnvir
 
     /// <summary>
     /// Opens an archive, or returns <see langword="null"/> when it is missing or unreadable --
-    /// the database can outlive the file it points at.
+    /// the database can outlive the file it points at. A cut-off archive is opened with the files it
+    /// still has, and what is wrong with it is logged.
     /// </summary>
     public RefractorFlatArchive? TryOpenArchive(string modFolderName, string rfaRelativePath)
     {
         string path = GetRfaPath(modFolderName, rfaRelativePath);
         try
         {
-            return new RefractorFlatArchive(path);
+            var archive = new RefractorFlatArchive(path);
+            foreach (string problem in archive.ReadFileListSafely())
+                logger.LogWarning("Archive {Path} {Problem}", path, problem);
+
+            return archive;
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or ArgumentOutOfRangeException or UnauthorizedAccessException)
         {

@@ -49,7 +49,7 @@ public sealed class ScriptReader
 
         if (!_fileSystem.TryReadText(path, out var text))
         {
-            _errors.Add(new ScriptError(path, -1, "", "file not found"));
+            _errors.Add(new ScriptError(ScriptErrorKind.FileNotFound, path, -1, "", "file not found"));
             return;
         }
 
@@ -63,7 +63,7 @@ public sealed class ScriptReader
             }
             catch (Exception ex)
             {
-                _errors.Add(new ScriptError(path, lineNumber, line, ex.Message));
+                _errors.Add(new ScriptError(ScriptErrorKind.OtherError, path, lineNumber, line, ex.Message));
             }
         }
     }

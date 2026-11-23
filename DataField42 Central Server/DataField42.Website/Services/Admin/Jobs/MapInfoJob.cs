@@ -1,5 +1,6 @@
 using System.Text.Json;
 using DataField42.Website.Services.MapAnalysis;
+using BF1942.Core.Scripting;
 using BF1942.FileSystem;
 using DataField42.Website.Services.Imaging;
 using BF1942.Lexicon;
@@ -25,12 +26,20 @@ public sealed class MapInfoJob(
     /// </summary>
     private const string LevelsPath = "archives/bf1942/levels";
 
-    private readonly Dictionary<string, LexiconFile> _lexiconsByMod = new(StringComparer.OrdinalIgnoreCase);
-
     /// <summary>
     /// How many of a map's script errors are listed; an old map can have hundreds.
     /// </summary>
     private const int MaxScriptErrorsLogged = 5;
+
+    /// <summary>
+    /// The kinds of script error that are not worth a line in the output: most maps run scripts that
+    /// are not there, and nobody can do anything about it.
+    /// </summary>
+    private static readonly ScriptErrorKind[] QuietScriptErrors = [ScriptErrorKind.FileNotFound];
+
+    private readonly HashSet<(string Path, string Problem)> _reportedArchiveProblems = [];
+
+    private readonly Dictionary<string, LexiconFile> _lexiconsByMod = new(StringComparer.OrdinalIgnoreCase);
 
     public string JobId => "MapInfo";
 
@@ -118,14 +127,17 @@ public sealed class MapInfoJob(
 
         var analysis = LevelAnalyzer.Analyze(archivePaths, modDirectory, mapNameRaw);
 
-        foreach (var (archivePath, reason) in analysis.UnreadableArchives)
-            jobContext.Log($"WARNING: {archivePath} could not be read and is left out of the analysis: {reason}");
+        // An archive that several maps are read from is reported once.
+        foreach (var (archivePath, problem) in analysis.ArchiveProblems.Where(item => _reportedArchiveProblems.Add(item)))
+            jobContext.Log($"WARNING: {archivePath} {problem}");
 
-        foreach (var error in analysis.Errors.Take(MaxScriptErrorsLogged))
+        var scriptErrors = analysis.Errors.Where(error => !QuietScriptErrors.Contains(error.Kind)).ToList();
+
+        foreach (var error in scriptErrors.Take(MaxScriptErrorsLogged))
             jobContext.Log($"WARNING: {mapNameRaw}: {error.Path}:{error.LineNumber}: {error.Message}");
 
-        if (analysis.Errors.Count > MaxScriptErrorsLogged)
-            jobContext.Log($"WARNING: {mapNameRaw}: and {analysis.Errors.Count - MaxScriptErrorsLogged} more script errors");
+        if (scriptErrors.Count > MaxScriptErrorsLogged)
+            jobContext.Log($"WARNING: {mapNameRaw}: and {scriptErrors.Count - MaxScriptErrorsLogged} more script errors");
 
         foreach (var archivePath in analysis.MismatchedArchiveNames)
             jobContext.Log($"WARNING: {archivePath} does not contain a level folder called {mapNameRaw}");

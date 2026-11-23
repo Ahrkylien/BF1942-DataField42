@@ -25,8 +25,8 @@ public sealed class LevelAnalysis
     public required IReadOnlyList<string> MismatchedArchiveNames { get; init; }
 
     /// <summary>
-    /// Archives that could not be opened, with why: a damaged or cut-off file. The level is read
-    /// without them.
+    /// What is wrong with the archives the level was read from, as a path and a sentence that
+    /// follows it: an archive that could not be opened and was left out, or one that is cut off.
     /// </summary>
-    public required IReadOnlyList<(string Path, string Reason)> UnreadableArchives { get; init; }
+    public required IReadOnlyList<(string Path, string Problem)> ArchiveProblems { get; init; }
 }

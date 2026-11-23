@@ -23,18 +23,18 @@ public static class LevelAnalyzer
     {
         var layers = new List<IBfFileSystem>();
         var mismatchedArchiveNames = new List<string>();
-        var unreadableArchives = new List<(string Path, string Reason)>();
+        var archiveProblems = new List<(string Path, string Problem)>();
 
         foreach (var archivePath in archivePaths)
         {
-            RefractorFlatArchive archive;
+            var archive = new RefractorFlatArchive(archivePath);
             try
             {
-                archive = new RefractorFlatArchive(archivePath);
+                archiveProblems.AddRange(archive.ReadFileListSafely().Select(problem => (archivePath, problem)));
             }
             catch (Exception ex) when (ex is IOException or InvalidDataException or ArgumentOutOfRangeException)
             {
-                unreadableArchives.Add((archivePath, ex.Message));
+                archiveProblems.Add((archivePath, $"could not be read and is left out of the analysis: {ex.Message}"));
                 continue;
             }
 
@@ -94,7 +94,7 @@ public static class LevelAnalyzer
             GameplayModes = modes,
             Errors = errors,
             MismatchedArchiveNames = mismatchedArchiveNames,
-            UnreadableArchives = unreadableArchives,
+            ArchiveProblems = archiveProblems,
         };
     }
 

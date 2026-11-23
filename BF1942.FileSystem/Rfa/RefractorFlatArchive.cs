@@ -7,33 +7,169 @@ public sealed class RefractorFlatArchive
 {
     private const int ChunkSize = 32768;
 
-    private static ReadOnlySpan<byte> V11Signature
-        => "Refractor2 FlatArchive 1.1  "u8;
+    /// <summary>
+    /// The four zero bytes the game's own tools leave after the table of contents.
+    /// </summary>
+    private const int TrailerLength = 4;
 
-    private readonly string? _path;
+    /// <summary>
+    /// What an entry takes in the table of contents when its name is empty: the length of the name
+    /// and the six numbers after it.
+    /// </summary>
+    private const int MinimumEntrySize = 4 + 24;
 
-    public IReadOnlyList<RefractorFlatArchiveEntry> Entries { get; }
+    private static readonly HashSet<string> ClientOnlyExtensions = new(StringComparer.OrdinalIgnoreCase)
+        { ".bik", ".dds", ".tga", ".wav" };
 
-    public bool IsCompressed { get; }
+    private static readonly HashSet<string> ClientOnlyFileNames = new(StringComparer.OrdinalIgnoreCase)
+        { "palette.pal", "envmap_g_.rcm", "lightmapshadowbits.lsb", "terrainpalette.pal", "textureprecache.dat" };
 
-    public bool IsV11Format { get; }
+    private static ReadOnlySpan<byte> V11Signature => "Refractor2 FlatArchive 1.1  "u8;
 
-    public XPackId XPackId { get; }
+    private readonly string _path;
 
+    private FileTable? _table;
+
+    /// <summary>
+    /// An archive on disk. Nothing is read until the file list is needed.
+    /// </summary>
     public RefractorFlatArchive(string path)
     {
-        using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-        var (isV11, isCompressed, xpackId, entries) = ReadFrom(fs);
         _path = path;
-        Entries = entries;
-        IsCompressed = isCompressed;
-        IsV11Format = isV11;
-        XPackId = xpackId;
     }
 
-    private static (bool IsV11, bool Compressed, XPackId XPackId, List<RefractorFlatArchiveEntry> Entries) ReadFrom(Stream s)
+    /// <summary>
+    /// The files in the archive. The file list is read when this is first used, and that fails if the
+    /// file is missing, is not an archive, or is cut off. <see cref="ReadFileListSafely"/> reads what
+    /// a cut-off archive still holds.
+    /// </summary>
+    public IReadOnlyList<RefractorFlatArchiveEntry> Entries => Table.Entries;
+
+    public bool IsCompressed => Table.IsCompressed;
+
+    public bool IsV11Format => Table.IsV11;
+
+    public XPackId XPackId => Table.XPackId;
+
+    private FileTable Table => _table ??= ReadHeaderAndFileList(allowCutOff: false);
+
+    /// <summary>
+    /// Reads the file list, and reports what is wrong with the file instead of failing on it. An
+    /// archive whose table of contents is cut off gives the files before the cut, which are then in
+    /// <see cref="Entries"/>; the ones after it are lost, though their data is still in the file.
+    /// </summary>
+    /// <returns>
+    /// What is wrong with the size of the file, as sentences that follow its name. The table of contents
+    /// says how many files there are and where their data lies, and the file has to be as long as that.
+    /// Empty when the size is right.
+    /// </returns>
+    /// <exception cref="IOException">The file is missing or is not an archive.</exception>
+    public IReadOnlyList<string> ReadFileListSafely()
     {
-        Span<byte> u4 = stackalloc byte[4];
+        var table = _table ??= ReadHeaderAndFileList(allowCutOff: true);
+        var problems = new List<string>();
+
+        if (table.Entries.Count < table.DeclaredEntryCount)
+            problems.Add($"is cut off: its table of contents lists {table.DeclaredEntryCount} files, but the file ends after {table.Entries.Count} of them");
+        else if (table.FileLength - table.TableEnd is var extra && extra > TrailerLength)
+            problems.Add($"has {extra} bytes after its table of contents");
+
+        int beyondEnd = table.Entries.Count(entry => entry.Offset + entry.BlockSize > table.FileLength);
+        if (beyondEnd > 0)
+            problems.Add($"has {beyondEnd} files whose data lies beyond the end of the file");
+
+        return problems;
+    }
+
+    public byte[] Read(RefractorFlatArchiveEntry e)
+    {
+        return DecodeRegion(ReadRegionFromFile(e), e.UncompressedSize, e.Name);
+    }
+
+    public List<(string Name, byte[] Data)> ReadServerEntries()
+        => Entries
+            .Where(e => !IsClientOnlyEntry(e.Name))
+            .Select(e => (e.Name, Read(e)))
+            .ToList();
+
+    public static bool IsClientOnlyEntry(string entryName)
+    {
+        string ext = Path.GetExtension(entryName);
+        string file = Path.GetFileName(entryName);
+        return ClientOnlyExtensions.Contains(ext) || ClientOnlyFileNames.Contains(file);
+    }
+
+    public static void WriteFile(
+        string path,
+        IReadOnlyList<(string Name, byte[] Data)> entries,
+        bool compress,
+        XPackId xPackId)
+    {
+        using var fs = new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
+        StreamArchive(
+            fs,
+            entries.Count,
+            i => entries[i].Name,
+            i => { var d = entries[i].Data; return (BuildRegion(d, compress), d.Length); },
+            compress,
+            xPackId);
+    }
+
+    public static void RepackToFile(
+        string path,
+        RefractorFlatArchive original,
+        IReadOnlyDictionary<string, byte[]> replacements)
+    {
+        var ci = new Dictionary<string, byte[]>(replacements, StringComparer.OrdinalIgnoreCase);
+        var ents = original.Entries;
+
+        string tmp = path + ".rfatmp";
+        try
+        {
+            using (var fs = new FileStream(tmp, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
+                StreamArchive(
+                    fs,
+                    ents.Count,
+                    i => ents[i].Name,
+                    i => ci.TryGetValue(ents[i].Name, out var rep)
+                        ? (BuildRegion(rep, original.IsCompressed), rep.Length)
+                        : (original.RawRegion(ents[i]), ents[i].UncompressedSize),
+                    original.IsCompressed,
+                    original.XPackId
+                );
+            File.Move(tmp, path, overwrite: true);
+        }
+        catch
+        {
+            try
+            { File.Delete(tmp); }
+            catch { }
+            throw;
+        }
+    }
+
+    private FileTable ReadHeaderAndFileList(bool allowCutOff)
+    {
+        using var fs = new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        return ReadHeaderAndFileList(fs, allowCutOff);
+    }
+
+    private byte[] RawRegion(RefractorFlatArchiveEntry e)
+    {
+        return ReadRegionFromFile(e);
+    }
+
+    private byte[] ReadRegionFromFile(RefractorFlatArchiveEntry e)
+    {
+        using var fs = new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        fs.Seek(e.Offset, SeekOrigin.Begin);
+        var buf = new byte[e.BlockSize];
+        fs.ReadExactly(buf);
+        return buf;
+    }
+
+    private static FileTable ReadHeaderAndFileList(Stream s, bool allowCutOff)
+    {
         Span<byte> sig = stackalloc byte[28];
 
         s.ReadExactly(sig);
@@ -41,10 +177,8 @@ public sealed class RefractorFlatArchive
         if (!isV11)
             s.Seek(0, SeekOrigin.Begin);
 
-        s.ReadExactly(u4);
-        uint tocOffset = BinaryPrimitives.ReadUInt32LittleEndian(u4);
-        s.ReadExactly(u4);
-        bool compressed = BinaryPrimitives.ReadUInt32LittleEndian(u4) == 1;
+        uint tocOffset = ReadU32(s);
+        bool compressed = ReadU32(s) == 1;
 
         XPackId xpackId = XPackId.Default;
         if (!isV11)
@@ -55,49 +189,54 @@ public sealed class RefractorFlatArchive
             uint sum = 0;
             foreach (var b in desc)
                 sum += b;
-            s.ReadExactly(u4);
-            xpackId = (XPackId)(BinaryPrimitives.ReadUInt32LittleEndian(u4) - sum);
+            xpackId = (XPackId)(ReadU32(s) - sum);
         }
 
         s.Seek(tocOffset, SeekOrigin.Begin);
-        s.ReadExactly(u4);
-        int count = (int)BinaryPrimitives.ReadUInt32LittleEndian(u4);
+        uint count = ReadU32(s);
 
-        var list = new List<RefractorFlatArchiveEntry>(count);
-        Span<byte> rec = stackalloc byte[24];
-        for (int i = 0; i < count; i++)
+        var list = new List<RefractorFlatArchiveEntry>((int)Math.Min(count, (s.Length - s.Position) / MinimumEntrySize));
+        long tableEnd = s.Position;
+        for (uint i = 0; i < count; i++)
         {
-            s.ReadExactly(u4);
-            var nameBytes = new byte[(int)BinaryPrimitives.ReadUInt32LittleEndian(u4)];
-            s.ReadExactly(nameBytes);
-            s.ReadExactly(rec);
-            list.Add(new RefractorFlatArchiveEntry(
-                Name: Encoding.Latin1.GetString(nameBytes),
-                BlockSize: (int)BinaryPrimitives.ReadUInt32LittleEndian(rec),
-                UncompressedSize: (int)BinaryPrimitives.ReadUInt32LittleEndian(rec.Slice(4)),
-                Offset: BinaryPrimitives.ReadUInt32LittleEndian(rec.Slice(8))));
+            var entry = ReadEntry(s);
+            if (entry is null)
+            {
+                // The entries before the cut are still good.
+                if (!allowCutOff)
+                    throw new InvalidDataException($"The table of contents lists {count} files, but the file ends after {list.Count} of them");
+                break;
+            }
+
+            list.Add(entry);
+            tableEnd = s.Position;
         }
 
-        return (isV11, compressed, xpackId, list);
+        return new FileTable(isV11, compressed, xpackId, list, count, tableEnd, s.Length);
     }
 
-    public byte[] Read(RefractorFlatArchiveEntry e)
+    /// <summary>
+    /// One entry of the table of contents, or <see langword="null"/> when the file ends before it does.
+    /// </summary>
+    private static RefractorFlatArchiveEntry? ReadEntry(Stream s)
     {
-        return DecodeRegion(ReadRegionFromFile(e), e.UncompressedSize, e.Name);
-    }
+        Span<byte> rec = stackalloc byte[24];
 
-    private byte[] RawRegion(RefractorFlatArchiveEntry e)
-    {
-        return ReadRegionFromFile(e);
-    }
+        if (s.Length - s.Position < sizeof(uint))
+            return null;
 
-    private byte[] ReadRegionFromFile(RefractorFlatArchiveEntry e)
-    {
-        using var fs = new FileStream(_path!, FileMode.Open, FileAccess.Read, FileShare.Read);
-        fs.Seek(e.Offset, SeekOrigin.Begin);
-        var buf = new byte[e.BlockSize];
-        fs.ReadExactly(buf);
-        return buf;
+        uint nameLength = ReadU32(s);
+        if (s.Length - s.Position < nameLength + rec.Length)
+            return null;
+
+        var nameBytes = new byte[nameLength];
+        s.ReadExactly(nameBytes);
+        s.ReadExactly(rec);
+        return new RefractorFlatArchiveEntry(
+            Name: Encoding.Latin1.GetString(nameBytes),
+            BlockSize: (int)BinaryPrimitives.ReadUInt32LittleEndian(rec),
+            UncompressedSize: (int)BinaryPrimitives.ReadUInt32LittleEndian(rec.Slice(4)),
+            Offset: BinaryPrimitives.ReadUInt32LittleEndian(rec.Slice(8)));
     }
 
     private static byte[] DecodeRegion(ReadOnlySpan<byte> region, int uncompressedSize, string? name = null)
@@ -236,76 +375,14 @@ public sealed class RefractorFlatArchive
         output.Position = end;
     }
 
-    public static void WriteFile(
-        string path,
-        IReadOnlyList<(string Name, byte[] Data)> entries,
-        bool compress,
-        XPackId xPackId)
+    private static uint ReadU32(Stream s)
     {
-        using var fs = new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
-        StreamArchive(
-            fs,
-            entries.Count,
-            i => entries[i].Name,
-            i => { var d = entries[i].Data; return (BuildRegion(d, compress), d.Length); },
-            compress,
-            xPackId);
+        Span<byte> bytes = stackalloc byte[sizeof(uint)];
+        s.ReadExactly(bytes);
+        return BinaryPrimitives.ReadUInt32LittleEndian(bytes);
     }
 
-    public static void RepackToFile(
-        string path,
-        RefractorFlatArchive original,
-        IReadOnlyDictionary<string, byte[]> replacements)
-    {
-        var ci = new Dictionary<string, byte[]>(replacements, StringComparer.OrdinalIgnoreCase);
-        var ents = original.Entries;
-
-        string tmp = path + ".rfatmp";
-        try
-        {
-            using (var fs = new FileStream(tmp, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
-                StreamArchive(
-                    fs,
-                    ents.Count,
-                    i => ents[i].Name,
-                    i => ci.TryGetValue(ents[i].Name, out var rep)
-                        ? (BuildRegion(rep, original.IsCompressed), rep.Length)
-                        : (original.RawRegion(ents[i]), ents[i].UncompressedSize),
-                    original.IsCompressed,
-                    original.XPackId
-                );
-            File.Move(tmp, path, overwrite: true);
-        }
-        catch
-        {
-            try
-            { File.Delete(tmp); }
-            catch { }
-            throw;
-        }
-    }
-
-    private static readonly HashSet<string> ClientOnlyExtensions = new(StringComparer.OrdinalIgnoreCase)
-        { ".bik", ".dds", ".tga", ".wav" };
-
-    private static readonly HashSet<string> ClientOnlyFileNames = new(StringComparer.OrdinalIgnoreCase)
-        { "palette.pal", "envmap_g_.rcm", "lightmapshadowbits.lsb", "terrainpalette.pal", "textureprecache.dat" };
-
-    public static bool IsClientOnlyEntry(string entryName)
-    {
-        string ext = Path.GetExtension(entryName);
-        string file = Path.GetFileName(entryName);
-        return ClientOnlyExtensions.Contains(ext) || ClientOnlyFileNames.Contains(file);
-    }
-
-    public List<(string Name, byte[] Data)> ReadServerEntries()
-        => Entries
-            .Where(e => !IsClientOnlyEntry(e.Name))
-            .Select(e => (e.Name, Read(e)))
-            .ToList();
-
-    private static uint ReadU32(ReadOnlySpan<byte> d, int p)
-        => BinaryPrimitives.ReadUInt32LittleEndian(d.Slice(p));
+    private static uint ReadU32(ReadOnlySpan<byte> d, int p) => BinaryPrimitives.ReadUInt32LittleEndian(d.Slice(p));
 
     private static void WriteU32(Stream s, uint v)
     {
@@ -313,4 +390,16 @@ public sealed class RefractorFlatArchive
         BinaryPrimitives.WriteUInt32LittleEndian(b, v);
         s.Write(b);
     }
+
+    /// <summary>
+    /// What the header and table of contents say about the archive, and how long the file is.
+    /// </summary>
+    private sealed record FileTable(
+        bool IsV11,
+        bool IsCompressed,
+        XPackId XPackId,
+        List<RefractorFlatArchiveEntry> Entries,
+        uint DeclaredEntryCount,
+        long TableEnd,
+        long FileLength);
 }
