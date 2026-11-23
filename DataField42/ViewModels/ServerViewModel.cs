@@ -100,7 +100,7 @@ public partial class ServerViewModel : ObservableObject, IPageViewModel
 
     // ── Show only when meaningful (non-zero) ──────────────────────────────────
     public string ReservedSlots => QueryResult?.ReservedSlots > 0 ? QueryResult.ReservedSlots.ToString() : string.Empty;
-    public string NumberOfRounds => QueryResult?.NumberOfRounds > 0 ? QueryResult.NumberOfRounds.ToString() : string.Empty;
+    public string NumberOfRounds => QueryResult?.NumberOfRounds is { } rounds && rounds > 0 ? rounds.ToString() : string.Empty;
     public string NameTagDistance => QueryResult?.NameTagDistance > 0 ? QueryResult.NameTagDistance.ToString() : string.Empty;
     public string NameTagDistanceScope => QueryResult?.NameTagDistanceScope > 0 ? QueryResult.NameTagDistanceScope.ToString() : string.Empty;
     public string Cpu => QueryResult?.Cpu > 0 ? QueryResult.Cpu.ToString() : string.Empty;

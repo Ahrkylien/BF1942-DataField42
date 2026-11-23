@@ -3,8 +3,8 @@
     const int BarWidth = 100;
     var status = Model.Status;
 
-    // One labelled setting. A server reports every property the protocol defines, so only the
-    // genuinely optional ones -- the two a Windows server alone sends -- can be absent.
+    // One labelled setting. Most of the protocol's properties are reported by every server; the
+    // ones that can be absent are skipped rather than shown blank.
     Microsoft.AspNetCore.Html.IHtmlContent Setting(string label, object? value, string labelColor = "#d4d4d4")
     {
         if (value is null || value.ToString() is not { Length: > 0 } text)
@@ -104,13 +104,7 @@ else
 			@Setting("CPU", status.Cpu)
 			@Setting("Average FPS", status.AverageFps)
 			@Setting("Bandwidth Choke Limit", status.BandwidthChokeLimit)
-			@Setting("Host Type", status.DedicatedServerType switch
-			{
-				DedicatedServerType.Windows => "Windows Server",
-				DedicatedServerType.Linux => "Linux Server",
-				DedicatedServerType.NonDedicated => "Windows Client",
-				_ => status.DedicatedServerType.ToString(),
-			})
+			@Setting("Host Type", status.DedicatedServerType.Description())
 			@Setting("Location (LCID)", status.Location)
 			@Setting("Language", status.Language)
 			<span style='color:#d4d4d4;'>PunkBuster: </span>@await Html.PartialAsync("_YesNoIcon", status.UsesPunkbuster)
@@ -135,7 +129,7 @@ else
 			<br>
 			@Setting("Name Tag Distance", $"{status.NameTagDistance}m")
 			@Setting("Name Tag Distance Scope", $"{status.NameTagDistanceScope}m")
-			@Setting("Number of Rounds", status.NumberOfRounds)
+			@Setting("Number of Rounds", status.NumberOfRounds?.ToString() ?? "unlimited")
 			@Setting("Ticket Ratio", $"{status.TicketRatio}%")
 			@Setting("Team Ratio (Axis:Allied)", $"{status.AxisTeamRatio}:{status.AlliedTeamRatio}")
 			@Setting("Spawn Delay", $"{status.SpawnDelay}s")
