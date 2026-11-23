@@ -5,4 +5,4 @@ namespace BF1942.Core.Scripting;
 /// loading the other several thousand across a full mod (matches <c>BF42_script.read</c>'s own
 /// per-line try/except that only logs to stderr and continues).
 /// </summary>
-public sealed record ScriptError(string Path, int LineNumber, string Line, string Message);
+public sealed record ScriptError(ScriptErrorKind Kind, string Path, int LineNumber, string Line, string Message);

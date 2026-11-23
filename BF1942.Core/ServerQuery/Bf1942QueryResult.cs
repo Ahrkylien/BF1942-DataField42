@@ -37,7 +37,12 @@ public class Bf1942QueryResult
     public DedicatedServerType DedicatedServerType { get; init; }
 
     public int ReservedSlots { get; init; }
-    public int NumberOfRounds { get; init; }
+
+    /// <summary>
+    /// Number of rounds the map list is played for.
+    /// Null means unlimited.
+    /// </summary>
+    public int? NumberOfRounds { get; init; }
     public int NameTagDistance { get; init; }
     public int NameTagDistanceScope { get; init; }
 
@@ -110,7 +115,7 @@ public class Bf1942QueryResult
 
         DedicatedServerType = (DedicatedServerType)Int(properties, "dedicated");
         ReservedSlots = Int(properties, "reservedslots");
-        NumberOfRounds = Int(properties, "number_of_rounds");
+        NumberOfRounds = IntThatCanBeInfinite(properties, "number_of_rounds");
         NameTagDistance = Int(properties, "name_tag_distance");
         NameTagDistanceScope = Int(properties, "name_tag_distance_scope");
         TimeLimit = IntThatCanBeInfinite(properties, "time_limit");
@@ -150,12 +155,12 @@ public class Bf1942QueryResult
                 Str(properties, "kills_" + i),
                 Str(properties, "deaths_" + i),
                 Str(properties, "ping_" + i),
-                properties.ContainsKey("keyhash_" + i) ? Str(properties, "keyhash_" + i) : ""
+                OptionalStr(properties, "keyhash_" + i) ?? ""
             ));
         }
 
-        Location = properties.ContainsKey("location") ? Int(properties, "location") : null;
-        Language = properties.ContainsKey("language") ? Str(properties, "language") : null;
+        Location = OptionalInt(properties, "location");
+        Language = OptionalStr(properties, "language");
     }
 
     private static string Str(Dictionary<string, string> p, string key) => p[key];
@@ -222,4 +227,11 @@ public class Bf1942QueryResult
             return false;
         throw new ProtocolViolationException($"Unexpected bool value for {key}: {p[key]}");
     }
+
+    // The properties a server is free to leave out entirely, as opposed to the ones it always
+    // reports, which are read straight out of the dictionary.
+
+    private static string? OptionalStr(Dictionary<string, string> p, string key) => p.ContainsKey(key) ? Str(p, key) : null;
+
+    private static int? OptionalInt(Dictionary<string, string> p, string key) => p.ContainsKey(key) ? Int(p, key) : null;
 }
