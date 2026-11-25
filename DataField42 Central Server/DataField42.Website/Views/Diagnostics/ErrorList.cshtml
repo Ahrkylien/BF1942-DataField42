@@ -6,7 +6,7 @@
 			<div style='font-weight: bold;font-size:20px;'>@group.Title</div>
 			@foreach (var finding in group.Findings)
 			{
-				<div>@finding</div>
+				<div>@foreach (var part in finding.Parts) { if (part.Url is null) {@part.Text} else {<a href='@part.Url' class='urlLine'>@part.Text</a>} }</div>
 			}
 			<br>
 		}
