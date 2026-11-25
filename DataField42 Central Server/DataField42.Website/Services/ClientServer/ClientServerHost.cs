@@ -49,7 +49,7 @@ public sealed class ClientServerHost(IServiceScopeFactory scopeFactory, ReleaseF
             while (!stoppingToken.IsCancellationRequested)
             {
                 var client = await listener.AcceptTcpClientAsync(stoppingToken);
-                _ = Task.Run(() => ServeAsync(client, stoppingToken), CancellationToken.None);
+                _ = Task.Run(() => Serve(client, stoppingToken), CancellationToken.None);
             }
         }
         finally
@@ -58,7 +58,7 @@ public sealed class ClientServerHost(IServiceScopeFactory scopeFactory, ReleaseF
         }
     }
 
-    private async Task ServeAsync(TcpClient client, CancellationToken cancellationToken)
+    private async Task Serve(TcpClient client, CancellationToken cancellationToken)
     {
         using (client)
         {
@@ -78,7 +78,7 @@ public sealed class ClientServerHost(IServiceScopeFactory scopeFactory, ReleaseF
                 client.NoDelay = true;
                 await using var scope = scopeFactory.CreateAsyncScope();
                 await scope.ServiceProvider.GetRequiredService<ClientRequestHandler>()
-                    .HandleAsync(new DataField42MessageStream(client.GetStream(), IdleTimeout), ip, cancellationToken);
+                    .Handle(new DataField42MessageStream(client.GetStream(), IdleTimeout), ip, cancellationToken);
             }
             catch (Exception ex) when (ex is ClientRequestException or TimeoutException or IOException or InvalidDataException)
             {

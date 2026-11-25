@@ -90,5 +90,6 @@ public sealed partial class HeartbeatRegistry(IOptions<WebsiteOptions> options, 
     private sealed record Record(
         [property: JsonPropertyName("ip")] string Ip,
         [property: JsonPropertyName("version")] string Version,
-        [property: JsonPropertyName("datetime")] string DateTime);
+        [property: JsonPropertyName("datetime")] string DateTime
+    );
 }

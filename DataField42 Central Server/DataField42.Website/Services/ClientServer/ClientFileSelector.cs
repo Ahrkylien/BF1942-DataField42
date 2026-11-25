@@ -17,7 +17,8 @@ public sealed class ClientFileSelector(
     DataField42DbContext context,
     ChecksumRepository checksums,
     IOptions<WebsiteOptions> options,
-    ILogger<ClientFileSelector> logger)
+    ILogger<ClientFileSelector> logger
+)
 {
     /// <summary>
     /// The files every mod has, in the order the game loads them.
@@ -35,21 +36,21 @@ public sealed class ClientFileSelector(
     /// The files for <paramref name="mapName"/> of <paramref name="modName"/>, which is none when the
     /// database does not know the mod.
     /// </summary>
-    public async Task<List<ClientFile>> SelectAsync(string mapName, string modName, CancellationToken cancellationToken)
+    public async Task<List<ClientFile>> Select(string mapName, string modName, CancellationToken cancellationToken)
     {
         var files = new List<ClientFile>();
 
-        foreach (var mod in await FindModsAsync(modName, cancellationToken))
+        foreach (var mod in await FindMods(modName, cancellationToken))
         {
             string modFolder = Path.Combine(options.Value.ModsDirectory, mod.FolderName!);
 
-            foreach (var (relativePath, fullPath) in await MapArchivesAsync(mod, modFolder, mapName, cancellationToken))
-                AddIfOffered(files, await DescribeAsync(mod.FolderName!, relativePath, fullPath, cancellationToken));
+            foreach (var (relativePath, fullPath) in await MapArchives(mod, modFolder, mapName, cancellationToken))
+                AddIfOffered(files, await Describe(mod.FolderName!, relativePath, fullPath, cancellationToken));
 
             foreach (string relativePath in ModBaseFiles)
             {
                 if (SmartPath.Resolve(modFolder, relativePath) is { } fullPath)
-                    AddIfOffered(files, await DescribeAsync(mod.FolderName!, relativePath, fullPath, cancellationToken));
+                    AddIfOffered(files, await Describe(mod.FolderName!, relativePath, fullPath, cancellationToken));
             }
 
             foreach (string folder in new[] { "movies", "music" })
@@ -57,7 +58,7 @@ public sealed class ClientFileSelector(
                 foreach (string fullPath in VideosIn(modFolder, folder))
                 {
                     string relativePath = Path.GetRelativePath(modFolder, fullPath).Replace('\\', '/');
-                    AddIfOffered(files, await DescribeAsync(mod.FolderName!, relativePath, fullPath, cancellationToken));
+                    AddIfOffered(files, await Describe(mod.FolderName!, relativePath, fullPath, cancellationToken));
                 }
             }
         }
@@ -75,22 +76,22 @@ public sealed class ClientFileSelector(
     /// The mod itself, then the mods it builds on in the order it lists them. Nothing when the name
     /// is not one mod.
     /// </summary>
-    private async Task<List<Mod>> FindModsAsync(string modName, CancellationToken cancellationToken)
+    private async Task<List<Mod>> FindMods(string modName, CancellationToken cancellationToken)
     {
-        if (await FindOneModAsync(modName, cancellationToken) is not { } main)
+        if (await FindOneMod(modName, cancellationToken) is not { } main)
             return [];
 
         var mods = new List<Mod> { main };
         foreach (string dependency in DependencyNames(main))
         {
-            if (await FindOneModAsync(dependency, cancellationToken) is { } found)
+            if (await FindOneMod(dependency, cancellationToken) is { } found)
                 mods.Add(found);
         }
 
         return mods;
     }
 
-    private async Task<Mod?> FindOneModAsync(string folderName, CancellationToken cancellationToken)
+    private async Task<Mod?> FindOneMod(string folderName, CancellationToken cancellationToken)
     {
         var found = await context.Mods.AsNoTracking().Where(mod => mod.FolderName == folderName).Take(2).ToListAsync(cancellationToken);
         return found.Count == 1 ? found[0] : null;
@@ -125,7 +126,7 @@ public sealed class ClientFileSelector(
     /// The archives of the map in a mod, which the game reads from the mod's levels folder, newest
     /// patch last. A mod that has no such map has none.
     /// </summary>
-    private async Task<List<(string RelativePath, string FullPath)>> MapArchivesAsync(Mod mod, string modFolder, string mapName, CancellationToken cancellationToken)
+    private async Task<List<(string RelativePath, string FullPath)>> MapArchives(Mod mod, string modFolder, string mapName, CancellationToken cancellationToken)
     {
         string name = mapName.Replace('_', ' ');
         var maps = await context.Maps.AsNoTracking().Where(map => map.ModId == mod.Id && map.Name == name).Take(2).ToListAsync(cancellationToken);
@@ -170,7 +171,7 @@ public sealed class ClientFileSelector(
     /// Describes a file the way a client will read it. A file the client would refuse -- by its name,
     /// or its place in the mod -- would fail the whole download, so it is left out.
     /// </summary>
-    private async Task<ClientFile?> DescribeAsync(string mod, string relativePath, string fullPath, CancellationToken cancellationToken)
+    private async Task<ClientFile?> Describe(string mod, string relativePath, string fullPath, CancellationToken cancellationToken)
     {
         relativePath = relativePath.Replace('\\', '/');
         var info = new System.IO.FileInfo(fullPath);

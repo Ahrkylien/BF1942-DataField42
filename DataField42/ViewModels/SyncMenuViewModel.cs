@@ -89,11 +89,11 @@ public partial class SyncMenuViewModel : ObservableObject, IPageViewModel
             PostMessage($"Querying master server to get query port...");
             try
             {
-                await _serverLobby.GetServerListFromHttpApi();
+                await _serverLobby.GetServerListFromMaster();
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to get server list from master API.");
+                _logger.LogWarning(ex, "Failed to get server list from master server.");
                 PostError($"Can't get server list: {ex.Message}");
             }
             await _serverLobby.QueryAllServers();

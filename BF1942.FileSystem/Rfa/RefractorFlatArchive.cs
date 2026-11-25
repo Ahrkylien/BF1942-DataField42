@@ -401,5 +401,6 @@ public sealed class RefractorFlatArchive
         List<RefractorFlatArchiveEntry> Entries,
         uint DeclaredEntryCount,
         long TableEnd,
-        long FileLength);
+        long FileLength
+    );
 }

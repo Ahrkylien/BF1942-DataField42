@@ -115,7 +115,7 @@ public partial class DashboardViewModel : ObservableObject, IPageViewModel
 
         try
         {
-            await _serverLobby.GetServerListFromHttpApi();
+            await _serverLobby.GetServerListFromMaster();
         }
         catch (Exception ex)
         {
