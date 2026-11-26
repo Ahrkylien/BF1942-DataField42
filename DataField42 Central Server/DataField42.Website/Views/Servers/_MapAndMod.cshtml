@@ -1,0 +1,21 @@
+@model ServerRoundPageViewModel
+@if (Model.MapId is { } mapId)
+{
+	<span style='color:#d4d4d4;'>Map: </span><a href='/Map/@mapId' class='urlLine'>@Model.MapNameFormatted</a>
+	<br>
+}
+else if (!string.IsNullOrEmpty(Model.MapNameFormatted))
+{
+	<span style='color:#d4d4d4;'>Map: </span>@Model.MapNameFormatted
+	<br>
+}
+@if (Model.ModIsInDatabase)
+{
+	<span style='color:#d4d4d4;'>Mod: </span><a href='/Maps?mod=@Model.ModName' class='urlLine'>@Model.ModName</a>
+	<br>
+}
+else if (!string.IsNullOrEmpty(Model.ModName))
+{
+	<span style='color:#d4d4d4;'>Mod: </span>@Model.ModName
+	<br>
+}
