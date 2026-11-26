@@ -67,7 +67,7 @@ public abstract partial class AbstractServerListViewModel : ObservableObject, IP
             _logger.LogDebug("Refreshing server list.");
             try
             {
-                await _serverLobby.GetServerListFromHttpApi();
+                await _serverLobby.GetServerListFromMaster();
             }
             catch (Exception ex)
             {

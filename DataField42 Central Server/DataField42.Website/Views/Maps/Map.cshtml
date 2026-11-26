@@ -1,10 +1,6 @@
 @model MapDetailsViewModel
 @if (Model is not null)
 {
-	<div class='container fullfW'>
-		<div class='titleBox' style='color:#ab0909;'>This page is under construction</div>
-	</div>
-	<div style='clear: both;'></div>
 	<div class='container halfW mapW'>
 		<div class='titleBox'>
 			@Model.Name
@@ -25,7 +21,7 @@
 					<div class='mapLenthBar2'></div>
 				</div>
 			}
-			<div class='mapMenu' id='' onclick='showMenu()'><span class='material-icons' style='font-size: 24px;'>settings</span></div>
+			@*<div class='mapMenu' id='' onclick='showMenu()'><span class='material-icons' style='font-size: 24px;'>settings</span></div>*@
 			@foreach (var controlPoint in Model.ControlPoints)
 			{
 				<div class='mapItem controlPoint @(controlPoint.Uncapturable ? "controlPointBase" : "") team@(controlPoint.Team)' id='controlPoint@(controlPoint.Id)' onclick='getProperties(@controlPoint.Id)' style='left:@controlPoint.RelativeLeft.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture)%;top:@controlPoint.RelativeTop.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture)%;'></div>

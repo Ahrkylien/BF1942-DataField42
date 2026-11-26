@@ -12,7 +12,6 @@ using System.Text;
 /// Whatever is received or sent has to make progress: the other side may stay silent, or leave a write
 /// stalled, for the stream's timeout and no longer.
 /// </remarks>
-/// <param name="stream">The connection.</param>
 /// <param name="defaultTimeout">How long the other side may take, when a call does not say; <see cref="DefaultTimeout"/> if omitted.</param>
 public sealed class DataField42MessageStream(Stream stream, TimeSpan? defaultTimeout = null)
 {
@@ -93,12 +92,12 @@ public sealed class DataField42MessageStream(Stream stream, TimeSpan? defaultTim
     public void SendMessage(string message) => SendMessage(Encoding.UTF8.GetBytes(message));
 
     public Task SendMessageAsync(string message, CancellationToken cancellationToken = default) =>
-        SendBytesAsync(Frame(Encoding.UTF8.GetBytes(message)), cancellationToken);
+        SendBytes(Frame(Encoding.UTF8.GetBytes(message)), cancellationToken);
 
     /// <summary>
     /// Sends bytes as they are, without a length.
     /// </summary>
-    public Task SendBytesAsync(ReadOnlyMemory<byte> data, CancellationToken cancellationToken = default) =>
+    public Task SendBytes(ReadOnlyMemory<byte> data, CancellationToken cancellationToken = default) =>
         Within(null, cancellationToken, token => stream.WriteAsync(data, token));
 
     /// <summary>
@@ -106,7 +105,7 @@ public sealed class DataField42MessageStream(Stream stream, TimeSpan? defaultTim
     /// told. A file that is no longer that long fails the send rather than leaving the other side
     /// waiting for the rest.
     /// </summary>
-    public async Task SendFileAsync(string path, long length, CancellationToken cancellationToken = default)
+    public async Task SendFile(string path, long length, CancellationToken cancellationToken = default)
     {
         await using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, FileChunkSize, FileOptions.Asynchronous | FileOptions.SequentialScan);
         var buffer = new byte[FileChunkSize];
@@ -117,7 +116,7 @@ public sealed class DataField42MessageStream(Stream stream, TimeSpan? defaultTim
             if (read == 0)
                 throw new IOException($"{Path.GetFileName(path)} is shorter than the {length} bytes it was announced with");
 
-            await SendBytesAsync(buffer.AsMemory(0, read), cancellationToken);
+            await SendBytes(buffer.AsMemory(0, read), cancellationToken);
             remaining -= read;
         }
     }
@@ -129,7 +128,7 @@ public sealed class DataField42MessageStream(Stream stream, TimeSpan? defaultTim
     /// <summary>
     /// Sends a message and waits for the other side to acknowledge it.
     /// </summary>
-    public async Task SendMessageAndAwaitAcknowledgementAsync(string message, CancellationToken cancellationToken = default)
+    public async Task SendMessageAndAwaitAcknowledgement(string message, CancellationToken cancellationToken = default)
     {
         await SendMessageAsync(message, cancellationToken);
         await AwaitAcknowledgement(cancellationToken: cancellationToken);

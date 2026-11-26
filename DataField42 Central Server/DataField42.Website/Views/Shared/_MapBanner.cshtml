@@ -10,12 +10,12 @@
 		</div>
 		<div class='mapName'>@if (Model.ShowHasNoReadme) {<span style="color:#996868;">@Model.Name</span>} else {@Model.Name}</div>
 		<a href='/Maps?author=@Uri.EscapeDataString(Model.AuthorName ?? "")&mod=@Model.ModFolderName'><div class='mapAuth'>@Model.AuthorName</div></a>
-		<div class='mapTagBar'>
+		@*<div class='mapTagBar'>
 		@foreach (var tag in Model.Tags)
 		{
 			<div class='mapTag' style='background:@tag.Color;'>@tag.Name</div>
 		}
-		</div>
+		</div>*@
 		@if (Model.MultiplayerBriefingObjectives is not null)
 		{
 			<div class='mapTxt pre'>@Model.MultiplayerBriefingObjectives</div>

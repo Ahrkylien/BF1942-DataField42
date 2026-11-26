@@ -15,16 +15,15 @@ namespace DataField42.Website.Services.ClientServer;
 public sealed class DownloadHandler(
     ClientFileSelector selector,
     DataField42DbContext context,
-    ILogger<DownloadHandler> logger)
+    ILogger<DownloadHandler> logger
+)
 {
     private const int RequestLogType = 1;
 
     private static readonly TimeSpan AnswerTimeout = TimeSpan.FromMinutes(15);
 
-    /// <param name="connection">The client.</param>
-    /// <param name="clientIp">The client's address.</param>
     /// <param name="arguments">The request after its name: map, mod, the game server's address and port, the player's key hash, and optional key and value pairs.</param>
-    public async Task HandleAsync(DataField42MessageStream messages, string clientIp, IReadOnlyList<string> arguments, CancellationToken cancellationToken)
+    public async Task Handle(DataField42MessageStream messages, string clientIp, IReadOnlyList<string> arguments, CancellationToken cancellationToken)
     {
         string map = arguments[0], mod = arguments[1], serverAddress = $"{arguments[2]}:{arguments[3]}", keyHash = arguments[4];
         string result = "Success";
@@ -32,7 +31,7 @@ public sealed class DownloadHandler(
         try
         {
             logger.LogInformation("{Ip} wants {Map} of {Mod} for {Server}", clientIp, map, mod, serverAddress);
-            await SendFilesAsync(messages, await selector.SelectAsync(map, mod, cancellationToken), cancellationToken);
+            await SendFiles(messages, await selector.Select(map, mod, cancellationToken), cancellationToken);
         }
         catch (Exception ex)
         {
@@ -41,11 +40,11 @@ public sealed class DownloadHandler(
         }
         finally
         {
-            await LogRequestAsync(clientIp, map, mod, serverAddress, keyHash, arguments.Skip(5), result);
+            await LogRequest(clientIp, map, mod, serverAddress, keyHash, arguments.Skip(5), result);
         }
     }
 
-    private static async Task SendFilesAsync(DataField42MessageStream messages, List<ClientFile> files, CancellationToken cancellationToken)
+    private static async Task SendFiles(DataField42MessageStream messages, List<ClientFile> files, CancellationToken cancellationToken)
     {
         await messages.SendMessageAsync(string.Join('\n', files.Select(file => file.Info.ToProtocolString())), cancellationToken);
 
@@ -60,19 +59,19 @@ public sealed class DownloadHandler(
         }
 
         var wanted = files.Where((_, index) => answers[index] == "yes").ToList();
-        await messages.SendMessageAndAwaitAcknowledgementAsync($"yes {wanted.Count} {wanted.Sum(file => (long)file.Info.Size)}", cancellationToken);
+        await messages.SendMessageAndAwaitAcknowledgement($"yes {wanted.Count} {wanted.Sum(file => (long)file.Info.Size)}", cancellationToken);
 
         foreach (var file in wanted)
         {
-            await messages.SendMessageAndAwaitAcknowledgementAsync(file.Info.ToProtocolString(), cancellationToken);
-            await messages.SendFileAsync(file.FullPath, (long)file.Info.Size, cancellationToken);
+            await messages.SendMessageAndAwaitAcknowledgement(file.Info.ToProtocolString(), cancellationToken);
+            await messages.SendFile(file.FullPath, (long)file.Info.Size, cancellationToken);
             await messages.AwaitAcknowledgement(cancellationToken: cancellationToken);
         }
 
         await messages.AwaitAcknowledgement(cancellationToken: cancellationToken);
     }
 
-    private async Task LogRequestAsync(string clientIp, string map, string mod, string server, string keyHash, IEnumerable<string> extra, string result)
+    private async Task LogRequest(string clientIp, string map, string mod, string server, string keyHash, IEnumerable<string> extra, string result)
     {
         try
         {

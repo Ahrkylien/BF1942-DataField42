@@ -70,21 +70,10 @@ else
 {
 	<div class='container halfW serverSettings'>
 		<div class='textBox' style='line-height: 21px;'>
-			@if (Model.MapId is { } liveMapId)
+			@await Html.PartialAsync("_MapAndMod", Model)
+			@if (Model.MapId is null && !string.Equals(status.Mod, status.GameId, StringComparison.OrdinalIgnoreCase))
 			{
-				<span style='color:#d4d4d4;'>Map: </span><a href='/Map/@liveMapId' class='urlLine'>@Model.MapNameFormatted</a>
-				<br>
-				<span style='color:#d4d4d4;'>Mod: </span><a href='/Maps?mod=@status.GameId' class='urlLine'>@status.GameId</a>
-				<br>
-			}
-			else
-			{
-				@Setting("Map", Model.MapNameFormatted)
-				@Setting("Mod", status.GameId)
-				@if (status.Mod != status.GameId)
-				{
-					@Setting("Mod (mapId, not gameId)", status.Mod, labelColor: "red")
-				}
+				@Setting("Mod (mapId, not gameId)", status.Mod, labelColor: "red")
 			}
 			@Setting("Mode", status.GameType)
 			@Setting("Tickets Team 1", status.Tickets1)
@@ -150,16 +139,7 @@ else if (!Model.IsLive && Model.Players.Count > 0)
 	@* A recorded round keeps the result and the scoreboard, not the server's settings. *@
 	<div class='container halfW serverSettings'>
 		<div class='textBox' style='line-height: 21px;'>
-			@if (Model.MapId is { } roundMapId)
-			{
-				<span style='color:#d4d4d4;'>Map: </span><a href='/Map/@roundMapId' class='urlLine'>@Model.MapNameFormatted</a>
-				<br>
-			}
-			else
-			{
-				@Setting("Map", Model.MapNameFormatted)
-			}
-			@Setting("Mod", Model.ModName)
+			@await Html.PartialAsync("_MapAndMod", Model)
 			@Setting("Tickets Team 1", Model.Tickets1)
 			@Setting("Tickets Team 2", Model.Tickets2)
 			@Setting("Round Time", Model.RoundTimeSeconds is { } seconds ? $"{seconds}s" : null)

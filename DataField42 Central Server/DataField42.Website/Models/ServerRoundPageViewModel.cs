@@ -36,6 +36,11 @@ public sealed class ServerRoundPageViewModel
     /// </summary>
     public string? ModName { get; init; }
 
+    /// <summary>
+    /// Whether the file database has a mod of this name, which is when <see cref="ModName"/> can link to the mod's maps.
+    /// </summary>
+    public bool ModIsInDatabase { get; init; }
+
     public int? Tickets1 { get; init; }
 
     public int? Tickets2 { get; init; }

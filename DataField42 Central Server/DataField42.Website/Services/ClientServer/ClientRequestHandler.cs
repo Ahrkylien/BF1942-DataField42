@@ -16,7 +16,8 @@ public sealed class ClientRequestHandler(
     ReleaseFiles releases,
     HeartbeatRegistry heartbeats,
     DownloadHandler downloads,
-    ILogger<ClientRequestHandler> logger)
+    ILogger<ClientRequestHandler> logger
+)
 {
     private const string CurrentProtocolVersion = "2.1.0.0";
     private const string LegacyProtocolVersion = "2";
@@ -33,9 +34,9 @@ public sealed class ClientRequestHandler(
     /// </summary>
     private static readonly string[] LegacyRequestStarts = ["upda", "hand", "down"];
 
-    public async Task HandleAsync(DataField42MessageStream messages, string clientIp, CancellationToken cancellationToken)
+    public async Task Handle(DataField42MessageStream messages, string clientIp, CancellationToken cancellationToken)
     {
-        var (text, legacy) = await ReadRequestAsync(messages, cancellationToken);
+        var (text, legacy) = await ReadRequest(messages, cancellationToken);
 
         // Whitespace is what the words are split on; any other control character is a client that is
         // not speaking the protocol, and would only end up in the log.
@@ -55,26 +56,26 @@ public sealed class ClientRequestHandler(
                 await messages.SendMessageAsync(arguments[0] == CurrentProtocolVersion ? $"null {ReleaseFiles.ClientVersion}" : ReleaseFiles.ClientVersion, cancellationToken);
                 break;
             case ("update", 1):
-                await SendReleaseFileAsync(messages, releases.ClientUpdater, cancellationToken);
+                await SendReleaseFile(messages, releases.ClientUpdater, cancellationToken);
                 break;
             case ("updateServer", 1):
-                await SendProgramAsync(messages, releases.ServerScript.Length, () => messages.SendBytesAsync(releases.ServerScript, cancellationToken), cancellationToken);
+                await SendProgram(messages, releases.ServerScript.Length, () => messages.SendBytes(releases.ServerScript, cancellationToken), cancellationToken);
                 break;
             case ("updateFile", 1):
-                await UpdateFileAsync(messages, arguments[0], cancellationToken);
+                await UpdateFile(messages, arguments[0], cancellationToken);
                 break;
             case ("heartbeatServer", 1):
                 await messages.SendMessageAsync(releases.ServerVersion, cancellationToken);
                 heartbeats.Store(clientIp, arguments[0]);
                 break;
             case ("download", >= 5):
-                await downloads.HandleAsync(messages, clientIp, arguments, cancellationToken);
+                await downloads.Handle(messages, clientIp, arguments, cancellationToken);
                 break;
             case ("handshakeV1", 1):
-                await messages.SendBytesAsync(Encoding.UTF8.GetBytes(LegacyProtocolVersion), cancellationToken);
+                await messages.SendBytes(Encoding.UTF8.GetBytes(LegacyProtocolVersion), cancellationToken);
                 break;
             case ("updateV1", 1):
-                await SendLegacyUpdateAsync(messages, cancellationToken);
+                await SendLegacyUpdate(messages, cancellationToken);
                 break;
             default:
                 logger.LogInformation("{Ip} sent a request that is not understood: {Name} with {Count} arguments", clientIp, name, arguments.Length);
@@ -86,7 +87,7 @@ public sealed class ClientRequestHandler(
     /// Reads the request. A client sends it as a message; a first-generation client sends its words
     /// bare, and is recognised by how they begin, which no message length looks like.
     /// </summary>
-    private static async Task<(string Text, bool IsLegacy)> ReadRequestAsync(DataField42MessageStream messages, CancellationToken cancellationToken)
+    private static async Task<(string Text, bool IsLegacy)> ReadRequest(DataField42MessageStream messages, CancellationToken cancellationToken)
     {
         byte[] start = await messages.ReceiveBytes(4, RequestTimeout, cancellationToken);
 
@@ -100,7 +101,7 @@ public sealed class ClientRequestHandler(
         return (await messages.ReceiveString(length, RequestTimeout, cancellationToken, MaxRequestLength), false);
     }
 
-    private async Task UpdateFileAsync(DataField42MessageStream messages, string fileName, CancellationToken cancellationToken)
+    private async Task UpdateFile(DataField42MessageStream messages, string fileName, CancellationToken cancellationToken)
     {
         if (fileName != ReleaseFiles.LatestClientFileName)
         {
@@ -108,21 +109,21 @@ public sealed class ClientRequestHandler(
             return;
         }
 
-        await SendReleaseFileAsync(messages, releases.LatestClientFile, cancellationToken);
+        await SendReleaseFile(messages, releases.LatestClientFile, cancellationToken);
     }
 
-    private static async Task SendReleaseFileAsync(DataField42MessageStream messages, string path, CancellationToken cancellationToken)
+    private static async Task SendReleaseFile(DataField42MessageStream messages, string path, CancellationToken cancellationToken)
     {
         long length = LengthOf(path);
-        await SendProgramAsync(messages, length, () => messages.SendFileAsync(path, length, cancellationToken), cancellationToken);
+        await SendProgram(messages, length, () => messages.SendFile(path, length, cancellationToken), cancellationToken);
     }
 
     /// <summary>
     /// Sends a program: its size, and once that is acknowledged, the program, and once that is.
     /// </summary>
-    private static async Task SendProgramAsync(DataField42MessageStream messages, long length, Func<Task> sendProgram, CancellationToken cancellationToken)
+    private static async Task SendProgram(DataField42MessageStream messages, long length, Func<Task> sendProgram, CancellationToken cancellationToken)
     {
-        await messages.SendMessageAndAwaitAcknowledgementAsync(length.ToString(), cancellationToken);
+        await messages.SendMessageAndAwaitAcknowledgement(length.ToString(), cancellationToken);
         await sendProgram();
         await messages.AwaitAcknowledgement(cancellationToken: cancellationToken);
     }
@@ -130,15 +131,15 @@ public sealed class ClientRequestHandler(
     /// <summary>
     /// The same, for a client that sends and expects its words bare.
     /// </summary>
-    private async Task SendLegacyUpdateAsync(DataField42MessageStream messages, CancellationToken cancellationToken)
+    private async Task SendLegacyUpdate(DataField42MessageStream messages, CancellationToken cancellationToken)
     {
         string path = releases.LegacyClientUpdater;
         long length = LengthOf(path);
 
-        await messages.SendBytesAsync(Encoding.UTF8.GetBytes(length.ToString()), cancellationToken);
+        await messages.SendBytes(Encoding.UTF8.GetBytes(length.ToString()), cancellationToken);
         byte[] answer = await messages.ReceiveAvailable(MaxRequestLength, RequestTimeout, cancellationToken);
         if (Encoding.UTF8.GetString(answer) == DataField42MessageStream.Acknowledgement)
-            await messages.SendFileAsync(path, length, cancellationToken);
+            await messages.SendFile(path, length, cancellationToken);
     }
 
     private static long LengthOf(string path) =>

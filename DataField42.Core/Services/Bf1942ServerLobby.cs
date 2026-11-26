@@ -1,13 +1,14 @@
+using BF1942.Core.MasterServer;
 using Microsoft.Extensions.Logging;
 using System.Net;
-using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 
 public class Bf1942ServerLobby
 {
     public List<Bf1942Server> Servers { get; private set; } = new();
 
-    private readonly string _masterApiEntryPoint = "http://master.bf1942.org/json";
+    private const string MasterServerHost = "master.bf1942.org";
+
+    private readonly Bf1942MasterServerClient _masterServer = new();
     private readonly ILogger<Bf1942ServerLobby> _logger;
 
     public Bf1942ServerLobby(ILogger<Bf1942ServerLobby> logger)
@@ -42,51 +43,26 @@ public class Bf1942ServerLobby
         return server;
     }
 
-    public async Task GetServerListFromHttpApi()
+    /// <summary>
+    /// Adds the game servers the master server knows of, which it tells over its own TCP protocol.
+    /// </summary>
+    public async Task GetServerListFromMaster(CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug($"Fetching server list from {_masterApiEntryPoint}.");
-        try
+        _logger.LogDebug($"Fetching server list from {MasterServerHost}.");
+
+        var endpoints = await _masterServer.GetServerList(MasterServerHost, cancellationToken: cancellationToken);
+
+        int added = 0;
+        foreach (var endpoint in endpoints)
         {
-            using HttpClient client = new();
-            HttpResponseMessage response = await client.GetAsync(_masterApiEntryPoint);
-
-            if (response.IsSuccessStatusCode)
+            var server = new Bf1942Server(endpoint.Address, endpoint.Port);
+            if (!Servers.Contains(server))
             {
-                var json = await response.Content.ReadAsStringAsync();
-                var options = new JsonSerializerOptions { TypeInfoResolver = new DefaultJsonTypeInfoResolver() };
-                List<List<object>>? jsonData = JsonSerializer.Deserialize<List<List<object>>>(json, options);
-
-                if (jsonData == null || jsonData.Count == 0)
-                    throw new Exception($"Failed to retrieve data from Master Api. Data: {jsonData} Count: {jsonData?.Count ?? 0}");
-
-                int added = 0;
-                foreach (var item in jsonData)
-                {
-                    try
-                    {
-                        var server = new Bf1942Server(IPAddress.Parse(item[0].ToString() ?? ""), int.Parse(item[1].ToString() ?? ""));
-                        if (!Servers.Contains(server))
-                        {
-                            Servers.Add(server);
-                            added++;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to parse server entry from master API response.");
-                    }
-                }
-
-                _logger.LogInformation($"Server list fetched: {Servers.Count} total servers, {added} newly added.");
-            }
-            else
-            {
-                throw new Exception($"Failed to retrieve data from Master Api. Status code: {response.StatusCode}");
+                Servers.Add(server);
+                added++;
             }
         }
-        catch (Exception ex)
-        {
-            throw new Exception($"Failed to retrieve data from Master Api. An error occurred: {ex.Message}");
-        }
+
+        _logger.LogInformation($"Server list fetched: {Servers.Count} total servers, {added} newly added.");
     }
 }

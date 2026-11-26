@@ -20,7 +20,7 @@ public sealed class DatabaseIntegrityService(DataField42DbContext context, IWebH
         var exceptions = ReadExceptions();
 
         // What the analysis finds out about a map can only be judged for a map it has run for.
-        var maps = await ReadMapsAsync(cancellationToken);
+        var maps = await ReadMaps(cancellationToken);
         var analysed = maps.Where(map => map.IsAnalysed).ToList();
 
         return
@@ -41,7 +41,7 @@ public sealed class DatabaseIntegrityService(DataField42DbContext context, IWebH
     /// Every map with what the analysis recorded for it. The maps are a few thousand, so the checks
     /// on them are made here and not in the database.
     /// </summary>
-    private async Task<List<MapRow>> ReadMapsAsync(CancellationToken cancellationToken) =>
+    private async Task<List<MapRow>> ReadMaps(CancellationToken cancellationToken) =>
         await context.Maps
             .AsNoTracking()
             .Select(map => new MapRow(
@@ -199,7 +199,8 @@ public sealed class DatabaseIntegrityService(DataField42DbContext context, IWebH
         int? CaptureTheFlag,
         int? TeamDeathmatch,
         int? Coop,
-        int? ObjectiveMode)
+        int? ObjectiveMode
+    )
     {
         public bool IsAnalysed => Conquest is not null && CaptureTheFlag is not null && TeamDeathmatch is not null
             && Coop is not null && ObjectiveMode is not null;

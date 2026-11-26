@@ -169,6 +169,7 @@ public sealed class ServersController(
             Status = status,
             Players = players,
             ModName = status?.GameId,
+            ModIsInDatabase = mapBanner is not null || await ModExists(status?.GameId, cancellationToken),
             Tickets1 = status?.Tickets1,
             Tickets2 = status?.Tickets2,
             RoundTimeSeconds = status?.RoundTime,
@@ -223,6 +224,7 @@ public sealed class ServersController(
             Team2 = round is null ? null : team2,
             MapNameFormatted = map?.Name ?? TextFormatting.Title(round?.MapName),
             ModName = round?.ModName,
+            ModIsInDatabase = map is not null || await ModExists(round?.ModName, cancellationToken),
             Tickets1 = round?.Team1EndTickets,
             Tickets2 = round?.Team2EndTickets,
             RoundTimeSeconds = round?.RoundTime,
@@ -304,6 +306,9 @@ public sealed class ServersController(
 
         return (double)status.RoundTimeRemain / status.RoundTime * 100;
     }
+
+    private async Task<bool> ModExists(string? modName, CancellationToken cancellationToken) =>
+        !string.IsNullOrEmpty(modName) && await context.Mods.AsNoTracking().AnyAsync(mod => mod.FolderName == modName, cancellationToken);
 
     /// <summary>
     /// The map being played, when the mod and map name match something in the file database.
